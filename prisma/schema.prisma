@@ -1,0 +1,677 @@
+// =============================================================================
+// Sirius — Prisma schema
+// =============================================================================
+// Prisma 7 notes (differs from v5/v6):
+//   * The generator is `prisma-client` (not `prisma-client-js`) and requires an
+//     explicit `output`. The client is emitted to `lib/generated/prisma` and is
+//     imported as `@/lib/generated/prisma` — never from `@prisma/client`.
+//   * `datasource.url` is NOT declared here. The connection string is supplied
+//     by `prisma.config.ts` (which reads `DATABASE_URL` via dotenv).
+//   * At runtime the client is constructed with a driver adapter
+//     (`@prisma/adapter-pg`). See `lib/prisma.ts`.
+//
+// Field naming: models use idiomatic camelCase in TypeScript and are `@map`ped
+// to snake_case columns, so the database reads the way the spec describes it
+// (`target_score`, `passage_text`, …) while application code stays idiomatic.
+//
+// Apply this schema with:  npx prisma db push
+// =============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+/// Which part of the Digital SAT a test covers.
+/// `FULL` is a complete adaptive test (Reading & Writing + Math).
+enum TestType {
+  READING
+  MATH
+  FULL
+}
+
+/// The Digital SAT is section-adaptive: every section has two modules, and
+/// performance in module 1 determines the difficulty of module 2.
+enum TestModule {
+  MODULE_1
+  MODULE_2
+}
+
+/// Digital SAT questions are either 4-option multiple choice or SPR
+/// ("student-produced response" — the student types a numeric answer).
+enum QuestionFormat {
+  MULTIPLE_CHOICE
+  SPR
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+/// The decision an admissions office returned.
+enum ApplicationStatus {
+  ACCEPTED
+  REJECTED
+  WAITLISTED
+}
+
+/// Lifecycle of an attempt, so an interrupted session can be resumed.
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+// -----------------------------------------------------------------------------
+// Users
+// -----------------------------------------------------------------------------
+
+/// A Sirius student, and the row Auth.js owns.
+///
+/// The first five fields are Auth.js's contract with `@auth/prisma-adapter` and
+/// must keep those exact names — the adapter writes them directly. Everything
+/// below `targetScore` is ours. `@map` only renames the *column*, so the
+/// database still reads in snake_case while the adapter sees what it expects.
+///
+/// The row is created by the adapter on first Google sign-in; `lib/user.ts`
+/// then reads it and seeds the starter roadmap on the first authenticated
+/// request.
+model User {
+  id String @id @default(cuid())
+
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+
+  /// The score the student is aiming for (400–1600), used by the dashboard to
+  /// frame progress. Null until the student sets a goal.
+  targetScore Int? @map("target_score")
+
+  /// Preferred UI language. Sirius is bilingual (Uzbek / English).
+  locale String @default("uz")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accounts Account[]
+  sessions Session[]
+
+  results       TestResult[]
+  attempts      TestAttempt[]
+  savedWords    SavedWord[]
+  roadmapTasks  RoadmapTask[]
+  shortlist     UniversityShortlistEntry[]
+
+  @@map("users")
+}
+
+/// An OAuth account linked to a user. Written by `@auth/prisma-adapter`.
+///
+/// The snake_case *field* names here are deliberate and must not be
+/// camelCased: they are the raw OAuth response keys the adapter stores by name.
+/// Google's `id_token` is a JWT and comfortably exceeds the default varchar, so
+/// every token column is `@db.Text`.
+model Account {
+  id String @id @default(cuid())
+
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+/// A database-backed session. Sirius uses the database strategy rather than
+/// JWTs so that signing out actually invalidates the session server-side.
+model Session {
+  id String @id @default(cuid())
+
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+/// Required by the adapter's contract. Unused while Google is the only
+/// provider — it backs email/passwordless flows, which we may add later.
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// -----------------------------------------------------------------------------
+// Tests & questions
+// -----------------------------------------------------------------------------
+
+/// A practice test or single module.
+///
+/// Content is authored elsewhere and loaded through `POST /api/tests/import`.
+/// `externalId` is the caller's own identifier for the test; it is unique so
+/// re-importing the same payload updates the existing test instead of
+/// duplicating it (idempotent import).
+model Test {
+  id String @id @default(cuid())
+
+  externalId  String?  @unique @map("external_id")
+  title       String
+  description String?
+  type        TestType @default(FULL)
+
+  /// Only published tests are visible to students.
+  isPublished Boolean @default(false) @map("is_published")
+
+  /// Time limit for the whole test, in minutes. The Digital SAT allots 32
+  /// minutes per Reading & Writing module and 35 per Math module.
+  durationMinutes Int @default(32) @map("duration_minutes")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  questions Question[]
+  results   TestResult[]
+  attempts  TestAttempt[]
+
+  @@index([isPublished, type])
+  @@map("tests")
+}
+
+/// A single question, optionally paired with a reading passage.
+///
+/// `options` is JSON so the importer can accept the caller's own shape. The
+/// canonical form is an array of `{ label, text }`:
+///   [{ "label": "A", "text": "…" }, { "label": "B", "text": "…" }]
+/// A bare `string[]` is also accepted and normalised to labels A–D on import.
+/// See `lib/validation/test-import.ts`.
+model Question {
+  id String @id @default(cuid())
+
+  testId String @map("test_id")
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  /// Caller-supplied id, unique per test, so re-imports update in place.
+  externalId String? @map("external_id")
+
+  /// 1-based position within the test.
+  order Int @default(1)
+
+  module TestModule @default(MODULE_1)
+
+  /// The reading passage / stimulus shown in the left pane of the simulator.
+  /// Null for most Math questions, which are self-contained.
+  passageText  String? @map("passage_text")
+  passageTitle String? @map("passage_title")
+
+  questionText String         @map("question_text")
+  format       QuestionFormat @default(MULTIPLE_CHOICE)
+
+  /// Answer choices. Empty/absent for SPR questions.
+  options Json?
+
+  /// For MULTIPLE_CHOICE this is the option label ("A"…"D").
+  /// For SPR it is the accepted numeric answer as a string ("3/4", "0.75").
+  correctAnswer String @map("correct_answer")
+
+  explanation String?
+
+  /// College Board content domain, e.g. "Information and Ideas", "Algebra".
+  domain     String?
+  skill      String?
+  difficulty Difficulty @default(MEDIUM)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([testId, externalId])
+  @@index([testId, module, order])
+  @@map("questions")
+}
+
+// -----------------------------------------------------------------------------
+// Attempts & results
+// -----------------------------------------------------------------------------
+
+/// An in-flight sitting of a test. Persisting this (rather than keeping it only
+/// in React state) lets a student close the tab mid-module and resume, and
+/// gives the timer a server-anchored start time that cannot be gamed by
+/// reloading the page.
+model TestAttempt {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  testId String @map("test_id")
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  status AttemptStatus @default(IN_PROGRESS)
+
+  /// Answers so far: `{ "<questionId>": "B" }`.
+  answers Json @default("{}")
+
+  /// Questions the student flagged for review: `["<questionId>", …]`.
+  flagged Json @default("[]")
+
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([userId, status])
+  @@map("test_attempts")
+}
+
+/// The graded outcome of a completed attempt.
+model TestResult {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  testId String @map("test_id")
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  /// Number of correct answers.
+  score Int
+
+  /// Total number of questions graded, so `score/total` survives later edits
+  /// to the test.
+  totalQuestions Int @map("total_questions")
+
+  /// Estimated scaled score on the 400–1600 SAT scale.
+  scaledScore Int? @map("scaled_score")
+
+  /// Full per-question record:
+  /// `{ "<questionId>": { "answer": "B", "correct": true } }`
+  answersRecord Json @map("answers_record")
+
+  /// Wall-clock seconds spent on the test.
+  durationSeconds Int? @map("duration_seconds")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("test_results")
+}
+
+// -----------------------------------------------------------------------------
+// Bilingual dictionary
+// -----------------------------------------------------------------------------
+
+/// English → Uzbek dictionary entry.
+///
+/// The MVP simulator reads `data/vocabulary.json` so lookups are instant and
+/// need no network round-trip. This table is the same shape, for when the
+/// dictionary outgrows a static file — seed it from the JSON with
+/// `npm run db:seed`.
+model Vocabulary {
+  id String @id @default(cuid())
+
+  /// Lower-cased lemma. Unique so imports can upsert.
+  englishWord String @unique @map("english_word")
+
+  /// Uzbek translation.
+  translatedWord String @map("translated_word")
+
+  /// Short English gloss shown above the translation.
+  explanation String?
+
+  /// Uzbek-language explanation.
+  explanationUz String? @map("explanation_uz")
+
+  partOfSpeech String? @map("part_of_speech")
+  example      String?
+
+  /*
+   * `explanation` above *is* the definition — the English gloss shown over the
+   * translation. A separate `definition` column would be the same sentence
+   * stored twice, and the two would drift.
+   */
+
+  /// Words that could stand in for this one, for building recall exercises.
+  synonyms String[] @default([])
+
+  /// Grouping for study sets: "SAT Tier 1", "Science", "Rhetoric", …
+  category String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  savedBy SavedWord[]
+
+  @@index([category])
+
+  @@map("vocabulary")
+}
+
+/// A word a student tapped in a passage and kept, for later revision.
+model SavedWord {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// The surface form as it appeared in the passage.
+  word String
+
+  /// Set when the word matched a dictionary entry.
+  vocabularyId String?     @map("vocabulary_id")
+  vocabulary   Vocabulary? @relation(fields: [vocabularyId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, word])
+  @@map("saved_words")
+}
+
+// -----------------------------------------------------------------------------
+// Universities
+// -----------------------------------------------------------------------------
+
+/// A university in the explorer.
+model University {
+  id String @id @default(cuid())
+
+  /*
+   * IPEDS UNITID, from the College Scorecard API. Present on rows imported from
+   * the API and null on the hand-curated international ones (Oxford, NYUAD, …),
+   * which the US federal dataset does not cover. It is the upsert key for
+   * re-imports, so a nightly refresh updates rows instead of duplicating them.
+   */
+  scorecardId Int? @unique @map("scorecard_id")
+
+  /// Where the row came from: "curated" (hand-written) or "scorecard" (API).
+  dataSource String @default("curated") @map("data_source")
+
+  name    String  @unique
+  country String?
+  city    String?
+  state   String?
+
+  /// Share of applicants admitted, as a fraction: 0.043 = 4.3%.
+  acceptanceRate Float? @map("acceptance_rate")
+
+  /// Competitive score floors used for filtering.
+  minSat   Int?   @map("min_sat")
+  minIelts Float? @map("min_ielts")
+
+  /// The TOEFL iBT equivalent of `minIelts`, where the university publishes one.
+  minToefl Int? @map("min_toefl")
+
+  /*
+   * SAT section midpoints as reported to the Department of Education: the score
+   * at which half of admitted students scored higher. `minSat` above is the
+   * total a student compares against, derived from these two when the API
+   * supplies them. Null for test-blind schools, which report no SAT at all.
+   */
+  satMath    Int? @map("sat_math")
+  satReading Int? @map("sat_reading")
+
+  /// Undergraduate enrolment. Useful context for "is this a big place?".
+  studentSize Int? @map("student_size")
+
+  /// Typical admitted GPA on the US 4.0 scale. Indicative, not a cut-off.
+  averageGpa Float? @map("average_gpa")
+
+  description String?
+
+  /*
+   * Free text and tag lists are stored per language rather than translated at
+   * runtime: these are short curated strings, and machine-translating an
+   * admissions requirement is how a student ends up believing something wrong.
+   * The `*Uz` column falls back to the English one when it is empty.
+   */
+  descriptionUz String? @map("description_uz")
+
+  /// Degree programmes the university is known for.
+  popularMajors   String[] @default([]) @map("popular_majors")
+  popularMajorsUz String[] @default([]) @map("popular_majors_uz")
+
+  /// What this admissions office actually rewards in an applicant's profile.
+  studentProfile   String? @map("student_profile")
+  studentProfileUz String? @map("student_profile_uz")
+
+  /// A campus photo. Null falls back to the generated cover in the UI.
+  imageUrl String? @map("image_url")
+
+  /// Extracurricular profile the admissions office rewards. A Postgres text[].
+  extracurriculars   String[] @default([]) @map("extracurriculars")
+  extracurricularsUz String[] @default([]) @map("extracurriculars_uz")
+
+  /// Annual tuition in USD.
+  tuitionUsd Int? @map("tuition_usd")
+
+  /// True when the university meets full demonstrated need — the single most
+  /// decision-relevant fact for most Sirius students.
+  meetsFullNeed Boolean @default(false) @map("meets_full_need")
+
+  worldRanking   Int?    @map("world_ranking")
+  websiteUrl     String? @map("website_url")
+  applicationDeadline DateTime? @map("application_deadline")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  shortlistedBy UniversityShortlistEntry[]
+  applicants    ApplicantProfile[]
+  essays        Essay[]
+
+  @@index([minSat])
+  @@map("universities")
+}
+
+/// A university a student is tracking.
+model UniversityShortlistEntry {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  universityId String     @map("university_id")
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  note String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, universityId])
+  @@map("university_shortlist_entries")
+}
+
+// -----------------------------------------------------------------------------
+// Roadmap
+// -----------------------------------------------------------------------------
+
+/// A checklist item on the student's preparation roadmap, shown on the
+/// dashboard. Seeded with a starter plan on first visit.
+model RoadmapTask {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title  String
+  detail String?
+
+  /*
+   * A stable key for the tasks Sirius seeds itself ("set-target", "first-test",
+   * …). It is what makes the checklist translatable: the row stores English
+   * text, and the UI prefers the dictionary entry for this slug when there is
+   * one. Null for anything a student writes themselves, which is shown as
+   * typed, in whatever language they typed it.
+   */
+  slug String?
+
+  isDone Boolean   @default(false) @map("is_done")
+  doneAt DateTime? @map("done_at")
+
+  /// Sort position within the checklist.
+  order Int @default(0)
+
+  /// Optional deadline, e.g. an application due date.
+  dueAt DateTime? @map("due_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isDone, order])
+  @@map("roadmap_tasks")
+}
+
+// -----------------------------------------------------------------------------
+// Admissions evidence
+// -----------------------------------------------------------------------------
+
+/// One admissions decision, as reported by an applicant.
+///
+/// A row is a *decision*, not a person: `universityId` plus `status` is the
+/// unit. `applicantKey` is what stitches several rows back into one applicant,
+/// so the profile view can show that the person who got into Yale was rejected
+/// by Harvard. It is a pseudonymous handle ("2026-0142"), never a name.
+///
+/// NOTHING HERE IDENTIFIES ANYONE. Demographics are coarse buckets by design —
+/// "state", "school type", "first generation" — because a shared SAT score plus
+/// a city plus a rare award is identifying even without a name.
+///
+/// `isSample` marks the demonstration rows shipped with the repo. The UI badges
+/// them, so a student never mistakes a made-up profile for a real outcome.
+model ApplicantProfile {
+  id String @id @default(cuid())
+
+  universityId String     @map("university_id")
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  /// Groups the rows that belong to one applicant. Not a foreign key: an
+  /// applicant is not an account, and never becomes one.
+  applicantKey String @map("applicant_key")
+
+  status ApplicationStatus
+
+  /// Application cycle, as the year the decision landed.
+  year Int?
+
+  satScore Int? @map("sat_score")
+  actScore Int? @map("act_score")
+
+  gpaUnweighted Float? @map("gpa_unweighted")
+  gpaWeighted   Float? @map("gpa_weighted")
+
+  major String?
+
+  /// Coarse buckets only — see the note above. `{ state, schoolType, firstGen }`.
+  demographics Json?
+
+  /// `[{ title, role, hours, description }]`, in the applicant's own order.
+  extracurriculars Json?
+
+  /// `[{ title, level, year }]`, where level is school / state / national.
+  awards Json?
+
+  /// True for the demonstration rows in this repository.
+  isSample Boolean @default(false) @map("is_sample")
+
+  essays Essay[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([applicantKey, universityId])
+  @@index([universityId, status])
+  @@index([satScore])
+  @@map("applicant_profiles")
+}
+
+/// An application essay, kept for students to read as craft rather than to copy.
+model Essay {
+  id String @id @default(cuid())
+
+  /// The university this essay was written for. Null for a Common App personal
+  /// statement, which goes to every school on the list.
+  universityId String?     @map("university_id")
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+
+  /// The decision this essay belongs to, when it is known.
+  applicantProfileId String?           @map("applicant_profile_id")
+  applicantProfile   ApplicantProfile? @relation(fields: [applicantProfileId], references: [id], onDelete: SetNull)
+
+  prompt  String
+  content String  @db.Text
+  /// Stored rather than derived: the count a student compares against a limit
+  /// is the one the essay was submitted with.
+  wordCount Int    @map("word_count")
+
+  /// What the essay is *about* — "Personal Identity", "Failure", "Community".
+  topicTags String[] @default([]) @map("topic_tags")
+
+  year Int?
+
+  /// Behind the paywall. Drives the locked card state in the UI.
+  isPremium Boolean @default(false) @map("is_premium")
+
+  /// True for the demonstration rows in this repository.
+  isSample Boolean @default(false) @map("is_sample")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([universityId])
+  @@index([topicTags])
+  @@map("essays")
+}
+
+/// A rung on the extracurricular ladder.
+///
+/// The tiers exist to answer the question every applicant actually has: "is
+/// what I am doing good enough, and what does the next step look like?" A row
+/// is a *kind* of involvement ("Club member", "Founded a non-profit"), not
+/// something a specific student did.
+model ActivityReference {
+  id String @id @default(cuid())
+
+  /// "Bronze I", "Bronze II", "Silver", "Gold", "Platinum".
+  tier String
+
+  /// "STEM", "Leadership", "Service", "Arts", "Athletics", "Research".
+  category String
+
+  title       String
+  titleUz     String? @map("title_uz")
+  description String?
+  descriptionUz String? @map("description_uz")
+
+  /// Sort position inside its tier.
+  order Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([tier, title])
+  @@index([tier, order])
+  @@index([category])
+  @@map("activity_references")
+}

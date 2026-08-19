@@ -1,0 +1,142 @@
+{
+  "_comment": [
+    "Sirius bilingual dictionary (English -> Uzbek).",
+    "",
+    "This file is the single source of truth for the dictionary feature in the",
+    "MVP. It is read at build time by lib/vocabulary.ts and compiled into a",
+    "lookup Map, so a translation costs no network request and no database",
+    "query — the tooltip opens instantly.",
+    "",
+    "Each entry carries a `forms` array listing the inflections that should",
+    "resolve to it (plurals, -ed/-ing, nominalisations, British spellings).",
+    "Passage text says 'scrutinized', not 'scrutinize', so matching on the",
+    "headword alone would miss most real occurrences.",
+    "",
+    "To grow the dictionary: add entries here. To move it into Postgres later,",
+    "the `Vocabulary` model in prisma/schema.prisma mirrors this shape — seed it",
+    "with `npm run db:seed`."
+  ],
+  "version": 1,
+  "sourceLanguage": "en",
+  "targetLanguage": "uz",
+  "entries": [
+    {
+      "word": "ubiquitous",
+      "partOfSpeech": "adjective",
+      "translation": "hamma yerda mavjud, keng tarqalgan",
+      "explanation": "Present everywhere at once; seemingly found in every place.",
+      "explanationUz": "Bir vaqtning o'zida hamma joyda uchraydigan; juda keng tarqalgan.",
+      "example": "Smartphones have become ubiquitous in modern classrooms.",
+      "forms": ["ubiquitous", "ubiquitously", "ubiquity"]
+    },
+    {
+      "word": "ambivalent",
+      "partOfSpeech": "adjective",
+      "translation": "ikkilanuvchi, qarama-qarshi hissiyotdagi",
+      "explanation": "Having mixed or contradictory feelings about something.",
+      "explanationUz": "Biror narsaga nisbatan bir vaqtda ham ijobiy, ham salbiy his tuyadigan; qat'iy qarorga kelolmagan.",
+      "example": "She felt ambivalent about leaving her hometown for university.",
+      "forms": ["ambivalent", "ambivalence", "ambivalently"]
+    },
+    {
+      "word": "meticulous",
+      "partOfSpeech": "adjective",
+      "translation": "sinchkov, puxta",
+      "explanation": "Showing great attention to detail; very careful and precise.",
+      "explanationUz": "Mayda tafsilotlarga ham katta e'tibor beradigan; juda ehtiyotkor va aniq.",
+      "example": "The researcher kept meticulous records of every measurement.",
+      "forms": ["meticulous", "meticulously", "meticulousness"]
+    },
+    {
+      "word": "pragmatic",
+      "partOfSpeech": "adjective",
+      "translation": "amaliy, pragmatik",
+      "explanation": "Dealing with things practically rather than theoretically.",
+      "explanationUz": "Nazariyaga emas, amaliy natijaga tayanadigan; hayotiy yondashuvli.",
+      "example": "They took a pragmatic approach and fixed the cheapest problems first.",
+      "forms": ["pragmatic", "pragmatically", "pragmatism", "pragmatist"]
+    },
+    {
+      "word": "arduous",
+      "partOfSpeech": "adjective",
+      "translation": "mashaqqatli, og'ir",
+      "explanation": "Requiring great effort; difficult and tiring.",
+      "explanationUz": "Katta kuch talab qiladigan; qiyin va charchatadigan.",
+      "example": "Preparing for the exam was an arduous but rewarding process.",
+      "forms": ["arduous", "arduously"]
+    },
+    {
+      "word": "candid",
+      "partOfSpeech": "adjective",
+      "translation": "samimiy, ochiq",
+      "explanation": "Honest and direct, even when the truth is uncomfortable.",
+      "explanationUz": "Halol va to'g'ridan-to'g'ri gapiradigan; haqiqatni yashirmaydigan.",
+      "example": "In a candid interview, the author admitted that her first draft had failed.",
+      "forms": ["candid", "candidly", "candour", "candor"]
+    },
+    {
+      "word": "scrutinize",
+      "partOfSpeech": "verb",
+      "translation": "sinchiklab tekshirmoq",
+      "explanation": "To examine something closely and critically.",
+      "explanationUz": "Biror narsani diqqat bilan, tanqidiy ko'z bilan tekshirmoq.",
+      "example": "Editors scrutinize every claim before publication.",
+      "forms": [
+        "scrutinize",
+        "scrutinizes",
+        "scrutinized",
+        "scrutinizing",
+        "scrutinise",
+        "scrutinises",
+        "scrutinised",
+        "scrutinising",
+        "scrutiny"
+      ]
+    },
+    {
+      "word": "tenuous",
+      "partOfSpeech": "adjective",
+      "translation": "zaif, ishonchsiz",
+      "explanation": "Very weak or slight; lacking a solid basis.",
+      "explanationUz": "Juda kuchsiz yoki asossiz; mustahkam poydevorga ega bo'lmagan.",
+      "example": "The link between the two events is tenuous at best.",
+      "forms": ["tenuous", "tenuously"]
+    },
+    {
+      "word": "resilient",
+      "partOfSpeech": "adjective",
+      "translation": "bardoshli, tez tiklanuvchi",
+      "explanation": "Able to recover quickly from difficulty or damage.",
+      "explanationUz": "Qiyinchilikdan keyin tez o'ziga keladigan; chidamli.",
+      "example": "Coral reefs are less resilient to heat than scientists once believed.",
+      "forms": ["resilient", "resiliently", "resilience", "resiliency"]
+    },
+    {
+      "word": "paradigm",
+      "partOfSpeech": "noun",
+      "translation": "andoza, namuna (paradigma)",
+      "explanation": "A fundamental model or typical example of how something works.",
+      "explanationUz": "Biror sohada qabul qilingan asosiy model yoki namuna.",
+      "example": "The discovery overturned the dominant paradigm in genetics.",
+      "forms": ["paradigm", "paradigms", "paradigmatic"]
+    },
+    {
+      "word": "empirical",
+      "partOfSpeech": "adjective",
+      "translation": "empirik, tajribaga asoslangan",
+      "explanation": "Based on observation or experiment rather than on theory.",
+      "explanationUz": "Nazariya emas, kuzatuv va tajriba natijalariga asoslangan.",
+      "example": "There is little empirical evidence for the claim.",
+      "forms": ["empirical", "empirically", "empiricism", "empiricist"]
+    },
+    {
+      "word": "nuance",
+      "partOfSpeech": "noun",
+      "translation": "nozik farq, ma'no qirrasi",
+      "explanation": "A very small difference in meaning, feeling, or tone.",
+      "explanationUz": "Ma'no, ohang yoki hissiyotdagi juda kichik, nozik farq.",
+      "example": "A good translation preserves the nuance of the original.",
+      "forms": ["nuance", "nuances", "nuanced"]
+    }
+  ]
+}

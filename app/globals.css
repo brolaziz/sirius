@@ -1,0 +1,633 @@
+/*
+ * Sirius — global stylesheet & design tokens
+ * -----------------------------------------------------------------------------
+ * Tailwind CSS v4 (CSS-first configuration — there is no tailwind.config.ts;
+ * everything a v3 config file would hold lives in the `@theme` block below).
+ *
+ * DIRECTION: "Bluebook Bright".
+ * The structure comes from the Bluebook direction picked on /design-system —
+ * white ground, hairline division, dense rhythm, no drop shadows. The mood is
+ * the opposite of an exam hall: the neutrals are tinted with the accent so the
+ * whole interface reads bright rather than grey, the palette is vivid, and the
+ * type is warm and easy to read instead of institutional.
+ *
+ * Two decisions worth knowing before you edit anything:
+ *
+ *   1. SHADOWS ARE RINGS. `--shadow-soft` and `--shadow-lift` resolve to 1px
+ *      rings, not blurs, so every `shadow-soft` in the codebase draws a hairline.
+ *      Only `--shadow-float` (dialogs, popovers) is a real shadow, because
+ *      something that floats over content needs to look like it does.
+ *
+ *   2. NEUTRALS ARE NOT GREY. Every "grey" carries a little of the accent hue.
+ *      That single choice is what keeps a white, dense UI from feeling clinical.
+ *
+ * Token layers, outermost first:
+ *   1. `@theme inline`  — maps CSS variables to Tailwind utilities.
+ *   2. `:root`          — the light palette. The product is designed in it.
+ *   3. `.dark`          — kept in sync, not shipped yet.
+ */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* --- Core surface + text ------------------------------------------------ */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+
+  /* --- Typography ---------------------------------------------------------
+   * Three roles, injected onto <html> by next/font in app/layout.tsx:
+   *   display — Bricolage Grotesque. Wonky joints, a real personality at 700+.
+   *             Headlines and numbers people care about.
+   *   sans    — Figtree. Round, open apertures, tall x-height: the friendliest
+   *             thing you can read for twenty minutes without noticing it.
+   *   mono    — DM Mono. Only the timer and code samples. Everything else uses
+   *             Figtree's tabular figures, because uppercase mono labels are
+   *             exactly the "official" voice we are getting away from.
+   */
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-figtree), ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: var(--font-dm-mono), ui-monospace, SFMono-Regular, Menlo,
+    Consolas, monospace;
+  --font-heading: var(--font-display);
+
+  --tracking-display: -0.025em;
+  --tracking-tightest: -0.04em;
+
+  /* --- Semantic colors (consumed by shadcn/ui) ---------------------------- */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* --- Brand ramp ---------------------------------------------------------
+   * A bright electric blue. 500/600 are the interactive steps; 50–200 are the
+   * tints that make white surfaces look lit rather than empty.
+   */
+  --color-brand-50: #f0f5ff;
+  --color-brand-100: #dfe9ff;
+  --color-brand-200: #c3d6ff;
+  --color-brand-300: #97b8ff;
+  --color-brand-400: #6392ff;
+  --color-brand-500: #2e6bff;
+  --color-brand-600: #1a51f0;
+  --color-brand-700: #163fc9;
+  --color-brand-800: #17369f;
+  --color-brand-900: #18327d;
+
+  /* --- The bright five ----------------------------------------------------
+   * One hue per meaning, each with a saturated ink and a light tint of itself.
+   * These are deliberately vivid: on a white, hairline-divided layout they are
+   * the only thing carrying energy, so washed-out versions would leave the page
+   * looking like a form.
+   *   mint   — correct, on track, done
+   *   coral  — wrong, out of reach, overdue
+   *   sun    — flagged, due soon, borderline
+   *   grape  — neutral supporting data (counts, rankings)
+   *   aqua   — money and cost
+   */
+  --color-viz-emerald: #06b981;
+  --color-viz-emerald-soft: #dcfbef;
+  --color-viz-rose: #ff4d6d;
+  --color-viz-rose-soft: #ffe6ec;
+  --color-viz-amber: #f59e0b;
+  --color-viz-amber-soft: #fff2d9;
+  --color-viz-violet: #c000c0;
+  --color-viz-violet-soft: #ffe3ff;
+  --color-viz-sky: #00808f;
+  --color-viz-sky-soft: #d9ffff;
+
+  /* --- The spectrum -------------------------------------------------------
+   * Four hues the product is allowed to shout with: magenta, cyan, lime and
+   * midnight. They are pure and very bright, which is the point — and also why
+   * each one ships in two forms:
+   *
+   *   --color-<hue>       the raw hue. Fills, strokes, glows, and text on
+   *                       midnight, where it is brilliant and legible.
+   *   --color-<hue>-ink   a darkened version for text on white. Pure cyan on
+   *                       white is 1.6:1 and pure lime is worse; these land
+   *                       above 4.5:1 so small text stays readable.
+   *   --color-<hue>-soft  a pale tint for chip and card fills.
+   *
+   * Midnight is the deep surface the bright hues sit on. It replaces black
+   * everywhere: black plus neon looks like a warning label, midnight plus neon
+   * looks like a night sky.
+   */
+  --color-magenta: #ff00ff;
+  --color-magenta-ink: #c000c0;
+  --color-magenta-soft: #ffe3ff;
+  --color-cyan: #00ffff;
+  --color-cyan-ink: #00808f;
+  --color-cyan-soft: #d9ffff;
+  --color-lime: #ccff00;
+  --color-lime-ink: #5f7d00;
+  --color-lime-soft: #f2ffcc;
+  --color-midnight: #191970;
+  --color-midnight-2: #23238c;
+  --color-midnight-soft: #e8e8f6;
+
+  /* --- Charts / progress -------------------------------------------------- */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* --- Sidebar (dashboard shell) ------------------------------------------ */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* --- Radii --------------------------------------------------------------
+   * 8px base. Bluebook asked for 6; friendly asked for round. This is the
+   * meeting point: `rounded-2xl` lands at 14px, soft enough to be welcoming and
+   * tight enough that a dense grid still looks engineered.
+   */
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.3);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.8);
+
+  /* --- "Elevation" (rings, not shadows) -----------------------------------
+   * The whole codebase already says `shadow-soft` / `shadow-lift`, so the swap
+   * happens here rather than in three hundred class attributes:
+   *   shadow-soft  — the resting hairline every card wears
+   *   shadow-lift  — the same hairline in accent blue, for hover
+   *   shadow-glow  — a bright halo ring for primary buttons
+   *   shadow-float — the one real shadow, for things that genuinely float
+   */
+  --shadow-soft: 0 0 0 1px var(--border);
+  --shadow-lift: 0 0 0 1px color-mix(in oklch, var(--primary) 45%, transparent);
+  --shadow-glow: 0 0 0 4px color-mix(in oklch, var(--primary) 16%, transparent);
+  --shadow-float:
+    0 2px 8px -4px color-mix(in oklch, var(--foreground) 22%, transparent),
+    0 24px 48px -24px color-mix(in oklch, var(--foreground) 28%, transparent);
+
+  /*
+   * The authenticated app gets real shadows, unlike the marketing site.
+   *
+   * A dashboard is a working surface: tiles sit on a tinted ground with
+   * coloured light behind it, and a hairline alone leaves them looking printed
+   * on. These two are soft, wide and tinted with the midnight ink rather than
+   * black — black shadows over a blue-tinted ground read as smudges.
+   */
+  --shadow-card:
+    0 1px 2px -1px color-mix(in oklch, var(--color-midnight) 10%, transparent),
+    0 10px 24px -14px color-mix(in oklch, var(--color-midnight) 30%, transparent);
+  --shadow-card-hover:
+    0 2px 6px -2px color-mix(in oklch, var(--color-midnight) 12%, transparent),
+    0 24px 48px -20px color-mix(in oklch, var(--color-midnight) 38%, transparent);
+
+  --spacing-section: 6rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Light palette — the default.
+ * ------------------------------------------------------------------------ */
+:root {
+  --radius: 0.5rem;
+
+  --background: #ffffff;
+  /* The app ground: white with a wash of the accent, so cards read as cards. */
+  --surface: #f4f7ff;
+  --foreground: #0f1b33;
+
+  --card: #ffffff;
+  --card-foreground: #0f1b33;
+  --popover: #ffffff;
+  --popover-foreground: #0f1b33;
+
+  --primary: #2e6bff;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eef3ff;
+  --secondary-foreground: #17369f;
+
+  --muted: #f1f5ff;
+  --muted-foreground: #5d6b8a;
+
+  --accent: #e6eeff;
+  --accent-foreground: #163fc9;
+
+  --destructive: #ff4d6d;
+  --success: #06b981;
+  --warning: #f59e0b;
+
+  --border: #e3eafb;
+  --input: #dbe4f8;
+  --ring: #2e6bff;
+
+  --chart-1: #2e6bff;
+  --chart-2: #8b5cf6;
+  --chart-3: #06b981;
+  --chart-4: #f59e0b;
+  --chart-5: #06b6d4;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f1b33;
+  --sidebar-primary: #2e6bff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef3ff;
+  --sidebar-accent-foreground: #163fc9;
+  --sidebar-border: #e3eafb;
+  --sidebar-ring: #2e6bff;
+}
+
+/* ---------------------------------------------------------------------------
+ * Dark palette — defined for completeness; activate by adding `.dark` to
+ * <html>. Light mode ships as the product default.
+ * ------------------------------------------------------------------------ */
+.dark {
+  --background: #0b1020;
+  --surface: #080c18;
+  --foreground: #eef2fb;
+
+  --card: #121a2e;
+  --card-foreground: #eef2fb;
+  --popover: #121a2e;
+  --popover-foreground: #eef2fb;
+
+  --primary: #6392ff;
+  --primary-foreground: #08122b;
+
+  --secondary: #1a2440;
+  --secondary-foreground: #eef2fb;
+
+  --muted: #1a2440;
+  --muted-foreground: #9aa8c6;
+
+  --accent: #1d2a4d;
+  --accent-foreground: #c3d6ff;
+
+  --destructive: #ff6b85;
+  --success: #34d99f;
+  --warning: #fbbf24;
+
+  --border: #24304f;
+  --input: #2b3757;
+  --ring: #6392ff;
+
+  --sidebar: #121a2e;
+  --sidebar-foreground: #eef2fb;
+  --sidebar-primary: #6392ff;
+  --sidebar-primary-foreground: #08122b;
+  --sidebar-accent: #1a2440;
+  --sidebar-accent-foreground: #eef2fb;
+  --sidebar-border: #24304f;
+  --sidebar-ring: #6392ff;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+    /* GSAP ScrollTrigger drives its own scrolling; CSS smooth scroll fights it. */
+    scroll-behavior: auto;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: var(--tracking-display);
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-brand-900;
+  }
+
+  /*
+   * MOTION PREFERENCE — read this before touching it.
+   *
+   * Windows' "Animation effects: off" (and the macOS equivalent) makes browsers
+   * report `prefers-reduced-motion: reduce`. On a machine with that setting the
+   * old rule below killed every animation in the product, including the ones
+   * this design is built around — which looked like the site was broken rather
+   * than considerate.
+   *
+   * The product answers that with `data-motion="full"`, hard-coded on <html> in
+   * app/layout.tsx: Sirius always animates. The rule below is written so it only
+   * bites when that attribute is something else, which is the one-line escape
+   * hatch — set it to "system" and the operating system decides again.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    :root:not([data-motion="full"]) *,
+    :root:not([data-motion="full"]) *::before,
+    :root:not([data-motion="full"]) *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+}
+
+/* ---------------------------------------------------------------------------
+ * Utilities
+ * ------------------------------------------------------------------------ */
+
+/*
+ * `marker` — a highlighter stroke behind a word.
+ *
+ * The single most effective way to make a headline sound like a person instead
+ * of a policy. Drawn as a background stripe that sits behind the lower two
+ * thirds of the line, exactly where a real marker would land, and it wraps
+ * across lines because it is a background rather than a box.
+ *
+ * GSAP animates `--marker-scale` to sweep it on. It starts at 0 and the reveal
+ * paints it left to right.
+ */
+@property --marker-scale {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@utility marker {
+  position: relative;
+  background-image: linear-gradient(
+    to right,
+    var(--color-lime),
+    var(--color-lime)
+  );
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: calc(var(--marker-scale) * 100%) 38%;
+  padding-inline: 0.08em;
+  border-radius: 0.15em;
+}
+
+/* The same stroke in cyan, for a second emphasis in the same headline. */
+@utility marker-mint {
+  background-image: linear-gradient(
+    to right,
+    var(--color-cyan),
+    var(--color-cyan)
+  );
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: calc(var(--marker-scale) * 100%) 38%;
+  padding-inline: 0.08em;
+  border-radius: 0.15em;
+}
+
+/*
+ * `sticker` — a chip that looks stuck on rather than printed. A solid bright
+ * fill, a slight rotation, no border. Used for playful labels ("new", "12 day
+ * streak"), never for status, which has its own colour language.
+ */
+@utility sticker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  line-height: 1;
+  rotate: -1.5deg;
+}
+
+/*
+ * `dict-term` — the bilingual dictionary highlight in SAT reading passages.
+ * Bright enough to invite a tap, quiet enough that the passage reads as prose.
+ */
+@utility dict-term {
+  border-radius: 0.25rem;
+  background-color: var(--color-brand-100);
+  box-shadow: inset 0 -2px 0 0 var(--color-brand-300);
+  text-underline-offset: 3px;
+  padding-inline: 0.15rem;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+
+  &:hover,
+  &[data-state="open"] {
+    background-color: var(--color-brand-200);
+    box-shadow: inset 0 -2px 0 0 var(--color-brand-500);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * `passage-prose` — typography for SAT reading passages. Figtree at 17px with
+ * generous leading holds up across a 32-minute module.
+ */
+@utility passage-prose {
+  font-size: 1.0625rem;
+  line-height: 1.75;
+
+  & p + p {
+    margin-top: 1.25em;
+  }
+}
+
+/* Ruled grid backdrop, tinted with the accent so it reads as bright. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--color-brand-100) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-brand-100) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* The dot field. Blue, not grey — this is what tints the whole page bright. */
+@utility bg-dots {
+  background-image: radial-gradient(var(--color-brand-200) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+
+@utility bg-dots-fine {
+  background-image: radial-gradient(var(--color-brand-100) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+  background-position: -1px -1px;
+}
+
+@utility bg-dots-light {
+  background-image: radial-gradient(oklch(1 0 0 / 0.25) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+
+/* Frosted plate for text over imagery and for floating bars. */
+@utility glass {
+  background-color: color-mix(in oklch, var(--background) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+}
+
+@utility glass-dark {
+  background-color: color-mix(in oklch, #0f1b33 45%, transparent);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+
+/*
+ * `timer-pulse` — the five-minute warning in the simulator.
+ * A slow scale pulse, in CSS so it costs nothing while a module is being timed.
+ * The global reduced-motion rule above stops it for anyone who asked for less.
+ */
+@keyframes timer-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+@utility timer-pulse {
+  animation: timer-pulse 1.6s ease-in-out infinite;
+}
+
+/* Tabular figures for scores, timers and data tables. */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ---------------------------------------------------------------------------
+ * Spectrum treatments
+ * ------------------------------------------------------------------------ */
+
+/*
+ * `text-spectrum` — the headline gradient, sliding forever.
+ *
+ * The four stops are the product's four bright hues, and the animation moves
+ * the background rather than the text, so nothing reflows. Requires
+ * `background-clip: text`, which needs a transparent text colour — hence the
+ * explicit `color: transparent` rather than a utility, so it can never be
+ * overridden by a text-colour class further down the cascade.
+ */
+@keyframes spectrum-slide {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@utility text-spectrum {
+  background-image: linear-gradient(
+    100deg,
+    var(--color-midnight) 0%,
+    var(--color-magenta) 22%,
+    var(--color-brand-500) 45%,
+    var(--color-cyan-ink) 62%,
+    var(--color-lime-ink) 80%,
+    var(--color-midnight) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: spectrum-slide 9s linear infinite;
+}
+
+/* The same ramp as a fill, for rules, bars and the scroll progress line. */
+@utility bg-spectrum {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-magenta),
+    var(--color-brand-500),
+    var(--color-cyan),
+    var(--color-lime)
+  );
+}
+
+/*
+ * `glow-<hue>` — a coloured halo for card hover.
+ *
+ * A ring plus a wide, very low-opacity shadow of the same hue. This is the one
+ * place the design allows something shadow-like, because a neon accent needs a
+ * little bloom to read as lit rather than as a coloured border.
+ */
+@utility glow-magenta {
+  box-shadow:
+    0 0 0 1px var(--color-magenta),
+    0 8px 32px -12px color-mix(in oklch, var(--color-magenta) 55%, transparent);
+}
+
+@utility glow-cyan {
+  box-shadow:
+    0 0 0 1px var(--color-cyan-ink),
+    0 8px 32px -12px color-mix(in oklch, var(--color-cyan) 65%, transparent);
+}
+
+@utility glow-lime {
+  box-shadow:
+    0 0 0 1px var(--color-lime-ink),
+    0 8px 32px -12px color-mix(in oklch, var(--color-lime) 70%, transparent);
+}
+
+@utility glow-brand {
+  box-shadow:
+    0 0 0 1px var(--color-brand-500),
+    0 8px 32px -12px color-mix(in oklch, var(--color-brand-500) 55%, transparent);
+}
+
+/* The dot field in the spectrum, for midnight panels. */
+@utility bg-dots-neon {
+  background-image: radial-gradient(
+    color-mix(in oklch, var(--color-cyan) 35%, transparent) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+}
+
+/*
+ * There is deliberately no rule that pre-hides animated content.
+ *
+ * Hiding elements in CSS and waiting for GSAP to reveal them removes the small
+ * flash between first paint and hydration — but it also means a JavaScript
+ * failure leaves a blank page instead of a readable one. GSAP's `.from()` sets
+ * the start values inside a layout effect, before the browser paints the
+ * hydrated tree, so the exposure is one frame on a slow connection. That is the
+ * better trade for a page whose job is to be read.
+ */
