@@ -51,6 +51,7 @@ import pg from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "@/lib/generated/prisma/client";
+import { printDatabaseBanner } from "@/lib/db-banner";
 
 /** True when a usable `DATABASE_URL` is present in the environment. */
 export function isDatabaseConfigured(): boolean {
@@ -75,6 +76,16 @@ function poolSize(): number {
 
 function createPrismaClient(): PrismaClient {
   const connectionString = process.env.DATABASE_URL;
+
+  /*
+   * Announce the endpoint before opening anything.
+   *
+   * Here rather than in each script, because this is the one place every
+   * connection in the codebase passes through — a script cannot forget it, and
+   * a new script gets it for free. Prints once per process; the server's
+   * startup hook has usually printed it already.
+   */
+  printDatabaseBanner("prisma client");
 
   if (!connectionString) {
     throw new Error(
