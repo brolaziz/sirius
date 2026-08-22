@@ -55,24 +55,57 @@ const SLIDE_FITS = `(min-width: ${SLIDE_FITS_MIN}px)`;
  *
  * `distance` is the only thing that varies by viewport — see the note in the
  * component.
+ *
+ * WHY `fromTo` + `immediateRender: false` AND NOT `from`
+ *
+ * A `from()` tween writes its start values the moment it is built and holds
+ * them until its ScrollTrigger fires. That made the *resting* state of this
+ * section `opacity: 0` and `x: distance` — so the layout was only correct if an
+ * animation ran, and any reason for the trigger not to fire left the stages
+ * permanently invisible and shifted right. That is what shipped, and it is what
+ * the owner saw on a real phone.
+ *
+ * `fromTo` alone does not fix it: GSAP renders `from()` *and* `fromTo()`
+ * immediately unless told otherwise (ScrollTrigger.js: "any from() or fromTo()
+ * tweens should render immediately (well, unless they have immediateRender:
+ * false)"). `immediateRender: false` is the part that matters. The settled
+ * state is now the default, the offset is applied only when the tween actually
+ * starts, and a trigger that never fires costs an animation rather than the
+ * page.
+ *
+ * `invalidateOnRefresh` re-reads the start and end values whenever ScrollTrigger
+ * recalculates, so a reveal that was measured against a pre-font, pre-SplitText
+ * layout does not animate to stale coordinates. It is safe *here* because both
+ * ends are explicit; it is applied per-trigger rather than in `revealTrigger`
+ * for that reason — see the note there.
  */
 function buildTimeline(root: HTMLDivElement | null, distance: number) {
-  gsap.from(root?.querySelectorAll("[data-stage]") ?? [], {
-    opacity: 0,
-    x: distance,
-    duration: DUR.base,
-    ease: EASE,
-    stagger: STAGGER,
-    scrollTrigger: revealTrigger(root),
-  });
+  gsap.fromTo(
+    root?.querySelectorAll("[data-stage]") ?? [],
+    { opacity: 0, x: distance },
+    {
+      opacity: 1,
+      x: 0,
+      duration: DUR.base,
+      ease: EASE,
+      stagger: STAGGER,
+      immediateRender: false,
+      scrollTrigger: { ...revealTrigger(root), invalidateOnRefresh: true },
+    },
+  );
 
-  gsap.from(root?.querySelector("[data-stage-rail]") ?? null, {
-    scaleY: 0,
-    transformOrigin: "top center",
-    duration: DUR.slow,
-    ease: EASE,
-    scrollTrigger: revealTrigger(root),
-  });
+  gsap.fromTo(
+    root?.querySelector("[data-stage-rail]") ?? null,
+    { scaleY: 0 },
+    {
+      scaleY: 1,
+      transformOrigin: "top center",
+      duration: DUR.slow,
+      ease: EASE,
+      immediateRender: false,
+      scrollTrigger: { ...revealTrigger(root), invalidateOnRefresh: true },
+    },
+  );
 }
 
 export function JourneySection() {

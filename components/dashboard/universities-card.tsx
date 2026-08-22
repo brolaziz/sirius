@@ -85,7 +85,7 @@ export function UniversitiesCard({
               "—";
 
             return (
-              <li key={university.id}>
+              <li key={university.id} className="min-w-0">
                 <PressableCard>
                   <Link
                     href="/universities"

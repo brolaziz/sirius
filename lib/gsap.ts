@@ -90,7 +90,22 @@ export const RISE_TO = { opacity: 1, y: 0 } as const;
  */
 export const SCROLL_START = "top 88%";
 
-/** Standard ScrollTrigger config for a one-shot reveal. */
+/**
+ * Standard ScrollTrigger config for a one-shot reveal.
+ *
+ * WHY `invalidateOnRefresh` IS NOT IN HERE
+ *
+ * It belongs on a reveal whose start *and* end values are both stated —
+ * `journey-section.tsx` adds it per-trigger for that reason. On a `from()` tween
+ * that has already rendered its start values (which is every caller of this
+ * helper except the journey stages), `invalidate()` re-reads the *current* DOM
+ * as the animation's end state — and before the trigger fires, the current DOM
+ * is the start state. The tween would then animate to `opacity: 0` and stay
+ * there. Putting the flag here would fix one reveal and silently break the rest.
+ *
+ * Move it in once the remaining callers are converted to `fromTo` with
+ * `immediateRender: false`. See the sweep note in HANDOFF.md.
+ */
 export function revealTrigger(trigger: Element | null) {
   return {
     trigger: trigger ?? undefined,
