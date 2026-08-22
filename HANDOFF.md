@@ -19,10 +19,10 @@ Source of truth is `TASK-2.md`. **A2 is the next piece of work.**
       A0  audit ......................... done
       A1  landing responsive ............ done; device regression (bug 1) fixed
       A2  post-login responsive ......... NOT STARTED  <- next
-      A3  tap targets ................... PARTLY done. The "70 to 17" figure is
-                                          RETRACTED — see Touch targets. 6 real
-                                          failures stand on /sign-in and
-                                          /sign-up; 12 surfaces are unmeasured
+      A3  tap targets ................... measured properly; "70 to 17" is
+                                          RETRACTED. 14 surfaces, 6 real
+                                          failures, all in the signed-out auth
+                                          shell. Unfixed — see Touch targets
       A4  university card fully clickable  NOT STARTED (only the cover opens it)
       A5  target score editing .......... NOT STARTED (blocked: no profile or
                                           settings route exists at all)
@@ -182,15 +182,58 @@ The app shell's equivalent mobile logo (`app/(app)/layout.tsx:181`) *did* get
 `tap-target`. The auth shell's did not. Unfixed — this is A3 work and was not in
 scope for the harness pass.
 
-`/design-system` is publicly reachable in production (it is not in
-`PROTECTED_PREFIXES`) and carries 54 failures. Whether that page should ship at
-all is the prior question.
+### The authenticated surfaces
 
-**This covers 4 surfaces, not 16.** Everything else is behind
-`isProtectedPath()`, and reaching it needs a session cookie minted in the
-database, which is deliberately not done yet. The 12 authenticated surfaces are
-**unmeasured under correct conditions** — treat their tap-target status as
-unknown, not as passing.
+Measured with a session minted for the `tap-audit-onboarded@example.com` fixture
+on the dev branch, same conditions (`coarse=true`, rAF 60–63/sec, visible).
+
+    surface                       checked  FAIL  clipped  smallLabels
+    /dashboard                         22     0        1            0
+    /practice                          27     0       21            0
+    /universities                      20     0        8            3
+    /universities/[universityId]        8     0        2            0
+    /applications                       7     0        0            0
+    /essays                             5     0        0            0
+    /activities                        10     0        0            0
+    /plan                               6     0        0            0
+    /words                              5     0        0            0
+    /onboarding                         8     0        0            0
+    /simulator/[testId]                13     0       13            0
+
+**Zero failures across the authenticated app.** The A3 pass did work there; what
+it missed was the signed-out shell.
+
+**Product total: 6 failures, all six in the auth shell**, across 14 measured
+surfaces.
+
+Read the `checked` column before trusting a zero. The fixture account has an
+empty shortlist, no saved words and no test results, so `/words`, `/essays`,
+`/plan` and `/applications` rendered empty states — 5 to 7 controls each, where a
+populated page has a control per row. Those zeros cover each surface's chrome and
+empty state, **not its populated state**. That is the same "the fixtures were not
+the product" gap that hid bug 2, and it is what the adversarial-fixture step is
+for.
+
+Still unmeasured, for want of data rather than access: `/essays/[essayId]` (the
+`essays` table is empty), `/practice/results/[resultId]` and
+`/practice/session/[sessionId]` (none for the fixture), and the simulator break
+screen (needs a full modular run).
+
+Not failures, worth knowing:
+
+- `/universities` reports 3 `smallLabels` — "Qidiruv", "Mening SAT balim",
+  "Saralash". Each points at a control measuring ≥44px, which is the deliberate
+  outcome of reverting that halo; the search input underneath now measures
+  44.53px rather than the 37.54px the halo was squeezing it to.
+- `/practice` has 21 clipped controls, all inside one
+  `ul.divide-y.overflow-hidden`, and `/simulator` has 13. None fails today, but
+  no `::after` halo can ever be added inside them — it would be clipped away
+  silently. Fix those with real spacing, not a halo.
+
+`/design-system` is publicly reachable in production (it is not in
+`PROTECTED_PREFIXES`) and carries 54 failures. **It is not product and its
+failures do not count toward any product number.** Whether it should ship at all
+is the prior question — see the proposal in the open items.
 
 **The runner is not committed.** The probe is. The harness that drove this run
 was scratch: Chrome headless over CDP, `Emulation.setDeviceMetricsOverride({
