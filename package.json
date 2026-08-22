@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "migrate:deploy": "prisma migrate deploy",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

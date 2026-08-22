@@ -1,5 +1,18 @@
 [build]
-  command = "npm run build"
+  # Migrations first, and a failure here stops the deploy: a green deploy on a
+  # database that did not migrate is the failure this exists to prevent.
+  #
+  # Each context migrates its own database. Nothing in the repo names an
+  # endpoint — the URL comes from the deploy context's own environment, so a
+  # preview build has no production string to reach even by mistake.
+  #
+  # DATABASE_URL_UNPOOLED, where it is set, sends the migration over Neon's
+  # direct endpoint instead of the pooler: PgBouncer in transaction mode is a
+  # poor host for DDL and advisory locks, and Prisma 7 has no `directUrl` to
+  # say so in config. The assignment is scoped to the migrate command alone, so
+  # the build and everything after it still use the pooled URL, and the `:-`
+  # fallback makes this line a no-op until the variable exists.
+  command = "DATABASE_URL=\"${DATABASE_URL_UNPOOLED:-$DATABASE_URL}\" npm run migrate:deploy && npm run build"
   publish = ".next"
 
 [[plugins]]

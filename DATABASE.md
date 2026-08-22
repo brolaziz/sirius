@@ -1,8 +1,15 @@
 # Database environments
 
-**Status — 22 August 2026.** One item accepted and next up; three accepted in
-principle and deferred until the responsive work lands. Nothing here is built
-yet. This file exists so the reasoning is not re-derived from scratch later.
+**Status — 23 August 2026.** The isolation layer has landed. Production, the
+Netlify preview contexts and each checkout now have their own Neon branch;
+every process prints the endpoint it is about to use; and the build applies
+migrations to whichever database the deploy context owns.
+
+The four guards under *Deferred* below are still unbuilt — accepted in
+principle, and deliberately not half-built while the responsive work is in
+flight. This file records the reasoning so it is not re-derived later, and the
+status line above is part of that: if it disagrees with the repository, the
+repository is right and this line is a bug.
 
 ## What this is a response to
 
@@ -18,7 +25,7 @@ which writes a `test_attempts` row, because that is what the page is supposed to
 do. No amount of care in scripts would have stopped it. A guard that inspects
 what *scripts* do is a guard aimed at the wrong thing.
 
-## Accepted, next: isolation, not inspection
+## Landed: isolation, not inspection
 
 **A Neon branch per developer.** Neon branches are copy-on-write off `main` and
 take seconds to make:
@@ -33,14 +40,20 @@ take seconds to make:
   discards every test account, attempt row and toggled flag in one command. The
   question that prompted this file — *should I delete these two users?* — has no
   equivalent on a branch.
-- CI and previews get an ephemeral branch per pull request, deleted on merge.
-  Migrations land on a branch before they land on `main`; promotion stays an
-  explicit, separate step.
+- Netlify's Deploy Previews, Branch deploys and Preview Server contexts share
+  one `preview` branch today. An ephemeral branch per pull request, created on
+  open and deleted on merge, is the better end state and is **not built**.
+- Migrations reach each database through that context's own build, so they land
+  on a branch before they land on `main`. See *Deploying a schema change*.
 
-**Plus: print the host on startup.** `next dev` and every CLI script prints one
-line — `db: ep-long-resonance… (dev)` — before doing anything. Not a safeguard;
-a standing fact on screen, so "which database am I on" is never answered by a
-comment again.
+**Plus: print the host on startup.** `next dev`, `next build`, the Prisma CLI,
+the seed and the importer each print one line before doing anything:
+
+    [db] ep-restless-cell-axrhiuf3 (pooled) · neondb · env: unset · next.config.ts
+
+Built from the host and path only, so it is safe in a log. Not a safeguard — it
+stops nothing — but it means "which database am I on" is never again answered
+by a comment. See `lib/db-banner.ts`.
 
 ## Deferred, accepted in principle
 
@@ -70,6 +83,42 @@ changes. A measurement pass should be *unable* to write, not merely disinclined.
 **4. Marked, self-cleaning fixtures.** Fixture rows carry a marker (`@fixture.invalid`
 addresses, or a `source` column), and a `fixtures:clean` script deletes exactly
 what carries it. Then "did I leave anything behind" is a query, not a memory.
+
+## Deploying a schema change
+
+The Netlify build runs `npm run migrate:deploy && npm run build`, so every
+context migrates its own database before it builds, and a failed migration
+fails the deploy. Migrations go over `DATABASE_URL_UNPOOLED` where it is set —
+Neon's direct endpoint — because PgBouncer in transaction mode is a poor host
+for DDL and advisory locks.
+
+**Migrate-then-build means the schema leads the running code.** From the moment
+migrations apply until the new deploy goes live, the database is ahead of the
+application serving traffic — and if the build fails after migrating, it stays
+ahead indefinitely, with the *old* code running against the *new* schema.
+
+- **Additive changes are safe in one deploy.** A new table, a new nullable
+  column, a new index: code that does not know about them keeps working.
+- **Destructive changes are not.** Dropping or renaming a column or table,
+  or tightening a constraint, breaks the live code the instant the migration
+  lands — before the deploy that stops using it. These need expand/contract
+  across two deploys: first ship code that no longer touches the thing, then,
+  in a later deploy, the migration that removes it.
+
+This is not hypothetical here. `20260821230000_drop_legacy_mastery_tables` is
+exactly that shape, and it is the shape this project actually writes.
+
+### One way to put a branch beyond `migrate deploy`
+
+`npm run db:push` and `npm run setup` are still in `package.json`, and both
+write schema **without recording a migration**. Run either against a preview or
+dev branch and its tables no longer match its history; the next `migrate deploy`
+then fails on an object that already exists, or on P3005 for an empty history
+against a non-empty schema.
+
+Recovery is either `neon branches reset <branch> --parent` — the cheap answer,
+and the reason branches exist — or `prisma migrate resolve --applied <name>` to
+baseline the history by hand.
 
 ## Order, and why
 
