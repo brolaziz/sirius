@@ -66,7 +66,7 @@ export function StickyHeader({ isSignedIn }: { isSignedIn: boolean }) {
       <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="tap-target rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={t.nav.home}
         >
           <Logo />
@@ -124,7 +124,7 @@ export function StickyHeader({ isSignedIn }: { isSignedIn: boolean }) {
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
-            className="inline-flex size-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="tap-target inline-flex size-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-nav"
             aria-label={isMenuOpen ? t.nav.closeMenu : t.nav.openMenu}

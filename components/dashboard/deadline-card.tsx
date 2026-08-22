@@ -110,7 +110,7 @@ export function DeadlineCard({
 
           <Link
             href="/universities"
-            className="mt-5 inline-flex items-center gap-1 text-xs font-semibold text-lime transition-opacity hover:opacity-80"
+            className="tap-target mt-5 inline-flex items-center gap-1 text-xs font-semibold text-lime transition-opacity hover:opacity-80"
           >
             {t.dash.universitiesCta}
             <ArrowUpRight className="size-3.5" />

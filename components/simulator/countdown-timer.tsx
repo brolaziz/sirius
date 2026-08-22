@@ -105,7 +105,13 @@ export function CountdownTimer({
       <button
         type="button"
         onClick={() => setIsHidden((hidden) => !hidden)}
-        className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        /*
+         * 32px painted, 44 to a finger. The halo reaches 6px a side: to the
+         * left that is the gap to the clock plate, which is not interactive,
+         * and to the right the header’s own gap-3. Nothing else is close
+         * enough to lose a tap to it.
+         */
+        className="tap-target inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         aria-label={isHidden ? "Show timer" : "Hide timer"}
         title={isHidden ? "Show timer" : "Hide timer"}
       >

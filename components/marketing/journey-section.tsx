@@ -42,6 +42,39 @@ const STAT_TONES = [
   "text-midnight",
 ];
 
+/**
+ * The viewport width at which the page margin can absorb the stages' 48px
+ * slide-in: the content column is `max-w-6xl` (1152px), so 1152 + 2 × 48.
+ */
+const SLIDE_FITS_MIN = 1248;
+const SLIDE_FITS = `(min-width: ${SLIDE_FITS_MIN}px)`;
+
+/**
+ * The stage timeline: the cards slide in one after another, and the rule that
+ * connects them draws itself downward.
+ *
+ * `distance` is the only thing that varies by viewport — see the note in the
+ * component.
+ */
+function buildTimeline(root: HTMLDivElement | null, distance: number) {
+  gsap.from(root?.querySelectorAll("[data-stage]") ?? [], {
+    opacity: 0,
+    x: distance,
+    duration: DUR.base,
+    ease: EASE,
+    stagger: STAGGER,
+    scrollTrigger: revealTrigger(root),
+  });
+
+  gsap.from(root?.querySelector("[data-stage-rail]") ?? null, {
+    scaleY: 0,
+    transformOrigin: "top center",
+    duration: DUR.slow,
+    ease: EASE,
+    scrollTrigger: revealTrigger(root),
+  });
+}
+
 export function JourneySection() {
   const { t } = useT();
   const ref = React.useRef<HTMLDivElement>(null);
@@ -50,22 +83,36 @@ export function JourneySection() {
     () => {
       if (prefersReducedMotion()) return;
 
-      gsap.from(ref.current?.querySelectorAll("[data-stage]") ?? [], {
-        opacity: 0,
-        x: 48,
-        duration: DUR.base,
-        ease: EASE,
-        stagger: STAGGER,
-        scrollTrigger: revealTrigger(ref.current),
+      /*
+       * WHY THE SLIDE-IN DISTANCE IS A MEDIA QUERY
+       *
+       * The stages animate *from* 48px to the right, which means 48px to the
+       * right is where they sit until their ScrollTrigger fires. On a wide
+       * screen that overhang lands in the page margin and nobody sees it. On a
+       * phone there is no margin to land in: the column is the viewport minus
+       * 16px of padding, so the resting state pushed the document 32px wide and
+       * the whole landing page scrolled sideways.
+       *
+       * The offset is the bug, not the animation — so it is sized to the space
+       * that actually exists rather than removed. `SLIDE_FITS` is the width at
+       * which the margin can absorb the full 48px: the content column is
+       * `max-w-6xl` (1152px), so 1152 + 2 × 48 = 1248. At or above that, the
+       * animation is exactly what it has always been; below it, the offset
+       * drops to 16px, which is the narrowest gutter the layout ever has
+       * (`px-4`) and therefore never overflows at any width.
+       *
+       * `gsap.matchMedia` rather than reading `window.matchMedia` once: it
+       * re-runs the animation for the new breakpoint if the window crosses it,
+       * and reverts itself with the surrounding `useGSAP` scope.
+       */
+      const media = gsap.matchMedia();
+
+      media.add(SLIDE_FITS, () => {
+        buildTimeline(ref.current, 48);
       });
 
-      // The rule that connects the stages draws itself downward.
-      gsap.from(ref.current?.querySelector("[data-stage-rail]") ?? null, {
-        scaleY: 0,
-        transformOrigin: "top center",
-        duration: DUR.slow,
-        ease: EASE,
-        scrollTrigger: revealTrigger(ref.current),
+      media.add(`(max-width: ${SLIDE_FITS_MIN - 0.02}px)`, () => {
+        buildTimeline(ref.current, 16);
       });
     },
     { scope: ref, dependencies: [t.journey.heading] },

@@ -73,7 +73,13 @@ export function LangSwitch({ className }: { className?: string }) {
             onClick={() => setLang(option.value)}
             aria-pressed={isActive}
             className={cn(
-              "relative z-10 w-11 text-xs font-bold transition-colors duration-200",
+              /*
+               * `tap-target-y`, not `tap-target`: each half is already 44px
+               * wide and they sit flush against each other, so growing the
+               * width would hand part of EN's area to UZ. Only the 16px height
+               * is short.
+               */
+              "tap-target-y relative z-10 w-11 text-xs font-bold transition-colors duration-200",
               isActive ? "text-white" : "text-midnight/70 hover:text-midnight",
             )}
           >

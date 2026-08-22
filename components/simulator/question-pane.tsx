@@ -71,7 +71,7 @@ export function QuestionPane({
               onClick={onToggleFlag}
               aria-pressed={isFlagged}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200",
+                "tap-target inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors duration-200",
                 isFlagged
                   ? "border-warning/40 bg-warning/10 text-foreground"
                   : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -164,7 +164,14 @@ export function QuestionPane({
                       type="button"
                       onClick={() => onToggleCrossOut(option.label)}
                       className={cn(
-                        "mt-3 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold transition-colors",
+                        /*
+                         * Safe to halo despite the 8px gap to the option beside
+                         * it: the option is already past 44px, so it asks for
+                         * no growth of its own and this button's 8px of reach
+                         * lands exactly in the gap. Verified with
+                         * `scripts/audit-tap-targets.ts`.
+                         */
+                        "tap-target mt-3 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold transition-colors",
                         isCrossed
                           ? "text-foreground hover:bg-muted"
                           : "text-muted-foreground/60 hover:bg-muted hover:text-foreground",

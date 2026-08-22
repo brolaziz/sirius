@@ -62,7 +62,10 @@ export function SiteFooter() {
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        // `tap-row`, not `tap-target`: six 17px links 10px
+                        // apart cannot reach 44 invisibly without overlapping
+                        // each other, so on touch the rows take real height.
+                        className="tap-row text-sm text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {link.label}
                       </Link>

@@ -180,7 +180,19 @@ export function UniversityCard({
           isShortlisted ? t.uni.removeFromShortlist : t.uni.addNamed,
           { name: university.name },
         )}
-        className="absolute top-3 right-3 z-10 inline-flex size-9 items-center justify-center rounded-full glass-dark text-white outline-none transition-transform duration-200 hover:scale-110 focus-visible:ring-2 focus-visible:ring-white/80 active:scale-90"
+        /*
+         * 36px of glass, 44 to a finger.
+         *
+         * The card clips (`overflow-hidden`, for the cover photo’s rounded
+         * corners), so the halo only works because the button is inset 12px
+         * from both edges and the halo reaches 4px — it stays inside the card.
+         * Move this button closer to a corner and the halo goes with it: check
+         * `scripts/audit-tap-targets.ts` if you do.
+         *
+         * The 4px it borrows on the other two sides comes off the cover
+         * button underneath, which is 176px tall and loses nothing it needs.
+         */
+        className="tap-target absolute top-3 right-3 z-10 inline-flex size-9 items-center justify-center rounded-full glass-dark text-white outline-none transition-transform duration-200 hover:scale-110 focus-visible:ring-2 focus-visible:ring-white/80 active:scale-90"
       >
         <Star
           className={cn(

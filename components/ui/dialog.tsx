@@ -69,9 +69,24 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
+            {/*
+             * `pointer-coarse:size-11` — 44 for real on touch, 28 on a mouse.
+             *
+             * A halo would be the usual answer (see `tap-target` in
+             * `app/globals.css`), but this button sits 8px from the edge of a
+             * container that scrolls its own content: the halo reaches exactly
+             * that far and no further, so the hit area is correct today only
+             * because nobody has changed the inset. A real box removes that
+             * dependency.
+             *
+             * Fenced to coarse pointers because the variant is `ghost`: on
+             * desktop an unfenced `size-11` would paint a 44px hover tint
+             * where a 28px one belongs, and nothing on a mouse-driven screen
+             * is allowed to move for a touch fix.
+             */}
             <Button
               variant="ghost"
-              className="absolute top-2 right-2"
+              className="absolute top-2 right-2 pointer-coarse:size-11"
               size="icon-sm"
             >
               <XIcon

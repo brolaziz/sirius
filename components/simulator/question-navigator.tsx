@@ -44,7 +44,7 @@ export function QuestionNavigator({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="tap-target inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span className="tnum">
             Question {currentIndex + 1} of {questionIds.length}
@@ -66,7 +66,16 @@ export function QuestionNavigator({
           </p>
         </div>
 
-        <div className="grid grid-cols-7 gap-1.5">
+        {/*
+          * Five columns, not seven, because the cells are 44px.
+          *
+          * A halo is no use in this grid: at 36px with 6px between them, every
+          * cell’s halo would reach 4px into its neighbours on all four sides,
+          * and a grid where each cell answers for the ones around it is worse
+          * than one with small cells. The only fix that works is real size, and
+          * 5 × 44 plus the gaps is what fits the popover’s width.
+          */}
+        <div className="grid grid-cols-5 justify-items-center gap-1.5">
           {questionIds.map((id, index) => {
             const isCurrent = index === currentIndex;
             const isAnswered = Boolean(answers[id]);
@@ -90,7 +99,7 @@ export function QuestionNavigator({
                   .join(", ")}
                 aria-current={isCurrent ? "true" : undefined}
                 className={cn(
-                  "relative inline-flex size-9 items-center justify-center rounded-lg text-xs font-semibold tnum transition-[background-color,transform,border-color] duration-150 active:scale-95",
+                  "relative inline-flex size-11 items-center justify-center rounded-lg text-xs font-semibold tnum transition-[background-color,transform,border-color] duration-150 active:scale-95",
                   isCurrent
                     ? "bg-foreground text-background"
                     : isAnswered

@@ -59,7 +59,7 @@ export function UniversitiesCard({
         </h2>
         <Link
           href="/universities"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-brand-700"
+          className="tap-target inline-flex items-center gap-1 text-xs font-semibold text-primary transition-colors hover:text-brand-700"
         >
           {t.dash.universitiesCta}
           <ArrowUpRight className="size-3.5" />

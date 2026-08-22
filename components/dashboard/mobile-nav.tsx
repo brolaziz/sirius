@@ -29,7 +29,9 @@ export function MobileNav() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 lg:hidden"
+          // 40px painted, 44 to a finger. The gap to the logo beside it is
+          // sized for this halo — see the note in `app/(app)/layout.tsx`.
+          className="tap-target inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 lg:hidden"
           aria-label="Open navigation"
         >
           <Menu className="size-5" />

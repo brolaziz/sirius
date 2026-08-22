@@ -41,7 +41,7 @@ export function DictionaryToggle({
       <TooltipTrigger asChild>
         <label
           className={cn(
-            "inline-flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-200 select-none",
+            "tap-target inline-flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-1.5 transition-colors duration-200 select-none",
             enabled
               ? "border-brand-200 bg-brand-50 text-brand-800"
               : "border-border bg-background text-muted-foreground hover:text-foreground",

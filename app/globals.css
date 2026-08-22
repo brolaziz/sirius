@@ -534,6 +534,120 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Touch targets
+ * ------------------------------------------------------------------------ */
+
+/*
+ * `tap-target` — makes a control reach 44×44 for a finger without moving a
+ * single visible pixel.
+ *
+ * WHY A PSEUDO-ELEMENT AND NOT A BIGGER BUTTON
+ * The design is drawn at 28–36px and stays there. Padding would grow the
+ * painted box; a min-height would grow it on phones. An `::after` overlay grows
+ * only what the browser hit-tests. The same trick is already how `ui/switch.tsx`
+ * and `ui/checkbox.tsx` reach past their 18px and 16px boxes — this is that
+ * pattern with the arithmetic fixed.
+ *
+ * WHY `max()` PER AXIS
+ * `max(100%, 44px)` never shrinks anything: a control already wider than 44px
+ * keeps its own width and only the deficient axis grows. That is what makes it
+ * safe to put on the base of every button rather than auditing each call site.
+ *
+ * WHY `(pointer: coarse)`
+ * A mouse is precise, so on desktop the halo buys nothing and costs something:
+ * an invisible 44px zone around a 28px ghost button would swallow clicks meant
+ * for whatever sits behind it. Touch-primary devices get it; everyone else gets
+ * exactly today's behaviour.
+ *
+ * TWO THINGS THAT DEFEAT IT — check with `scripts/audit-tap-targets.ts`
+ *   1. `overflow: hidden` on an ancestor clips the halo away silently.
+ *   2. A neighbour closer than the halo's growth turns a dead tap into a
+ *      *wrong* tap. Apply it only where that probe reports the control safe.
+ */
+@utility tap-target {
+  /*
+   * `position: relative` lives inside the media query too, not outside it.
+   * The halo needs it, but a mouse-driven browser has no halo — and shipping
+   * `relative` unconditionally would change which elements are positioned, and
+   * therefore paint order, on desktop. This way the desktop stylesheet is
+   * untouched: the utility contributes nothing at all until a coarse pointer
+   * is the primary input.
+   */
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+    }
+  }
+}
+
+/*
+ * Single-axis versions, for controls that are already big enough one way.
+ *
+ * The language switch is the case that needs this: its two halves are 44px wide
+ * and 16px tall, sitting flush against each other. A square halo would push
+ * each half 14px into its neighbour — so UZ would answer for part of EN. Only
+ * the height is short, so only the height grows.
+ */
+@utility tap-target-y {
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      translate: 0 -50%;
+      height: max(100%, 44px);
+    }
+  }
+}
+
+/*
+ * `tap-row` — for a stacked list of text links, where a halo cannot work.
+ *
+ * Six 17px links with 10px between them cannot all reach 44px by growing
+ * invisibly: each would need 13.5px a side into a 10px gap, so neighbours would
+ * start answering for each other. The only honest fix is real space, so this
+ * one *does* change the layout — but only where it has to, and only on touch.
+ *
+ * `display: block` matters: vertical padding on an inline element paints and
+ * hit-tests without moving its siblings, which would produce exactly the
+ * overlapping hit areas this is meant to avoid.
+ */
+@utility tap-row {
+  @media (pointer: coarse) {
+    display: block;
+    padding-block: calc(var(--spacing) * 3.5);
+  }
+}
+
+@utility tap-target-x {
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      translate: -50% 0;
+      width: max(100%, 44px);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * Spectrum treatments
  * ------------------------------------------------------------------------ */
 
