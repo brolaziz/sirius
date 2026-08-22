@@ -14,6 +14,18 @@
  * What this component deliberately does **not** know: which answer is correct.
  * `SimulatorQuestion` carries no answer key, and grading happens in the
  * `submitAttempt` Server Action.
+ *
+ * MODULES
+ * A full sitting is four timed modules with a break between the sections, and
+ * this component renders **one** of them. Moving on is a server round trip:
+ * `advanceModule` closes the module, starts the next one's clock, and the page
+ * re-renders with the next module's questions. Keeping the transition on the
+ * server is what makes the break real — the next clock starts when the student
+ * says they are ready, not on a schedule the browser invented.
+ *
+ * The countdown here is a *rendering* of `module.deadlineMs`. The deadline
+ * itself belongs to the server, which refuses answers past it; see the note at
+ * the top of `lib/actions/attempts.ts`.
  */
 
 import * as React from "react";
@@ -37,10 +49,14 @@ import { CountdownTimer } from "@/components/simulator/countdown-timer";
 import { QuestionNavigator } from "@/components/simulator/question-navigator";
 import { QuestionPane } from "@/components/simulator/question-pane";
 import { Logo } from "@/components/brand/logo";
-import { saveAttemptProgress, submitAttempt } from "@/lib/actions/attempts";
+import {
+  advanceModule,
+  saveAttemptProgress,
+  submitAttempt,
+} from "@/lib/actions/attempts";
 import { saveWord } from "@/lib/actions/words";
 import { countTermsInPassage } from "@/lib/vocabulary";
-import { testTypeLabel } from "@/lib/sat";
+import { formatDuration, testTypeLabel } from "@/lib/sat";
 import { useReducedMotion } from "@/components/motion/use-reduced-motion";
 import { cn } from "@/lib/utils";
 import type { SimulatorQuestion } from "@/lib/simulator";
@@ -57,9 +73,23 @@ interface SimulatorEngineProps {
     type: TestType;
     durationMinutes: number;
   };
+  /** The questions of the module currently open — not of the whole test. */
   questions: SimulatorQuestion[];
   /** Server-issued attempt start, in epoch ms — the timer's anchor. */
   startedAtMs: number;
+  /**
+   * Set on a full sitting. Absent on a single-module practice test, which has
+   * one clock and no modules to advance through.
+   */
+  module?: {
+    /** "Section 1, Module 2". */
+    label: string;
+    /** Epoch ms. Comes from the server's `moduleStartedAt + minutes`. */
+    deadlineMs: number;
+    hasNext: boolean;
+    /** Minutes of break after this module. Zero when the next follows on. */
+    breakMinutes: number;
+  };
   /** Answers already saved for this attempt, when resuming. */
   initialAnswers: Record<string, string>;
   initialFlagged: string[];
@@ -70,6 +100,7 @@ export function SimulatorEngine({
   test,
   questions,
   startedAtMs,
+  module,
   initialAnswers,
   initialFlagged,
 }: SimulatorEngineProps) {
@@ -89,8 +120,11 @@ export function SimulatorEngine({
   const [dictionaryEnabled, setDictionaryEnabled] = React.useState(false);
   const [isFinishOpen, setIsFinishOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  /** The module is over and the student is between modules. */
+  const [isModuleOver, setIsModuleOver] = React.useState(false);
 
-  const deadlineMs = startedAtMs + test.durationMinutes * 60_000;
+  const deadlineMs =
+    module?.deadlineMs ?? startedAtMs + test.durationMinutes * 60_000;
   const currentQuestion = questions[currentIndex];
   const questionIds = React.useMemo(
     () => questions.map((question) => question.id),
@@ -129,6 +163,12 @@ export function SimulatorEngine({
     answersRef.current = answers;
   }, [answers]);
 
+  const flaggedRef = React.useRef(flagged);
+
+  React.useEffect(() => {
+    flaggedRef.current = flagged;
+  }, [flagged]);
+
   const isSubmittingRef = React.useRef(false);
 
   const handleSubmit = React.useCallback(
@@ -161,9 +201,72 @@ export function SimulatorEngine({
     [attemptId, router],
   );
 
+  /**
+   * Close this module.
+   *
+   * The answers are flushed first, deliberately: the autosave runs on a 1.5s
+   * debounce, and a student who answers the last question and immediately hits
+   * "finish" would otherwise lose it — the server grades what it stored, not
+   * what the browser is holding.
+   */
+  const handleAdvance = React.useCallback(async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
+    await saveAttemptProgress({
+      attemptId,
+      answers: answersRef.current,
+      flagged: [...flaggedRef.current],
+    });
+
+    const result = await advanceModule(attemptId);
+
+    if (!result.ok) {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+      toast.error(result.error ?? "Could not start the next module.");
+      return;
+    }
+
+    if (result.resultId) {
+      router.replace(`/practice/results/${result.resultId}`);
+      return;
+    }
+
+    // The page re-reads the attempt and renders the next module's questions.
+    router.refresh();
+  }, [attemptId, router]);
+
+  /**
+   * Time is up, or the student says they are done.
+   *
+   * With a module still to come this ends the module rather than the sitting —
+   * and when a break follows, the student sits on the break screen until they
+   * choose to go on, which is when the next clock starts.
+   */
+  const handleFinishModule = React.useCallback(
+    (reason: "manual" | "expired") => {
+      if (!module?.hasNext) {
+        void handleSubmit(reason);
+        return;
+      }
+
+      setIsFinishOpen(false);
+
+      if (module.breakMinutes > 0) {
+        setIsModuleOver(true);
+        return;
+      }
+
+      void handleAdvance();
+    },
+    [module, handleSubmit, handleAdvance],
+  );
+
   const handleExpire = React.useCallback(() => {
-    void handleSubmit("expired");
-  }, [handleSubmit]);
+    handleFinishModule("expired");
+  }, [handleFinishModule]);
 
   /* ---------------------------------------------------------------------- */
   /* Autosave                                                               */
@@ -341,6 +444,16 @@ export function SimulatorEngine({
     />
   );
 
+  if (isModuleOver && module) {
+    return (
+      <BreakScreen
+        minutes={module.breakMinutes}
+        isPending={isSubmitting}
+        onContinue={() => void handleAdvance()}
+      />
+    );
+  }
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
       {/* ---------------------------------------------------------------- */}
@@ -351,9 +464,10 @@ export function SimulatorEngine({
           <Logo compact className="hidden sm:inline-flex" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">
-              {currentQuestion.module === "MODULE_2"
-                ? "Section 1, Module 2"
-                : "Section 1, Module 1"}
+              {module?.label ??
+                (currentQuestion.module === "MODULE_2"
+                  ? "Module 2"
+                  : "Module 1")}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {testTypeLabel(test.type)}
@@ -378,7 +492,9 @@ export function SimulatorEngine({
             className="h-9 shrink-0"
             onClick={() => setIsFinishOpen(true)}
           >
-            <span className="hidden sm:inline">Finish section</span>
+            <span className="hidden sm:inline">
+              {module?.hasNext ? "Finish module" : "Finish section"}
+            </span>
             <span className="sm:hidden">Finish</span>
           </Button>
         </div>
@@ -502,11 +618,15 @@ export function SimulatorEngine({
       <Dialog open={isFinishOpen} onOpenChange={setIsFinishOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Finish this section?</DialogTitle>
+            <DialogTitle>
+              {module?.hasNext ? "Finish this module?" : "Finish this section?"}
+            </DialogTitle>
             <DialogDescription>
-              {unansweredCount === 0
-                ? "Every question has an answer. Your test will be scored immediately."
-                : `${unansweredCount} question${unansweredCount === 1 ? "" : "s"} ${unansweredCount === 1 ? "is" : "are"} still blank. Blank answers are marked incorrect.`}
+              {unansweredCount > 0
+                ? `${unansweredCount} question${unansweredCount === 1 ? "" : "s"} ${unansweredCount === 1 ? "is" : "are"} still blank. Blank answers are marked incorrect.`
+                : module?.hasNext
+                  ? "Every question has an answer. You cannot come back to this module."
+                  : "Every question has an answer. Your test will be scored immediately."}
             </DialogDescription>
           </DialogHeader>
 
@@ -541,11 +661,17 @@ export function SimulatorEngine({
             <Button
               size="lg"
               className="h-10"
-              onClick={() => void handleSubmit("manual")}
+              onClick={() => handleFinishModule("manual")}
               disabled={isSubmitting}
             >
               {isSubmitting && <Loader2 className="size-4 animate-spin" />}
-              {isSubmitting ? "Scoring…" : "Submit section"}
+              {isSubmitting
+                ? module?.hasNext
+                  ? "Closing…"
+                  : "Scoring…"
+                : module?.hasNext
+                  ? "Finish module"
+                  : "Submit section"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -583,6 +709,67 @@ function AnimatedQuestion({
       className={cn("h-full animate-in fade-in slide-in-from-right-3 duration-200")}
     >
       {children}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* The break                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The break between the two sections.
+ *
+ * The countdown here is **informational**. Nothing expires while it runs and
+ * nothing is being marked: the next module's clock does not start until the
+ * student presses the button, which is the whole reason the transition is a
+ * server call rather than a timer. A student who needs twelve minutes takes
+ * twelve minutes and still gets a full Math module.
+ */
+function BreakScreen({
+  minutes,
+  isPending,
+  onContinue,
+}: {
+  minutes: number;
+  isPending: boolean;
+  onContinue: () => void;
+}) {
+  const [secondsLeft, setSecondsLeft] = React.useState(minutes * 60);
+
+  React.useEffect(() => {
+    const timer = window.setInterval(() => {
+      setSecondsLeft((previous) => Math.max(0, previous - 1));
+    }, 1_000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex h-dvh flex-col items-center justify-center bg-background px-6 text-center">
+      <Logo />
+
+      <h1 className="mt-10 text-3xl font-extrabold tracking-tightest sm:text-4xl">
+        Break
+      </h1>
+      <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground">
+        Stand up, look out of a window, drink something. The Math section starts
+        when you say so — this countdown does not take time away from it.
+      </p>
+
+      <p className="mt-10 font-mono text-6xl font-semibold tabular-nums">
+        {formatDuration(secondsLeft)}
+      </p>
+
+      <Button
+        size="lg"
+        className="mt-10 h-12 px-8 shadow-glow"
+        disabled={isPending}
+        onClick={onContinue}
+      >
+        {isPending && <Loader2 className="size-4 animate-spin" />}
+        {isPending ? "Starting…" : "Start the next module"}
+      </Button>
     </div>
   );
 }

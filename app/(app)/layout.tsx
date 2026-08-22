@@ -32,6 +32,7 @@
  */
 
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { UserMenu } from "@/components/dashboard/user-menu";
 
@@ -43,6 +44,7 @@ import { LangSwitch } from "@/components/i18n/lang-switch";
 import { DatabaseSetupBanner } from "@/components/dashboard/database-setup-banner";
 import { DatabaseErrorBanner } from "@/components/dashboard/database-error-banner";
 import { isDatabaseConfigured } from "@/lib/prisma";
+import { hasCompletedOnboarding } from "@/lib/queries/study-plan";
 import { getOrCreateCurrentUser, requireUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
 
@@ -66,9 +68,30 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
    * from the database inside the route that renders the data, so a forged or
    * expired cookie stops here.
    */
-  await requireUserId();
+  const userId = await requireUserId();
 
   const databaseReady = isDatabaseConfigured();
+
+  /*
+   * Everything in the app assumes a target score and an exam date, so an
+   * account that has not answered those is sent to onboarding before it can
+   * reach a page built on them.
+   *
+   * The check is deliberately its own one-column query and deliberately fails
+   * open: a database blip must not trap a student in a form they have already
+   * filled in. `redirect()` works by throwing, so it has to stay outside the
+   * try — catching it here would swallow the redirect.
+   */
+  if (databaseReady) {
+    let onboarded = true;
+    try {
+      onboarded = await hasCompletedOnboarding(userId);
+    } catch (error) {
+      console.error("[app] could not read onboarding state:", error);
+    }
+
+    if (!onboarded) redirect("/onboarding");
+  }
   const t = getDictionary(await getLang());
 
   /*
@@ -142,9 +165,20 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-white/60 glass px-4 sm:px-6"
           suppressHydrationWarning
         >
-          <div className="flex items-center gap-2">
+          {/*
+           * WHY gap-3 HERE AND gap-2 EVERYWHERE ELSE
+           *
+           * Both children are `lg:hidden`, so this row only exists on a phone
+           * and the extra 4px is spent nowhere else.
+           *
+           * It buys room for two halos. `tap-target` grows the 40px menu
+           * button by 2px a side and the 24px logo by 10px, so the two hit
+           * areas need 12px between them; at gap-2 they would overlap by 4px
+           * and the logo would answer for part of the menu button.
+           */}
+          <div className="flex items-center gap-3">
             <MobileNav />
-            <Link href="/dashboard" className="inline-flex lg:hidden">
+            <Link href="/dashboard" className="tap-target inline-flex lg:hidden">
               <Logo compact />
             </Link>
           </div>

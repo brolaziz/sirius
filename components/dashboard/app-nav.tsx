@@ -23,9 +23,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookMarked,
+  CalendarDays,
+  FileText,
   GraduationCap,
   House,
   PenLine,
+  Sparkles,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -60,6 +64,7 @@ export function AppNav({
       eyebrow: t.app.build,
       items: [
         { href: "/dashboard", label: t.app.today, icon: House },
+        { href: "/plan", label: t.app.plan, icon: CalendarDays },
         { href: "/practice", label: t.app.practice, icon: PenLine },
         { href: "/words", label: t.app.myWords, icon: BookMarked },
       ],
@@ -68,6 +73,9 @@ export function AppNav({
       eyebrow: t.app.apply,
       items: [
         { href: "/universities", label: t.app.universities, icon: GraduationCap },
+        { href: "/applications", label: t.app.applications, icon: Users },
+        { href: "/essays", label: t.app.essays, icon: FileText },
+        { href: "/activities", label: t.app.activities, icon: Sparkles },
       ],
     },
   ];

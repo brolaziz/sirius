@@ -93,6 +93,15 @@ export default async function ResultsPage({
   if (!result) notFound();
 
   const records = asAnswerRecords(result.answersRecord);
+
+  /*
+   * Only the questions this sitting actually asked. A full test assembled from
+   * a partial bank leaves whole modules out, and showing those questions as
+   * "blank, incorrect" would misreport the sitting.
+   */
+  const reviewed = result.test.questions.filter(
+    (question) => records[question.id] !== undefined,
+  );
   const accuracy =
     result.totalQuestions > 0 ? result.score / result.totalQuestions : 0;
 
@@ -166,6 +175,14 @@ export default async function ResultsPage({
         </div>
       </div>
 
+      {/* Section scores — a full sitting only. */}
+      {(result.rwScore !== null || result.mathScore !== null) && (
+        <section className="grid gap-5 sm:grid-cols-2">
+          <SectionScore label="Reading & Writing" value={result.rwScore} />
+          <SectionScore label="Math" value={result.mathScore} />
+        </section>
+      )}
+
       {/* Answer review */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground">
@@ -173,7 +190,7 @@ export default async function ResultsPage({
         </h2>
 
         <StaggerGroup immediate pace="tight" className="mt-5 space-y-4">
-          {result.test.questions.map((question, index) => {
+          {reviewed.map((question, index) => {
             const record = records[question.id];
             const options = parseQuestionOptions(question.options);
             const submitted = record?.answer ?? null;
@@ -323,6 +340,31 @@ export default async function ResultsPage({
           })}
         </StaggerGroup>
       </section>
+    </div>
+  );
+}
+
+/**
+ * One section's scaled score.
+ *
+ * A section the sitting did not cover shows as absent rather than as 200 — the
+ * bank cannot fill four modules yet, and a missing half of the exam must not
+ * read as a bad half.
+ */
+function SectionScore({ label, value }: { label: string; value: number | null }) {
+  return (
+    <div className="rounded-2xl bg-card p-6 shadow-card">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      {value === null ? (
+        <p className="mt-3 text-lg font-medium text-muted-foreground">
+          Not in this sitting
+        </p>
+      ) : (
+        <p className="mt-3 text-4xl leading-none font-extrabold tracking-tightest tnum">
+          {value}
+          <span className="text-xl text-muted-foreground">/800</span>
+        </p>
+      )}
     </div>
   );
 }

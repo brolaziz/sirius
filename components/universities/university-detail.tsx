@@ -23,7 +23,8 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { ExternalLink, Star } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ExternalLink, Star } from "lucide-react";
 
 import {
   Dialog,
@@ -345,6 +346,25 @@ export function UniversityDetail({
                 >
                   <Star className={cn("size-4", isShortlisted && "fill-current")} />
                   {isShortlisted ? t.uni.shortlisted : t.uni.addToShortlist}
+                </Button>
+              </Pressable>
+
+              {/*
+               * The dialog is the quick look; the page is where the admissions
+               * evidence lives, and that is too much to open over a grid the
+               * student is still scanning.
+               */}
+              <Pressable>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="h-11 rounded-lg"
+                >
+                  <Link href={`/universities/${university.id}`}>
+                    {t.uni.fullProfile}
+                    <ArrowRight className="size-4" />
+                  </Link>
                 </Button>
               </Pressable>
 

@@ -171,9 +171,13 @@ export const uz = {
     build: "Profil",
     apply: "Ariza",
     today: "Bugun",
+    plan: "Reja",
     practice: "Mashq",
     myWords: "So'zlarim",
     universities: "Universitetlar",
+    applications: "Arizalar",
+    essays: "Insholar",
+    activities: "Faoliyatlar",
   },
 
   dash: {
@@ -272,9 +276,129 @@ export const uz = {
     resultsReview: "Har bir savolni ko'rib chiqing",
   },
 
+  onboarding: {
+    eyebrow: "Boshlanish",
+    title: "Rejani sizga moslaymiz",
+    body: "Besh savol — javoblardan haftalik reja chiqadi.",
+    stepOf: "{current} / {total}-qadam",
+    back: "Orqaga",
+    next: "Davom etish",
+    finish: "Rejani tuzish",
+    saving: "Saqlanmoqda…",
+    failed: "Saqlanmadi. Yana urinib ko'ring.",
+
+    gradeTitle: "Nechanchi sinfdasiz?",
+    gradeBody: "Bu qancha imtihon davri qolganini ko'rsatadi.",
+    grade9: "9-sinf",
+    grade10: "10-sinf",
+    grade11: "11-sinf",
+    grade12: "12-sinf",
+    graduated: "Maktabni tugatganman",
+
+    currentTitle: "Hozirgi balingiz qancha?",
+    currentBody:
+      "Oxirgi rasmiy yoki mashq testidagi ball. Aniq bilmasangiz — pastdagi tugmani tanlang.",
+    currentLabel: "Hozirgi ball",
+    currentUnknown: "Bilmayman — diagnostikadan boshlayman",
+    currentUnknownNote:
+      "Reja baribir tuziladi, lekin bashorat ko'rsatilmaydi: noma'lum balldan chiqarilgan raqam hech narsani anglatmaydi.",
+
+    targetTitle: "Qaysi ballga chiqmoqchisiz?",
+    targetBody: "Ro'yxatingizdagi universitetlar so'raydigan ball.",
+    targetLabel: "Maqsad ball",
+    scoreHint: "{min} dan {max} gacha, 10 lik qadam bilan.",
+
+    dateTitle: "Imtihon qachon?",
+    dateBody: "Sana rejani necha haftaga bo'lishni belgilaydi.",
+    dateLabel: "Imtihon sanasi",
+
+    priorityTitle: "Nimaga ko'proq e'tibor beramiz?",
+    priorityBody: "Buni keyin ham o'zgartirishingiz mumkin.",
+    prioritySat: "SAT bali",
+    prioritySatBody: "Asosiy maqsad — ballni ko'tarish.",
+    priorityAdmissions: "Universitetga hujjat",
+    priorityAdmissionsBody: "Ro'yxat, insholar, muddatlar.",
+    priorityBoth: "Ikkalasi",
+    priorityBothBody: "Ball ustida ham, ariza ustida ham parallel ishlaymiz.",
+  },
+
+  practice: {
+    topicsTitle: "Mavzular",
+    topicsBody:
+      "Bitta mavzuni tanlang — savollar bittalab keladi, javobdan keyin darhol tushuntirish chiqadi.",
+    topicsEmpty: "Savol banki hali bo'sh.",
+
+    weakTitle: "Zaif mavzular",
+    weakBody:
+      "Yetarli javob bergan mavzularingiz ichida eng past natijalilari. Kam ma'lumotli mavzular bu ro'yxatga tushmaydi.",
+
+    available: "{count} savol",
+    accuracy: "{count}%",
+
+    start: "Mashq",
+    starting: "Ochilmoqda…",
+    startFailed: "Sessiya ochilmadi. Yana urinib ko'ring.",
+
+    questionOf: "{current} / {total}",
+    answerLabel: "Javobingiz",
+    check: "Tekshirish",
+    next: "Keyingisi",
+    finish: "Yakunlash",
+    finishing: "Yakunlanmoqda…",
+    answerFailed: "Javob saqlanmadi. Yana urinib ko'ring.",
+
+    correct: "To'g'ri",
+    incorrect: "Noto'g'ri",
+    correctAnswerIs: "To'g'ri javob: {answer}",
+    noExplanation: "Bu savol uchun tushuntirish hali yozilmagan.",
+
+    summaryTitle: "Sessiya yakuni",
+    summaryAccuracy: "{count}% to'g'ri",
+    summaryTime: "o'rtacha {count} soniya",
+    summaryStrong: "Yaxshi natija. Shu mavzuni vaqti-vaqti bilan takrorlab turing.",
+    summaryWeak: "{skill} bo'yicha yana mashq qilish foydali bo'ladi.",
+    backToPractice: "Mashqqa qaytish",
+    backToPlan: "Rejaga qaytish",
+  },
+
+  plan: {
+    eyebrow: "Profil",
+    title: "Haftalik reja",
+    body: "Imtihon sanangiz, maqsad balingiz va savol bankidan chiqarilgan reja.",
+    empty: "Reja hali tuzilmagan.",
+    emptyBody: "Onboarding javoblaringizdan reja bir soniyada tuziladi.",
+    regenerate: "Rejani yangilash",
+    regenerating: "Tuzilmoqda…",
+    regenerateFailed: "Reja tuzilmadi. Yana urinib ko'ring.",
+    regenerateHint:
+      "Imtihon sanasi yoki maqsad ball o'zgargan bo'lsa, rejani yangilang.",
+
+    thisWeek: "Shu hafta",
+    weekLabel: "{n}-hafta",
+    questionsCount: "{count} savol",
+    due: "{date} gacha",
+    allWeeks: "To'liq reja",
+
+    target: "Maqsad ball",
+    projected: "Kutilayotgan ball",
+    projectedNote: "Model bahosi, kafolat emas.",
+    projectedUnknown: "Hozirgi ball noma'lum",
+    projectedUnknownNote: "Diagnostika topshirsangiz, bashorat paydo bo'ladi.",
+    examDate: "Imtihon sanasi",
+    weeksLeft: "{count} hafta qoldi",
+    weeklyLoad: "Haftasiga {count} savol",
+    weeklyLoadLabel: "Haftalik yuk",
+
+    onTrack: "Shu sur'at maqsadga yetkazadi.",
+    offTrack: "Shu sur'atda maqsadga yetib bo'lmaydi.",
+    shortfall: "Haftasiga yana {count} daqiqa kerak bo'ladi.",
+    bankLimited:
+      "Savollar banki hozircha kichik, shuning uchun ba'zi haftalar rejadagidan yengil.",
+  },
+
   uni: {
     search: "Qidiruv",
-    searchPlaceholder: "Nomi, davlati yoki faoliyat…",
+    searchPlaceholder: "Nomi, shahri, shtati yoki yo'nalish…",
     myScore: "Mening SAT balim",
     myScorePlaceholder: "masalan 1400",
     sortBy: "Saralash",
@@ -326,6 +450,122 @@ export const uz = {
       "Qabul foizi, SAT va narx — AQSh Ta'lim vazirligining College Scorecard ma'lumotlaridan.",
     showing: "{total} tadan {shown} tasi ko'rsatilyapti",
     loadMore: "Yana yuklash",
+
+    fullProfile: "To'liq sahifa",
+    rankingBadge: "Jahon reytingi: {rank}",
+    satBenchmark: "SAT o'rtachasi",
+    noSatRequirement: "SAT talab qilinmaydi",
+
+    verdictNoScore:
+      "Balingiz hali ma'lum emas. Diagnostika topshiring yoki onboardingda joriy balni kiriting — shundan keyin bu yerda taqqoslash chiqadi.",
+    verdictNoBenchmark:
+      "Bu universitet SAT ko'rsatkichini e'lon qilmagan, shuning uchun taqqoslash uchun raqam yo'q.",
+    verdictLevel:
+      "Balingiz ({score}) bu universitetning o'rtachasi bilan bir darajada.",
+    verdictAbove:
+      "Balingiz ({score}) o'rtachadan {difference} ball yuqori (o'rtacha {benchmark}).",
+    verdictBelow:
+      "Balingiz ({score}) o'rtachadan {difference} ball past (o'rtacha {benchmark}).",
+    verdictNote:
+      "Bu qabul kafolati emas: universitetlar ballga qo'shimcha ravishda butun profilga qaraydi.",
+
+    outcomesSection: "Qabul natijalari",
+    outcomesTitle: "Nomzodlar natijalari",
+    outcomesCount: "{count} ta natija",
+    outcomesAccepted: "{count}% qabul qilingan",
+    outcomesYours: "Sizning balingiz: {score}",
+    outcomesEmpty: "Hali natija yo'q",
+    outcomesEmptyBody:
+      "Bu universitet bo'yicha nomzodlar natijalari hali yig'ilmagan. Bo'sh joyni to'ldirish uchun raqam o'ylab topmaymiz — ma'lumot paydo bo'lishi bilan shu yerda chiqadi.",
+    outcomesDisclaimer:
+      "Natijalar nomzodlarning o'zlari yuborgan ma'lumotlar asosida. Rasmiy statistika emas.",
+
+    accepted: "Qabul qilingan",
+    rejected: "Rad etilgan",
+    waitlisted: "Navbatda",
+
+    sampleAll: "Namuna ma'lumot",
+    sampleSome: "Qisman namuna ma'lumot",
+  },
+
+  applications: {
+    eyebrow: "Ariza",
+    title: "Arizalar bazasi",
+    body: "Nomzodlar o'z natijalarini yuboradi: qaysi ball bilan qayerga kirgan, qayerdan rad javob olgan.",
+    likeYou: "Sizga o'xshash nomzodlar",
+    likeYouBody: "{score} ballga eng yaqin natijalar.",
+    likeYouNoScore:
+      "Avval balingiz kerak: diagnostika topshiring yoki joriy balni kiriting — shundan keyin sizga o'xshash nomzodlarni ko'rsatamiz.",
+    likeYouNoData:
+      "Hozircha taqqoslash uchun yetarli natija yo'q. Ma'lumot to'planishi bilan shu yerda chiqadi.",
+    allTitle: "Barcha natijalar",
+    counted: "{total} tadan {shown} tasi",
+    searchPlaceholder: "Universitet yoki yo'nalish…",
+    status: "Natija",
+    statusAll: "Hammasi",
+    empty: "Baza hozircha bo'sh",
+    emptyBody:
+      "Nomzodlar natijalari hali yig'ilmagan. Boshqa saytlardan ko'chirib olmaymiz — bu ma'lumot o'sha talabalarniki. Sirius o'z foydalanuvchilari roziligi bilan yuborgan natijalardan to'planadi.",
+    noMatch: "Mos natija topilmadi",
+    noMatchBody: "Qidiruvni yoki filtrni o'zgartiring.",
+    sourceNote:
+      "Har bir qator — bitta qaror, bitta odam emas. Ism-sharif saqlanmaydi; nomzod faqat taxallus kod bilan belgilanadi.",
+  },
+
+  essays: {
+    eyebrow: "Ariza",
+    title: "Insholar",
+    body: "Kuchli insholar qanday yozilganini ko'chirish uchun emas, hunarni tushunish uchun o'qing.",
+    empty: "Kutubxona hozircha bo'sh",
+    emptyBody:
+      "Insho — kimningdir mehnati. Boshqa saytlardagi insholar o'sha talabalar tomonidan o'sha saytga yuborilgan, va ularni bu yerga ko'chirish ruxsatsiz olish bo'lardi. Kutubxona muallif roziligi bilan yuborilgan insholardan to'ldiriladi.",
+    locked: "Qulflangan",
+    lockedTitle: "Bu insho premium",
+    lockedBody:
+      "Insho matni premium obuna bilan ochiladi. Mashq, reja va universitetlar bo'limi har doim ochiq qoladi.",
+    commonApp: "Common App",
+    wordCount: "{count} so'z",
+    readingNote:
+      "Insholar o'qish uchun, ko'chirish uchun emas. Ko'chirilgan insho arizani kuchaytirmaydi — uni bekor qiladi.",
+  },
+
+  activities: {
+    eyebrow: "Ariza",
+    title: "Faoliyatlar",
+    body: "Common App ro'yxatingiz va u qanday darajalardan iboratligi.",
+
+    mineTitle: "Mening ro'yxatim",
+    mineCount: "{count} / {max} ta faoliyat",
+    mineEmpty: "Hali faoliyat qo'shilmagan.",
+    full: "Common App {max} tagacha ruxsat beradi. Yangisini qo'shish uchun bittasini o'chiring.",
+    add: "Qo'shish",
+    addTitle: "Yangi faoliyat",
+    editTitle: "Faoliyatni tahrirlash",
+    edit: "Tahrirlash",
+    remove: "O'chirish",
+    cancel: "Bekor qilish",
+    save: "Saqlash",
+    saving: "Saqlanmoqda…",
+    saveFailed: "Saqlanmadi. Yana urinib ko'ring.",
+
+    fieldTitle: "Nomi",
+    fieldRole: "Rolingiz",
+    fieldOrganisation: "Tashkilot",
+    fieldHours: "Soat/hafta",
+    fieldWeeks: "Hafta/yil",
+    fieldDescription: "Tavsif",
+    descriptionHint:
+      "Common App {max} belgi beradi. Shu chegara ichida yozish — mashqning o'zi.",
+    hours: "{count} soat/hafta",
+    weeks: "{count} hafta/yil",
+
+    ladderTitle: "Faoliyat darajalari",
+    ladderBody:
+      "Quyi pog'onadan yuqoriga. Savol — «hozir qayerdaman va keyingi qadam qanday ko'rinadi».",
+    ladderEmpty: "Daraja ro'yxati bo'sh",
+    ladderEmptyBody:
+      "Ma'lumot hali yuklanmagan. Admin import yo'li orqali qo'shiladi.",
+    participation: "{count}%",
   },
 
   roadmapTasks: {
@@ -553,9 +793,13 @@ export const en: Dictionary = {
     build: "Profile",
     apply: "Application",
     today: "Today",
+    plan: "Plan",
     practice: "Practice",
     myWords: "My words",
     universities: "Universities",
+    applications: "Applications",
+    essays: "Essays",
+    activities: "Activities",
   },
 
   dash: {
@@ -654,9 +898,129 @@ export const en: Dictionary = {
     resultsReview: "Go through every question",
   },
 
+  onboarding: {
+    eyebrow: "Getting started",
+    title: "Let's shape the plan around you",
+    body: "Five questions. Your weekly plan comes out of the answers.",
+    stepOf: "Step {current} of {total}",
+    back: "Back",
+    next: "Continue",
+    finish: "Build my plan",
+    saving: "Saving…",
+    failed: "That did not save. Try again.",
+
+    gradeTitle: "What year are you in?",
+    gradeBody: "It tells us how many admissions cycles you have left.",
+    grade9: "Grade 9",
+    grade10: "Grade 10",
+    grade11: "Grade 11",
+    grade12: "Grade 12",
+    graduated: "I have finished school",
+
+    currentTitle: "What do you score today?",
+    currentBody:
+      "Your most recent official or practice score. If you do not know it, pick the option below.",
+    currentLabel: "Current score",
+    currentUnknown: "I don't know — start me with a diagnostic",
+    currentUnknownNote:
+      "You still get a plan, but no projection: a number derived from an unknown starting point means nothing.",
+
+    targetTitle: "What are you aiming for?",
+    targetBody: "The score the universities on your list actually ask for.",
+    targetLabel: "Target score",
+    scoreHint: "{min} to {max}, in steps of 10.",
+
+    dateTitle: "When is the exam?",
+    dateBody: "The date decides how many weeks the plan is split into.",
+    dateLabel: "Exam date",
+
+    priorityTitle: "What should we lead with?",
+    priorityBody: "You can change this later.",
+    prioritySat: "SAT score",
+    prioritySatBody: "The score is the thing to move.",
+    priorityAdmissions: "Applications",
+    priorityAdmissionsBody: "Shortlist, essays, deadlines.",
+    priorityBoth: "Both",
+    priorityBothBody: "Score and application, side by side.",
+  },
+
+  practice: {
+    topicsTitle: "Topics",
+    topicsBody:
+      "Pick one topic. Questions come one at a time, and the explanation appears the moment you answer.",
+    topicsEmpty: "The question bank is still empty.",
+
+    weakTitle: "Weakest topics",
+    weakBody:
+      "The lowest scores among the topics you have answered enough of. Topics with too little evidence are left out.",
+
+    available: "{count} questions",
+    accuracy: "{count}%",
+
+    start: "Practise",
+    starting: "Opening…",
+    startFailed: "The session could not be opened. Try again.",
+
+    questionOf: "{current} / {total}",
+    answerLabel: "Your answer",
+    check: "Check",
+    next: "Next",
+    finish: "Finish",
+    finishing: "Finishing…",
+    answerFailed: "That answer did not save. Try again.",
+
+    correct: "Correct",
+    incorrect: "Not quite",
+    correctAnswerIs: "The answer is {answer}",
+    noExplanation: "No explanation has been written for this question yet.",
+
+    summaryTitle: "Session summary",
+    summaryAccuracy: "{count}% correct",
+    summaryTime: "{count} seconds each on average",
+    summaryStrong: "Strong session. Come back to this topic now and then.",
+    summaryWeak: "{skill} is worth another session.",
+    backToPractice: "Back to practice",
+    backToPlan: "Back to the plan",
+  },
+
+  plan: {
+    eyebrow: "Build",
+    title: "Weekly plan",
+    body: "Built from your exam date, your target score and what the question bank holds.",
+    empty: "No plan yet.",
+    emptyBody: "Your answers are enough to build one in a second.",
+    regenerate: "Rebuild the plan",
+    regenerating: "Building…",
+    regenerateFailed: "The plan could not be built. Try again.",
+    regenerateHint:
+      "Rebuild after changing your exam date or target score.",
+
+    thisWeek: "This week",
+    weekLabel: "Week {n}",
+    questionsCount: "{count} questions",
+    due: "by {date}",
+    allWeeks: "The whole plan",
+
+    target: "Target score",
+    projected: "Projected score",
+    projectedNote: "A model estimate, not a promise.",
+    projectedUnknown: "Starting score unknown",
+    projectedUnknownNote: "Sit a diagnostic and the projection appears.",
+    examDate: "Exam date",
+    weeksLeft: "{count} weeks left",
+    weeklyLoad: "{count} questions a week",
+    weeklyLoadLabel: "Weekly load",
+
+    onTrack: "This pace reaches your target.",
+    offTrack: "This pace does not reach your target.",
+    shortfall: "It would need {count} more minutes a week.",
+    bankLimited:
+      "The question bank is still small, so some weeks are lighter than the plan asks for.",
+  },
+
   uni: {
     search: "Search",
-    searchPlaceholder: "Name, country or activity…",
+    searchPlaceholder: "Name, city, state or major…",
     myScore: "My SAT score",
     myScorePlaceholder: "e.g. 1400",
     sortBy: "Sort by",
@@ -708,6 +1072,120 @@ export const en: Dictionary = {
       "Admission rate, SAT and cost come from the US Department of Education's College Scorecard.",
     showing: "Showing {shown} of {total}",
     loadMore: "Load more",
+
+    fullProfile: "Full profile",
+    rankingBadge: "World rank {rank}",
+    satBenchmark: "Average SAT",
+    noSatRequirement: "No SAT requirement",
+
+    verdictNoScore:
+      "We do not know your score yet. Sit a diagnostic, or add your current score in onboarding, and the comparison appears here.",
+    verdictNoBenchmark:
+      "This university publishes no SAT figure, so there is nothing to compare against.",
+    verdictLevel: "Your score ({score}) is level with their average.",
+    verdictAbove:
+      "Your score ({score}) is {difference} points above their average of {benchmark}.",
+    verdictBelow:
+      "Your score ({score}) is {difference} points below their average of {benchmark}.",
+    verdictNote:
+      "Not a prediction: admissions offices read the whole profile, not only the score.",
+
+    outcomesSection: "Reported outcomes",
+    outcomesTitle: "Applicant outcomes",
+    outcomesCount: "{count} reported",
+    outcomesAccepted: "{count}% accepted",
+    outcomesYours: "Your score: {score}",
+    outcomesEmpty: "No outcomes yet",
+    outcomesEmptyBody:
+      "Nobody has reported a decision from this university yet. We will not invent numbers to fill the space — as soon as there is data, it appears here.",
+    outcomesDisclaimer:
+      "Self-reported by applicants. Not official admissions statistics.",
+
+    accepted: "Accepted",
+    rejected: "Rejected",
+    waitlisted: "Waitlisted",
+
+    sampleAll: "Sample data",
+    sampleSome: "Partly sample data",
+  },
+
+  applications: {
+    eyebrow: "Apply",
+    title: "Applications database",
+    body: "Applicants report their own results: what they scored, where they got in, where they did not.",
+    likeYou: "Applicants like you",
+    likeYouBody: "The reported results closest to {score}.",
+    likeYouNoScore:
+      "We need your score first. Sit a diagnostic or add your current score, and the closest applicants appear here.",
+    likeYouNoData:
+      "There are not enough reported results to compare against yet. They will appear here as they arrive.",
+    allTitle: "All results",
+    counted: "Showing {shown} of {total}",
+    searchPlaceholder: "University or major…",
+    status: "Decision",
+    statusAll: "All",
+    empty: "Nothing reported yet",
+    emptyBody:
+      "No applicant results have been collected. We do not copy them from other sites — that data belongs to the students who submitted it there. This fills up from Sirius users who choose to share their own.",
+    noMatch: "No matching results",
+    noMatchBody: "Try a different search or filter.",
+    sourceNote:
+      "Each row is a decision, not a person. No names are stored; an applicant appears only as a pseudonymous key.",
+  },
+
+  essays: {
+    eyebrow: "Apply",
+    title: "Essays",
+    body: "Read strong essays as craft — how they are built — rather than as something to copy.",
+    empty: "The library is empty",
+    emptyBody:
+      "An essay is somebody's work. The ones on other sites were submitted by students to those sites, and copying them here would be taking work nobody gave us. The library fills up from essays donated with permission.",
+    locked: "Locked",
+    lockedTitle: "This essay is premium",
+    lockedBody:
+      "The text opens with a premium subscription. Practice, your plan and the university explorer stay open either way.",
+    commonApp: "Common App",
+    wordCount: "{count} words",
+    readingNote:
+      "These are for reading, not for reusing. A copied essay does not strengthen an application — it ends it.",
+  },
+
+  activities: {
+    eyebrow: "Apply",
+    title: "Activities",
+    body: "Your Common App list, and the ladder it sits on.",
+
+    mineTitle: "My list",
+    mineCount: "{count} of {max} activities",
+    mineEmpty: "Nothing added yet.",
+    full: "The Common App allows {max}. Remove one to add another.",
+    add: "Add",
+    addTitle: "New activity",
+    editTitle: "Edit activity",
+    edit: "Edit",
+    remove: "Remove",
+    cancel: "Cancel",
+    save: "Save",
+    saving: "Saving…",
+    saveFailed: "That did not save. Try again.",
+
+    fieldTitle: "Name",
+    fieldRole: "Your role",
+    fieldOrganisation: "Organisation",
+    fieldHours: "Hours/week",
+    fieldWeeks: "Weeks/year",
+    fieldDescription: "Description",
+    descriptionHint:
+      "The Common App gives you {max} characters. Writing inside that limit is the exercise.",
+    hours: "{count} hrs/week",
+    weeks: "{count} weeks/year",
+
+    ladderTitle: "The ladder",
+    ladderBody:
+      "From the first rung upwards. The question is where you are now and what the next step looks like.",
+    ladderEmpty: "No tiers loaded",
+    ladderEmptyBody: "This list arrives through the admin import path.",
+    participation: "{count}%",
   },
 
   roadmapTasks: {

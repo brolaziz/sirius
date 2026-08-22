@@ -1,8 +1,13 @@
 /**
- * Practice — pick a test, or review a past one.
+ * Practice — pick a topic, sit a test, or review a past one.
  *
- * Two sections: available tests, and this student's history. Both have real
- * empty states, because a fresh install legitimately has neither.
+ * The page leads with topics rather than with tests. A student with twenty
+ * minutes wants to practise something specific, and the weak-topic list above
+ * it answers "something specific" for them when there is enough evidence to
+ * answer it honestly.
+ *
+ * Every section has a real empty state, because a fresh install legitimately
+ * has no questions, no history and no weaknesses to report.
  */
 
 import type { Metadata } from "next";
@@ -11,11 +16,19 @@ import { ArrowRight, Clock, FileJson, History, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StartPracticeButton } from "@/components/practice/start-practice-button";
 import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
+import { fill } from "@/lib/i18n/config";
 import { formatDuration, testTypeLabel } from "@/lib/sat";
+import {
+  getPracticeSkills,
+  getWeakSkills,
+  type PracticeSkillOption,
+} from "@/lib/queries/practice";
+import type { Lang } from "@/lib/i18n/config";
 
 export const metadata: Metadata = {
   title: "Practice",
@@ -24,7 +37,19 @@ export const metadata: Metadata = {
 export default async function PracticePage() {
   const databaseReady = isDatabaseConfigured();
   const userId = databaseReady ? await getCurrentUserId() : null;
-  const t = getDictionary(await getLang());
+  const lang = await getLang();
+  const t = getDictionary(lang);
+
+  const [skills, weak] = userId
+    ? await Promise.all([getPracticeSkills(userId), getWeakSkills(userId, 3)])
+    : [[], []];
+
+  const byDomain = new Map<string, PracticeSkillOption[]>();
+  for (const skill of skills) {
+    const group = byDomain.get(skill.domainName) ?? [];
+    group.push(skill);
+    byDomain.set(skill.domainName, group);
+  }
 
   const [tests, results] = databaseReady
     ? await prisma.$transaction([
@@ -70,6 +95,107 @@ export default async function PracticePage() {
           {t.pages.practiceBody}
         </p>
       </div>
+
+      {/* Weak topics — only when there is enough evidence to name one. */}
+      {weak.length > 0 && (
+        <section>
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            {t.practice.weakTitle}
+          </h2>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            {t.practice.weakBody}
+          </p>
+
+          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {weak.map((skill) => (
+              <li
+                key={skill.code}
+                className="flex h-full flex-col justify-between rounded-2xl bg-card p-5 shadow-card"
+              >
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {skill.domainName}
+                  </p>
+                  <p className="mt-1 text-base font-bold tracking-tight text-balance">
+                    {skillLabel(skill, lang)}
+                  </p>
+                  <p className="mt-2 text-sm text-viz-rose tabular-nums">
+                    {fill(t.practice.accuracy, {
+                      count: Math.round(skill.accuracy * 100),
+                    })}{" "}
+                    · {skill.correct}/{skill.answered}
+                  </p>
+                </div>
+
+                <StartPracticeButton
+                  skillCode={skill.code}
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 w-full"
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Topics */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground">
+          {t.practice.topicsTitle}
+        </h2>
+        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+          {t.practice.topicsBody}
+        </p>
+
+        {skills.length === 0 ? (
+          <div className="mt-5 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t.practice.topicsEmpty}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-5 space-y-8">
+            {[...byDomain.entries()].map(([domain, group]) => (
+              <div key={domain}>
+                <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  {domain}
+                </h3>
+
+                <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-card">
+                  {group.map((skill) => (
+                    <li
+                      key={skill.code}
+                      className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {skillLabel(skill, lang)}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                          {fill(t.practice.available, { count: skill.available })}
+                          {skill.answered > 0 &&
+                            ` · ${fill(t.practice.accuracy, {
+                              count: Math.round(
+                                (skill.correct / skill.answered) * 100,
+                              ),
+                            })}`}
+                        </p>
+                      </div>
+
+                      <StartPracticeButton
+                        skillCode={skill.code}
+                        variant="outline"
+                        size="sm"
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       {/* Available tests */}
       <section>
@@ -205,4 +331,13 @@ export default async function PracticePage() {
       </section>
     </div>
   );
+}
+
+/**
+ * Skill names are stored in both languages on the taxonomy rows, so this picks
+ * rather than translates. A missing Uzbek name falls back to the English one.
+ */
+function skillLabel(skill: PracticeSkillOption, lang: Lang): string {
+  if (lang === "uz" && skill.nameUz) return skill.nameUz;
+  return skill.name;
 }

@@ -22,6 +22,12 @@ import { startAttempt } from "@/lib/actions/attempts";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/user";
 import { parseQuestionOptions, type SimulatorQuestion } from "@/lib/simulator";
+import {
+  moduleDeadline,
+  parseModulePlan,
+  questionIdsAt,
+  specForPlanIndex,
+} from "@/lib/mock";
 
 export const metadata: Metadata = {
   title: "Test in progress",
@@ -146,10 +152,59 @@ export default async function SimulatorPage({
 
   const attempt = await prisma.testAttempt.findUnique({
     where: { id: started.attemptId },
-    select: { answers: true, flagged: true },
+    select: {
+      answers: true,
+      flagged: true,
+      modulePlan: true,
+      moduleIndex: true,
+      moduleStartedAt: true,
+      startedAt: true,
+    },
   });
 
-  const questions: SimulatorQuestion[] = test.questions.map((question) => ({
+  /*
+   * A full sitting is four timed modules and this page renders one of them. The
+   * plan was decided when the attempt started and is stored on it, so a reload
+   * lands in the same module with the same clock — see `TestAttempt.modulePlan`.
+   *
+   * A test with no plan is a single-module practice test, which is what every
+   * test was before modules existed. It renders exactly as it always has.
+   */
+  const plan = parseModulePlan(attempt?.modulePlan);
+  const spec = plan.length > 0 ? specForPlanIndex(plan, attempt?.moduleIndex ?? 0) : null;
+
+  const moduleQuestionIds = spec
+    ? new Set(questionIdsAt(plan, attempt?.moduleIndex ?? 0))
+    : null;
+
+  const visibleQuestions = moduleQuestionIds
+    ? test.questions.filter((question) => moduleQuestionIds.has(question.id))
+    : test.questions;
+
+  if (spec && visibleQuestions.length === 0) {
+    return (
+      <SimulatorError
+        title="This module has no questions"
+        body="The sitting could not be assembled. Import more of the question bank and start again."
+      />
+    );
+  }
+
+  const moduleStartedAt = attempt?.moduleStartedAt ?? attempt?.startedAt ?? null;
+
+  const moduleProps =
+    spec && moduleStartedAt
+      ? {
+          label: `Section ${spec.section === "READING" ? 1 : 2}, Module ${
+            spec.module === "MODULE_1" ? 1 : 2
+          }`,
+          deadlineMs: moduleDeadline(moduleStartedAt, spec).getTime(),
+          hasNext: (attempt?.moduleIndex ?? 0) + 1 < plan.length,
+          breakMinutes: spec.breakMinutes,
+        }
+      : undefined;
+
+  const questions: SimulatorQuestion[] = visibleQuestions.map((question) => ({
     id: question.id,
     order: question.order,
     module: question.module,
@@ -172,6 +227,7 @@ export default async function SimulatorPage({
       }}
       questions={questions}
       startedAtMs={started.startedAtMs}
+      module={moduleProps}
       initialAnswers={asAnswerMap(attempt?.answers)}
       initialFlagged={asFlaggedList(attempt?.flagged)}
     />

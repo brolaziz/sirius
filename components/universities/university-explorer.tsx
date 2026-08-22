@@ -62,6 +62,7 @@ export interface UniversityView {
   name: string;
   country: string | null;
   city: string | null;
+  state: string | null;
   acceptanceRate: number | null;
   minSat: number | null;
   minIelts: number | null;
@@ -99,9 +100,20 @@ const PAGE_SIZE = 24;
 export function UniversityExplorer({
   universities,
   shortlistedIds,
+  initialScore = null,
 }: {
   universities: UniversityView[];
   shortlistedIds: string[];
+  /**
+   * The student's own score, from their latest sitting or from onboarding.
+   *
+   * Prefilling it rather than making them type it is the difference between a
+   * list of universities and a list of *their* universities: every card
+   * already knows whether the score clears the bar before they touch anything.
+   * It stays editable — trying a shortlist against the score you are aiming
+   * for is exactly what this field is for.
+   */
+  initialScore?: number | null;
 }) {
   const { t } = useT();
   const gridRef = React.useRef<HTMLDivElement>(null);
@@ -109,7 +121,9 @@ export function UniversityExplorer({
 
   const [query, setQuery] = React.useState("");
   const [sortKey, setSortKey] = React.useState<SortKey>("ranking");
-  const [satScore, setSatScore] = React.useState("");
+  const [satScore, setSatScore] = React.useState(
+    initialScore === null ? "" : String(initialScore),
+  );
   const [onlyFullNeed, setOnlyFullNeed] = React.useState(false);
   const [selected, setSelected] = React.useState<UniversityView | null>(null);
 
@@ -155,11 +169,14 @@ export function UniversityExplorer({
       if (!needle) return true;
 
       // Search both languages, so "muhandislik" and "engineering" both work
-      // whichever language the interface happens to be in.
+      // whichever language the interface happens to be in. The state is in
+      // here because "California" is how a student thinks about a US shortlist
+      // long before they know which city they mean.
       return [
         university.name,
         university.country ?? "",
         university.city ?? "",
+        university.state ?? "",
         ...university.extracurriculars,
         ...university.extracurricularsUz,
         ...university.popularMajors,
@@ -302,6 +319,22 @@ export function UniversityExplorer({
       {/* Controls */}
       <div className="rounded-2xl bg-card p-6 shadow-card">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end">
+          {/*
+           * These three labels carried `tap-target-y` and no longer do.
+           *
+           * The exception was granted on the argument that the overlap was
+           * harmless, because what each halo covered was the control the label
+           * itself activates. The measurement says otherwise: the halo took
+           * 6.5px off the top of the search field and held its hit area to
+           * 37.54px inside a 44px box. A halo that pushes its neighbour under
+           * the threshold is a worse trade than the 16px label it was fixing,
+           * and the neighbour here is the control that actually matters.
+           *
+           * The labels are back to 16px and the fields they point at measure
+           * their full 44. `scripts/audit-tap-targets.ts` reports a label like
+           * this under `smallLabels` rather than as a failure, which is the
+           * honest description of it: a convenience target, not a blocked tap.
+           */}
           <div className="flex-1">
             <Label htmlFor="uni-search" className="text-xs font-semibold">
               {t.uni.search}

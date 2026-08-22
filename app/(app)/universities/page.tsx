@@ -15,6 +15,7 @@ import {
 } from "@/components/universities/university-explorer";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
+import { getLatestScore } from "@/lib/queries/score";
 import { getDictionary, getLang } from "@/lib/i18n";
 
 export const metadata: Metadata = {
@@ -35,6 +36,7 @@ export default async function UniversitiesPage() {
             name: true,
             country: true,
             city: true,
+            state: true,
             acceptanceRate: true,
             minSat: true,
             minIelts: true,
@@ -67,6 +69,17 @@ export default async function UniversitiesPage() {
       ])
     : [[], []];
 
+  /*
+   * The student's own score, so every card arrives already answering "can I
+   * apply here?" instead of waiting to be told what to compare against.
+   *
+   * A real sitting beats what they told onboarding: the number they typed in a
+   * form is a memory, and the number they earned last week is a measurement.
+   */
+  const measured = userId
+    ? await getLatestScore(userId)
+    : null;
+
   return (
     <div className="mx-auto max-w-7xl space-y-10">
       <div>
@@ -98,6 +111,7 @@ export default async function UniversitiesPage() {
         <UniversityExplorer
           universities={universities as UniversityView[]}
           shortlistedIds={shortlist.map((entry) => entry.universityId)}
+          initialScore={measured}
         />
       )}
     </div>

@@ -33,7 +33,12 @@ import { NextResponse, type NextRequest } from "next/server";
  * Path prefixes that should bounce signed-out visitors to sign-in.
  */
 const PROTECTED_PREFIXES = [
+  "/activities",
+  "/applications",
   "/dashboard",
+  "/essays",
+  "/onboarding",
+  "/plan",
   "/practice",
   "/simulator",
   "/universities",
