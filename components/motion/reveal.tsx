@@ -65,7 +65,21 @@ export function Reveal({
           duration: DUR.base,
           ease: EASE,
           delay,
-          ...(immediate ? {} : { scrollTrigger: revealTrigger(ref.current) }),
+          /*
+           * `immediateRender: false` on the scroll-triggered path only — see the
+           * long note in `journey-section.tsx`. Short version: a tween that is
+           * gated behind a trigger must not write its start values before that
+           * trigger fires, or a trigger that never fires leaves the content
+           * invisible for good. The `immediate` path is not gated on anything
+           * — it runs on mount — so there is nothing to strand and the default
+           * render is what we want.
+           */
+          ...(immediate
+            ? {}
+            : {
+                immediateRender: false,
+                scrollTrigger: revealTrigger(ref.current),
+              }),
         },
       );
     },
@@ -118,7 +132,13 @@ export function StaggerGroup({
         ease: EASE,
         delay,
         stagger: pace === "tight" ? STAGGER_TIGHT : STAGGER,
-        ...(immediate ? {} : { scrollTrigger: revealTrigger(ref.current) }),
+        // Same reasoning as `Reveal` above.
+        ...(immediate
+          ? {}
+          : {
+              immediateRender: false,
+              scrollTrigger: revealTrigger(ref.current),
+            }),
       });
     },
     { scope: ref, dependencies: [pace, immediate, delay] },

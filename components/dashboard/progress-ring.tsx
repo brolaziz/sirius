@@ -54,6 +54,17 @@ export function ProgressRing({
     () => {
       if (prefersReducedMotion()) return;
 
+      /*
+       * `immediateRender: false` matters more here than anywhere else in the
+       * product. Rendering the start values means `strokeDashoffset:
+       * circumference` — an empty arc — so a ScrollTrigger that never fires
+       * does not merely hide the ring, it shows a *confident zero* where the
+       * student's real progress should be. The markup already carries the
+       * settled `strokeDashoffset={offset}`, so deferring the render leaves the
+       * true number on screen and the sweep becomes decoration.
+       *
+       * See the long note in `journey-section.tsx`.
+       */
       gsap.fromTo(
         ref.current?.querySelector("[data-arc]") ?? null,
         { strokeDashoffset: circumference },
@@ -61,10 +72,12 @@ export function ProgressRing({
           strokeDashoffset: offset,
           duration: 1.2,
           ease: "power2.out",
+          immediateRender: false,
           scrollTrigger: {
             trigger: ref.current,
             start: "top 92%",
             once: true,
+            invalidateOnRefresh: true,
           },
         },
       );

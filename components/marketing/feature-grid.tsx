@@ -92,15 +92,26 @@ export function FeatureGrid() {
     () => {
       if (prefersReducedMotion()) return;
 
-      gsap.from(ref.current?.querySelectorAll("[data-feature-card]") ?? [], {
-        opacity: 0,
-        y: 60,
-        rotate: -2,
-        duration: DUR.slow,
-        ease: EASE,
-        stagger: STAGGER,
-        scrollTrigger: revealTrigger(ref.current),
-      });
+      /*
+       * `fromTo` with `immediateRender: false` rather than `from` — the cards
+       * must be on screen and upright when the tween never runs. See the long
+       * note in `journey-section.tsx` for why `from` made the start state the
+       * resting state, and why `fromTo` alone does not fix it.
+       */
+      gsap.fromTo(
+        ref.current?.querySelectorAll("[data-feature-card]") ?? [],
+        { opacity: 0, y: 60, rotate: -2 },
+        {
+          opacity: 1,
+          y: 0,
+          rotate: 0,
+          duration: DUR.slow,
+          ease: EASE,
+          stagger: STAGGER,
+          immediateRender: false,
+          scrollTrigger: revealTrigger(ref.current),
+        },
+      );
     },
     { scope: ref, dependencies: [t.features.heading] },
   );

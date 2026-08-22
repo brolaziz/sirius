@@ -53,7 +53,13 @@ export function QuestionPane({
     <div className="mx-auto max-w-2xl">
       {/* Question meta bar */}
       <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-        <div className="flex items-center gap-2.5">
+        {/*
+          `min-w-0` is what makes the `truncate` below actually truncate: without
+          it this flex item keeps `min-width: auto`, its minimum is the domain
+          string's min-content, and a long domain widens the meta bar instead of
+          being clipped. Same shape as the bug fixed in `universities-card.tsx`.
+        */}
+        <div className="flex min-w-0 items-center gap-2.5">
           <span className="inline-flex size-7 items-center justify-center rounded-md bg-foreground text-xs font-semibold text-background tnum">
             {questionNumber}
           </span>

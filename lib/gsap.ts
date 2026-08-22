@@ -93,24 +93,34 @@ export const SCROLL_START = "top 88%";
 /**
  * Standard ScrollTrigger config for a one-shot reveal.
  *
- * WHY `invalidateOnRefresh` IS NOT IN HERE
+ * WHAT EVERY CALLER OF THIS OWES IT
  *
- * It belongs on a reveal whose start *and* end values are both stated —
- * `journey-section.tsx` adds it per-trigger for that reason. On a `from()` tween
- * that has already rendered its start values (which is every caller of this
- * helper except the journey stages), `invalidate()` re-reads the *current* DOM
- * as the animation's end state — and before the trigger fires, the current DOM
- * is the start state. The tween would then animate to `opacity: 0` and stay
- * there. Putting the flag here would fix one reveal and silently break the rest.
+ * `invalidateOnRefresh` re-reads a tween's start and end values whenever
+ * ScrollTrigger recalculates, so a reveal first measured against a pre-font,
+ * pre-`SplitText` layout does not animate to stale coordinates. That is only
+ * safe when both ends are *stated*. On a `from()` tween that has already
+ * rendered its start values, `invalidate()` re-reads the current DOM as the
+ * animation's end state — and before the trigger fires, the current DOM **is**
+ * the start state, so the tween would animate to `opacity: 0` and stay there.
  *
- * Move it in once the remaining callers are converted to `fromTo` with
- * `immediateRender: false`. See the sweep note in HANDOFF.md.
+ * So the flag lives here, and the contract it assumes is:
+ *
+ *   pair this with `gsap.fromTo()` and `immediateRender: false`, never
+ *   `gsap.from()`.
+ *
+ * That is not a style preference. A tween gated behind a scroll trigger must
+ * not write its start values before the trigger fires, because a trigger that
+ * never fires then leaves the content permanently invisible — which is exactly
+ * what shipped on the landing page. The settled state is what the DOM must show
+ * when the tween never runs; the animation is the conditional part. See the long
+ * note in `components/marketing/journey-section.tsx`.
  */
 export function revealTrigger(trigger: Element | null) {
   return {
     trigger: trigger ?? undefined,
     start: SCROLL_START,
     once: true,
+    invalidateOnRefresh: true,
   } as const;
 }
 

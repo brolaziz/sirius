@@ -73,11 +73,11 @@ const SLIDE_FITS = `(min-width: ${SLIDE_FITS_MIN}px)`;
  * starts, and a trigger that never fires costs an animation rather than the
  * page.
  *
- * `invalidateOnRefresh` re-reads the start and end values whenever ScrollTrigger
- * recalculates, so a reveal that was measured against a pre-font, pre-SplitText
- * layout does not animate to stale coordinates. It is safe *here* because both
- * ends are explicit; it is applied per-trigger rather than in `revealTrigger`
- * for that reason — see the note there.
+ * `revealTrigger` carries `invalidateOnRefresh`, which re-reads both ends
+ * whenever ScrollTrigger recalculates, so a reveal measured against a pre-font,
+ * pre-SplitText layout does not animate to stale coordinates. That flag is only
+ * safe on a tween whose ends are both stated — which is the contract documented
+ * on `revealTrigger` and the reason this file no longer uses `from()`.
  */
 function buildTimeline(root: HTMLDivElement | null, distance: number) {
   gsap.fromTo(
@@ -90,7 +90,7 @@ function buildTimeline(root: HTMLDivElement | null, distance: number) {
       ease: EASE,
       stagger: STAGGER,
       immediateRender: false,
-      scrollTrigger: { ...revealTrigger(root), invalidateOnRefresh: true },
+      scrollTrigger: revealTrigger(root),
     },
   );
 
@@ -103,7 +103,7 @@ function buildTimeline(root: HTMLDivElement | null, distance: number) {
       duration: DUR.slow,
       ease: EASE,
       immediateRender: false,
-      scrollTrigger: { ...revealTrigger(root), invalidateOnRefresh: true },
+      scrollTrigger: revealTrigger(root),
     },
   );
 }

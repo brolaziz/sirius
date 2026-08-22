@@ -5,10 +5,11 @@ phase status), `DATABASE.md` (environments and deploy rules), `ARCHITECTURE.md`
 (the codebase), and `AGENTS.md` (this is Next 16 — read the guide in
 `node_modules/next/dist/docs/` before writing code).
 
-> **`TASK-2.md` is missing.** It is not in the working tree, not in the git
-> history (`git log --all --name-only` has no match for it), and not ignored-but-
-> present. The phase table below is the only surviving copy of what it said.
-> Restore it from whichever checkout still has it before trusting that table.
+`TASK-2.md` was absent from the repository until `5e4bc57` and is now committed.
+The phase table below is a summary of it, not a substitute — read the real
+document for the standing rules, which include the four gates every phase must
+pass (`tsc --noEmit`, `npm run check`, `npm run lint`, `npm test`) and the rule
+that desktop layouts stay pixel-identical through responsive work.
 
 ## TASK-2 phase status
 
@@ -98,11 +99,13 @@ audit of them measures nothing.
 
 ## Where the code is
 
-`main` and `origin/main` are level at `e034a29`, working tree clean. The last
-week landed in six commits, `23f0699`…`e034a29`: the migration history, the
-data/domain layer, the feature screens, the touch-target pass, the database
-banner, and the Netlify migrate step. `tsc`, `eslint`, `npm run check` and 159
-vitest tests were green at that commit.
+The last week landed in six commits, `23f0699`…`e034a29`: the migration history,
+the data/domain layer, the feature screens, the touch-target pass, the database
+banner, and the Netlify migrate step. `TASK-2.md` itself followed in `5e4bc57`.
+
+The two device bugs and the reveal sweep sit on **`fix/device-responsive-defects`**,
+branched from `5e4bc57` and not yet merged. All four gates are green on it:
+`tsc --noEmit`, `npm run check` (35 passed), `npm run lint`, and 159 vitest tests.
 
 ## Database, as it now stands
 
@@ -142,6 +145,49 @@ failures. Two surfaces were deferred for want of fixtures — the break screen
 **The runner is not committed.** The probe is; the harness that drove it was
 scratch — Chrome over CDP on port 9222, a JSON list of target screens, and a
 session cookie minted directly in the database. Rebuild it or ask.
+
+## Two sweeps, both closed
+
+**Every scroll-gated reveal now states both ends.** Bug 1's defect was a class,
+not an instance, so the whole class was converted to `fromTo` +
+`immediateRender: false`:
+
+    components/motion/reveal.tsx      Reveal and StaggerGroup — the shared
+                                      primitive, and therefore most of the app
+    components/marketing/feature-grid.tsx
+    components/marketing/journey-section.tsx
+    components/dashboard/progress-ring.tsx
+
+`progress-ring` was the worst of them and the least obvious. Its start value is
+`strokeDashoffset: circumference` — an empty arc — so a trigger that never fired
+did not merely hide the ring, it displayed a **confident zero** where a student's
+real progress should be. Measured with the trigger unreachable: the arc now
+renders 64.0% for `value={64}`, and GSAP writes no inline style at all.
+
+Because every caller now states both ends, `invalidateOnRefresh` moved into
+`revealTrigger()` where it belongs, and the contract it depends on is written on
+that function: **pair it with `fromTo` and `immediateRender: false`, never
+`from()`.** Re-read that note before adding a reveal.
+
+Deliberately unconverted, because they have no defect: `auth-panel.tsx:46`,
+`bento-grid.tsx:47`, `welcome-banner.tsx:70` and `university-detail.tsx:91` use
+`gsap.from()` with **no** ScrollTrigger, so they run on mount and the start state
+lasts a frame. `animated-number.tsx` and `hero.tsx` use `gsap.to()`, which has no
+start state to strand. `Reveal`'s own `immediate` path is left rendering
+immediately for the same reason.
+
+**`truncate` inside a grid or flex item.** Swept the whole app. Everything is now
+guarded, either by `min-w-0` on the item or `overflow-hidden` on the grid item
+itself. `question-pane.tsx` was the one remaining case — its `truncate` was inert
+because the wrapping flex item kept `min-width: auto` — and is fixed.
+
+Worth knowing for next time: `/universities` looks like the same bug as
+`universities-card` and is not. `UniversityCard`'s root **is** the grid item and
+carries `overflow-hidden`, which zeroes the automatic minimum at the right level.
+In `universities-card` the `overflow-hidden` sat on the `<a>`, one level *below*
+the grid item, which is why it did nothing. Same class, different position,
+opposite outcome — check which element is actually the grid item before deciding
+a card is safe.
 
 ## Open items
 
@@ -183,36 +229,3 @@ session cookie minted directly in the database. Rebuild it or ask.
 
    If that is confirmed, the fix is a refresh that runs when the layout has
    actually settled rather than when fonts happen to resolve.
-
-5. **The rest of the reveals still have bug 1's defect.** `journey-section.tsx` is
-   converted; these are not. Every one is gated behind a ScrollTrigger and renders
-   its start values immediately, so each is one non-firing trigger away from
-   permanently invisible content:
-
-       components/motion/reveal.tsx:60      Reveal        (fromTo, page-wide)
-       components/motion/reveal.tsx:115     StaggerGroup  (fromTo, page-wide)
-       components/marketing/feature-grid.tsx:95           (from)
-       components/dashboard/progress-ring.tsx:57          (fromTo)
-
-   `reveal.tsx` is the important one — it is the shared primitive, so converting
-   it fixes the most surface for the least change. The fix is the same three
-   words: `immediateRender: false`, plus explicit `to` values.
-
-   Not defects, for contrast: `auth-panel.tsx:46`, `bento-grid.tsx:47`,
-   `welcome-banner.tsx:70` and `university-detail.tsx:91` all use `gsap.from()`
-   with **no** ScrollTrigger, so they run on mount and the start state lasts one
-   frame. `animated-number.tsx` and `hero.tsx` use `gsap.to()`, which has no start
-   state to strand.
-
-   `invalidateOnRefresh` cannot move into `revealTrigger()` until the above are
-   converted — see the note on that function in `lib/gsap.ts` for why it would
-   break the unconverted callers.
-
-6. **`truncate` inside a grid item, elsewhere.** Swept the whole app after bug 2.
-   Everything else is correctly guarded (`min-w-0` on the flex item, or
-   `overflow-hidden` on the grid item itself). One latent case:
-   `components/simulator/question-pane.tsx:61` — the `truncate` span is a direct
-   flex item of the meta bar with no `min-w-0` on it or its wrapper, so the
-   truncation is inert and the row is sized to the full domain string instead.
-   Not currently overflowing at realistic domain names; it will the first time a
-   long one appears. `min-w-0` on the line 56 wrapper fixes it.
