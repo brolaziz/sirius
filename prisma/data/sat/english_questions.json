@@ -1,0 +1,145 @@
+{
+  "subject": "English",
+  "questions": [
+    {
+      "id": "eng-1",
+      "topic": "Reading - Main Idea",
+      "type": "multiple_choice",
+      "passage": "Horses and barn owls can see in three dimensions (3D), which helps them perceive distance and depth. Octopuses and squid are thought to lack 3D vision. Many researchers once thought the same about cuttlefish, but Trevor Wardell and his team wanted to test whether this assumption was true. The team studied how cuttlefish wearing 3D glasses reacted to 3D images of shrimp (a favorite prey) projected on a tank wall. Cuttlefish changed their striking position to match the 3D images, suggesting that their vision is more like that of horses and barn owls than that of octopuses or squid.",
+      "question": "Which choice best states the main idea of the text?",
+      "options": {
+        "A": "Researchers have long known that horses and barn owls can see in 3D.",
+        "B": "Cuttlefish are surprisingly similar in structure to octopuses and squid.",
+        "C": "Contrary to what many researchers had assumed, cuttlefish may be able to see in 3D.",
+        "D": "The ability to see in 3D allows many animals to interact with one another."
+      },
+      "answer": "C"
+    },
+    {
+      "id": "eng-2",
+      "topic": "Reading - Main Idea",
+      "type": "multiple_choice",
+      "passage": "Animals use many objects as tools to achieve goals more easily. Such goals include grooming, finding food, and protecting themselves. For a long time, people thought tool use was unique to primates. Octopuses and other animals, though, have busted the myth that tool use requires hands. Inventively, octopuses use two halves of a seashell to provide protection or a place to hide. Greater vasa parrots also get creative. They use date pits to grind seashells into calcium powder.",
+      "question": "Which choice best states the main idea of the text?",
+      "options": {
+        "A": "Unlike primates, octopuses are exceptionally skillful at using different tools.",
+        "B": "There are many myths about tool use that researchers are starting to challenge.",
+        "C": "Animals find it difficult to use objects as tools.",
+        "D": "Contrary to long-held beliefs, primates aren't the only animals to use tools."
+      },
+      "answer": "D"
+    },
+    {
+      "id": "eng-3",
+      "topic": "Reading - Main Idea",
+      "type": "multiple_choice",
+      "passage": "Tanya Tagaq is a writer and musician and a member of the Inuit community of Cambridge Bay in northern Canada. Critics and fellow writers have praised her work for combining traditional Inuit stories with popular genres of literature, such as fantasy fiction. But Tagaq is not the only Indigenous writer to blend traditional stories with popular literature. In the 2020 novel The Only Good Indians, Stephen Graham Jones successfully blended the oral storytelling tradition of his tribe, the Blackfeet Nation, with horror fiction.",
+      "question": "Which choice best states the main idea of the text?",
+      "options": {
+        "A": "Non-Indigenous authors should consider the expectations of Indigenous readers.",
+        "B": "Several famous Indigenous writers increased their book sales when they began incorporating traditional stories.",
+        "C": "Recent Indigenous fiction writers are mixing traditional stories with popular literary genres.",
+        "D": "The success of Tanya Tagaq has influenced non-Indigenous authors who write in popular literary genres."
+      },
+      "answer": "C"
+    },
+    {
+      "id": "eng-4",
+      "topic": "Reading - Inference",
+      "type": "multiple_choice",
+      "passage": "Anne Bronte's 1847 novel Agnes Grey contains elements drawn from Bronte's own life: there are many parallels between the experiences of the novel's title character and those of Bronte, and as a result Agnes Grey is regularly described as an autobiographical novel. This characterization can be useful, but it also presents drawbacks in terms of how the work is perceived, as it may lead readers to believe that Bronte merely fictionalized true events, which, in an artistic field where creativity and inventiveness are prized, can suggest that ____________",
+      "question": "Which choice most logically completes the text?",
+      "options": {
+        "A": "Agnes Grey is less of an imaginative achievement than it actually is.",
+        "B": "the real-world counterparts of other characters in Agnes Grey are hard to identify.",
+        "C": "Bronte should not have claimed that Agnes Grey is based on real events.",
+        "D": "critics disagree about whether Agnes Grey shows greater originality than works without autobiographical elements."
+      },
+      "answer": "A"
+    },
+    {
+      "id": "eng-5",
+      "topic": "Writing - Boundaries (Punctuation)",
+      "type": "multiple_choice",
+      "passage": "Within Earth's biomes, there are four main types of deserts: arid, semiarid, coastal, and cold. The Great Salt Desert in western Asia is an arid ____________ it is one of the largest deserts in the world, with a total area of about 77,000 km2.",
+      "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": {
+        "A": "desert, for example;",
+        "B": "desert, for example,",
+        "C": "desert; for example,",
+        "D": "desert, for example"
+      },
+      "answer": "A"
+    },
+    {
+      "id": "eng-6",
+      "topic": "Writing - Boundaries (Punctuation)",
+      "type": "multiple_choice",
+      "passage": "After finding information about Harold Eugene Ford, who represented Tennessee in the United States House of Representatives, the student discovered biographical sketches of two other Black Americans who served in ____________ Harold Washington of Illinois and Augustus (Gus) Freeman Hawkins of California.",
+      "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": {
+        "A": "Congress.",
+        "B": "Congress;",
+        "C": "Congress:",
+        "D": "Congress,"
+      },
+      "answer": "C"
+    },
+    {
+      "id": "eng-7",
+      "topic": "Writing - Transitions",
+      "type": "multiple_choice",
+      "passage": "Of Names, an essay by French philosopher Michel de Montaigne, explores a relatively light subject, while his essay \"Of the Punishment of Cowardice\" takes on heavier fare. No matter the essay topic, Montaigne challenges his own ideas, beliefs, and values. ____________ he questions his own perspective, regardless of subject matter.",
+      "question": "Which choice completes the text with the most logical transition?",
+      "options": {
+        "A": "For example,",
+        "B": "At that time,",
+        "C": "Indeed,",
+        "D": "However,"
+      },
+      "answer": "C"
+    },
+    {
+      "id": "eng-8",
+      "topic": "Writing - Transitions",
+      "type": "multiple_choice",
+      "passage": "Built at a scale of 1:110, the Eiffel Tower in Baku, Azerbaijan, is one of many replicas of the famous Eiffel Tower in Paris, France. ____________ towers like the Metallic Tower of Fourviere in Lyon, France, though not exact replicas, pay homage to the Eiffel's iconic spire-like design.",
+      "question": "Which choice completes the text with the most logical transition?",
+      "options": {
+        "A": "On the contrary,",
+        "B": "Consequently,",
+        "C": "Invariably,",
+        "D": "Moreover,"
+      },
+      "answer": "D"
+    },
+    {
+      "id": "eng-9",
+      "topic": "Reading - Words in Context",
+      "type": "multiple_choice",
+      "passage": "The Lascaux Cave paintings—detailed paintings of animals found in what is now France and dating from around 17,000 years ago—are sometimes said to be emotionally powerful despite their age, but in fact the paintings are ____________ precisely because of their age. It is the link of shared humanity with the artists across so many centuries that gives the Lascaux Cave paintings such resonance.",
+      "question": "Which choice completes the text with the most logical and precise word or phrase?",
+      "options": {
+        "A": "ingenious",
+        "B": "meticulous",
+        "C": "pristine",
+        "D": "affecting"
+      },
+      "answer": "D"
+    },
+    {
+      "id": "eng-10",
+      "topic": "Reading - Words in Context",
+      "type": "multiple_choice",
+      "passage": "Some robots such as Surena (developed in 2008) and COMAN (developed in 2012) feature humanoid characteristics like bipedal locomotion so that people will find it easier to interact with them. While these features can help to ____________ feelings of comfort in people, a robot that looks too like a human can fall into the 'uncanny valley,' meaning that its appearance unintentionally unsettles those who encounter it.",
+      "question": "Which choice completes the text with the most logical and precise word or phrase?",
+      "options": {
+        "A": "engender",
+        "B": "constrict",
+        "C": "counterbalance",
+        "D": "repudiate"
+      },
+      "answer": "A"
+    }
+  ]
+}

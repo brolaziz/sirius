@@ -1,0 +1,111 @@
+{
+  "subject": "Math",
+  "questions": [
+    {
+      "id": "math-11",
+      "topic": "Linear System of Equations",
+      "type": "grid_in",
+      "question": "y = (x − 6)(x + 5) and y = 11x − 66. The solution to the given system of equations is (x, y). What is the value of 2y?",
+      "answer": "0"
+    },
+    {
+      "id": "math-12",
+      "topic": "Linear System of Equations",
+      "type": "multiple_choice",
+      "question": "y = −15x + 19 and y = −20x + 24. What is the solution (x, y) to the given system of equations?",
+      "options": {
+        "A": "(24, 19)",
+        "B": "(19, 24)",
+        "C": "(4, 1)",
+        "D": "(1, 4)"
+      },
+      "answer": "D"
+    },
+    {
+      "id": "math-13",
+      "topic": "Linear Inequalities",
+      "type": "multiple_choice",
+      "question": "To win a game show, a contestant needs to score at least 70 total points from two rounds. Correct responses in the first round are worth 4 points each, and correct responses in the second round are worth 5 points each. Which inequality models this situation, where f is the number of correct responses in the first round and s is the number of correct responses in the second round?",
+      "options": {
+        "A": "f + s ≤ 70",
+        "B": "4f + 5s ≥ 70",
+        "C": "5f + s ≥ 70",
+        "D": "5f + 4s ≤ 70"
+      },
+      "answer": "B"
+    },
+    {
+      "id": "math-14",
+      "topic": "Functions & Function Notation",
+      "type": "grid_in",
+      "question": "The function f is defined by f(x) = 7x^3 + 6. What is the value of f(2)?",
+      "answer": "62"
+    },
+    {
+      "id": "math-15",
+      "topic": "Functions & Function Notation",
+      "type": "multiple_choice",
+      "question": "The functions f and g are defined by the equations f(x) = 4(g(x)) − 2 and g(x) = |13x − 8|. What is the value of f(−10)?",
+      "options": {
+        "A": "−554",
+        "B": "−42",
+        "C": "550",
+        "D": "138"
+      },
+      "answer": "C"
+    },
+    {
+      "id": "math-16",
+      "topic": "Exponents & Radicals",
+      "type": "multiple_choice",
+      "question": "What is the solution to the given equation? √w + 22 = 28",
+      "options": {
+        "A": "2",
+        "B": "3",
+        "C": "12",
+        "D": "36"
+      },
+      "answer": "D"
+    },
+    {
+      "id": "math-17",
+      "topic": "Unit Conversion",
+      "type": "multiple_choice",
+      "question": "A triathlon is a multisport race consisting of three different legs. A triathlon participant completed the cycling leg with an average speed of 19.3 miles per hour. What was the average speed, in yards per hour, of the participant during the cycling leg? (1 mile = 1,760 yards)",
+      "options": {
+        "A": "33,968",
+        "B": "91.2",
+        "C": "57.9",
+        "D": "5,280"
+      },
+      "answer": "A"
+    },
+    {
+      "id": "math-18",
+      "topic": "Probability",
+      "type": "grid_in",
+      "question": "A department store sells pants in three lengths: short, regular, and long. The table summarizes the distribution of pant length, by color, for all the pants in the store.\n\n           Black  Brown  Blue  Total\nShort        19     20    24     63\nRegular      17     21    22     60\nLong         14     25    19     58\nTotal        50     66    65    181\n\nA pair of pants is selected at random. What is the probability of selecting a pair of pants that is brown, given that the pair of pants is regular length? (Express your answer as a decimal or fraction, not as a percent.)",
+      "answer": "0.35 or 7/20"
+    },
+    {
+      "id": "math-19",
+      "topic": "Mean, Median, Mode, Range",
+      "type": "grid_in",
+      "question": "The list gives the speeds, in miles per hour, of 7 serves made by a professional tennis player: 121, 123, 123, 125, 151, 154, 155. What is the mean speed, in miles per hour, of these 7 serves?",
+      "answer": "136"
+    },
+    {
+      "id": "math-20",
+      "topic": "Geometry - Lines and Angles",
+      "type": "multiple_choice",
+      "question": "A rectangle has a perimeter of 36 inches. If the sum of the lengths of three sides of the rectangle is 21 inches, what is the length, in inches, of the fourth side?",
+      "options": {
+        "A": "3",
+        "B": "57",
+        "C": "15",
+        "D": "36"
+      },
+      "answer": "C"
+    }
+  ]
+}

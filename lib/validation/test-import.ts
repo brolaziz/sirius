@@ -254,7 +254,7 @@ const questionSchema = z
     explanation: z.string().max(10_000).optional(),
     domain: z.string().max(200).optional(),
     skill: z.string().max(200).optional(),
-    difficulty: z.enum(["EASY", "MEDIUM", "HARD"]),
+    difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).optional(),
   })
   /*
    * Cross-field rules. These are the checks that stop an unanswerable question
@@ -376,8 +376,13 @@ function normaliseQuestion(raw: unknown, index: number): UnknownRecord {
     ),
     domain: asOptionalString(pick(raw, "domain", "category", "topic", "area")),
     skill: asOptionalString(pick(raw, "skill", "subskill", "sub_skill", "tag")),
-    difficulty:
-      coerceDifficulty(pick(raw, "difficulty", "level", "diff")) ?? "MEDIUM",
+    /*
+     * No fallback: a payload that does not rate its questions leaves
+     * `difficulty` null, which reads as "not rated yet". Defaulting to MEDIUM
+     * would record a guess as a fact, and the adaptive module selection that
+     * will read this column later cannot tell the two apart.
+     */
+    difficulty: coerceDifficulty(pick(raw, "difficulty", "level", "diff")),
   };
 }
 

@@ -1,0 +1,145 @@
+{
+  "subject": "English",
+  "questions": [
+    {
+      "id": "eng-11",
+      "topic": "Reading - Details",
+      "type": "multiple_choice",
+      "passage": "In a study by Mika R. Moran, Daniel A. Rodriguez, and colleagues, residents of Panama City, Panama, and Fortaleza, Brazil, were surveyed about parks in their cities. Of the 318 respondents from Panama City, 53.5% indicated that they use the city's parks, and of 938 respondents from Fortaleza, 35.7% indicated using city parks. Given that the percentage of Panama City respondents who reported living within a 10-minute walk of a park was much lower than that reported by Fortaleza respondents, greater proximity alone can't explain the difference in park use.",
+      "question": "The text makes which point about the difference between the proportions of Panama City residents and Fortaleza residents using parks?",
+      "options": {
+        "A": "It was much larger than the researchers conducting the study expected.",
+        "B": "It could be due to inaccuracies in the survey results.",
+        "C": "It was calculated using sources that predate the survey.",
+        "D": "It is caused by something other than the parks' proximity to the residents."
+      },
+      "answer": "D"
+    },
+    {
+      "id": "eng-12",
+      "topic": "Reading - Details",
+      "type": "multiple_choice",
+      "passage": "Like all species of baleen whales, the common minke whale feeds on tiny creatures known as krill by filtering water through bristlelike keratin structures called baleen plates. In this way, baleen whales can eat up to 30% of their total mass per day. And while no one would call the common minke whale small—it can have a mass as high as 4,000 kg—it is one of the smaller baleen whales and it is much smaller than the fin whale, which can weigh a whopping 80,000 kg and consume as much as 24,000 kg of krill per day.",
+      "question": "Based on the text, what can most reasonably be concluded about krill consumption among common minke and fin whales?",
+      "options": {
+        "A": "Both of them can eat as much as 24,000 kg of krill per day.",
+        "B": "The quantities of krill consumed by fin whales has made it difficult for minke whales to find sufficient food.",
+        "C": "The fin whale is able to eat more krill per day than the minke whale.",
+        "D": "The common minke whale eats a greater proportion of its body mass in krill than the fin whale does."
+      },
+      "answer": "C"
+    },
+    {
+      "id": "eng-13",
+      "topic": "Reading - Main Purpose",
+      "type": "multiple_choice",
+      "passage": "When people think of dinosaurs with feathers, they typically think of winged dinosaurs, such as the bat-like Ambopteryx. However, many dinosaurs that didn't have wings also had feathers on their bodies. For instance, research indicates that the wingless large Yutyrannus likely had feathers.",
+      "question": "Which choice best states the main purpose of the text?",
+      "options": {
+        "A": "To discuss the presence of feathers on certain types of dinosaurs.",
+        "B": "To point out the differences between dinosaur feathers and bird feathers.",
+        "C": "To explain why feathered dinosaurs went extinct.",
+        "D": "To argue that only one species of dinosaur had feathers."
+      },
+      "answer": "A"
+    },
+    {
+      "id": "eng-14",
+      "topic": "Reading - Main Purpose",
+      "type": "multiple_choice",
+      "passage": "Smartwatches and fitness trackers currently available to the public claim to be able to provide data on VO2 max, a measurement of an individual's fitness level that indicates heart disease and mortality risk. However, whether or not these measurements are accurate is still unproven. Meanwhile, Cambridge developed a model that can provide more accurate tracking of one's heart rate and can also monitor fitness changes leading to better indications of health risks.",
+      "question": "Which choice best states the main purpose of the text?",
+      "options": {
+        "A": "To prove that currently available smartwatches are not an accurate indicator of overall health.",
+        "B": "To introduce a new fitness tracker model that may provide more accurate data on health than current products.",
+        "C": "To argue that individuals should not rely on fitness trackers or smartwatches to monitor their health.",
+        "D": "To summarize the findings of a new fitness tracking study."
+      },
+      "answer": "B"
+    },
+    {
+      "id": "eng-15",
+      "topic": "Reading - Overall Structure",
+      "type": "multiple_choice",
+      "passage": "Horizontal gene transfer involves the exchange of genetic material between organisms not in a parent-offspring relationship. It is common among prokaryotes (single-celled organisms, such as the bacteria Carnobacterium viridans and Lactococcus lactis). The process can have the effect of increasing bacterial resistance to antibiotics; as such, an understanding of how to prevent horizontal gene transfer might result in the mitigation of dangerous pathogens (organisms that cause disease).",
+      "question": "Which choice best describes the overall structure of the text?",
+      "options": {
+        "A": "It provides a history of research into a biological process and suggests a direction for further investigation.",
+        "B": "It explains why an organism poses a threat and then suggests how that threat might be avoided.",
+        "C": "It depicts two organisms and presents their similarities and differences.",
+        "D": "It describes a biological process and explains why researching it is important."
+      },
+      "answer": "D"
+    },
+    {
+      "id": "eng-16",
+      "topic": "Writing - Form, Structure, and Sense (Agreement)",
+      "type": "multiple_choice",
+      "passage": "The writer Maya Angelou, along with others such as Lorenzo Thomas and Gwendolyn Brooks, ____________ commonly associated with the Black Arts movement, a loose-knit group of writers and artists active in the 1960s and the 1970s who were interested in exploring the Black American experience through their work.",
+      "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": {
+        "A": "have been",
+        "B": "is",
+        "C": "are",
+        "D": "were"
+      },
+      "answer": "B"
+    },
+    {
+      "id": "eng-17",
+      "topic": "Writing - Form, Structure, and Sense (Agreement)",
+      "type": "multiple_choice",
+      "passage": "Both Heinrich Boll and Camilo Jose Cela have been commended for ____________ contributions to literature, perhaps most notably when the Swedish Academy awarded Boll the Nobel Prize in Literature in 1972 and Cela in 1989.",
+      "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": {
+        "A": "it's",
+        "B": "their",
+        "C": "its",
+        "D": "they're"
+      },
+      "answer": "B"
+    },
+    {
+      "id": "eng-18",
+      "topic": "Writing - Form, Structure, and Sense (Agreement)",
+      "type": "multiple_choice",
+      "passage": "On the other hand, Newark Liberty International Airport, which ____________ located in Newark, New Jersey, saw an overall increase in departing passengers over the same time period, from 16,704,844 total passengers to 23,171,827.",
+      "question": "Which choice completes the text so that it conforms to the conventions of Standard English?",
+      "options": {
+        "A": "is",
+        "B": "are",
+        "C": "were",
+        "D": "have been"
+      },
+      "answer": "A"
+    },
+    {
+      "id": "eng-19",
+      "topic": "Writing - Rhetorical Synthesis",
+      "type": "multiple_choice",
+      "passage": "While researching a topic, a student has taken the following notes:\n• The Music by Black Composers (MBC) project aims to inspire aspiring music students by archiving and sharing information about the music of Black classical composers.\n• George Theophilus Walker is a Black classical music composer included in MBC's Historic Composers Directory.\n• He was born in 1922 and died in 2018.",
+      "question": "Which choice most effectively uses information from the given sentences to set up a discussion of Walker's career for an audience already familiar with the MBC Project?",
+      "options": {
+        "A": "While George Theophilus Walker is considered a great composer, there are many more such composers included in MBC's Historic Composers Directory.",
+        "B": "Born in 1922, George Theophilus Walker passed away in 2018 according to the MBC project.",
+        "C": "Among the many talented figures included in the MBC project is classical music composer George Theophilus Walker.",
+        "D": "The MBC project's Historic Composers Directory highlights Black classical composers of the past, such as George Theophilus Walker (1922-2018), in order to inspire music students to become the classical composers of the future."
+      },
+      "answer": "C"
+    },
+    {
+      "id": "eng-20",
+      "topic": "Writing - Rhetorical Synthesis",
+      "type": "multiple_choice",
+      "passage": "While researching a topic, a student has taken the following notes:\n• Blackberries are fruits that contain ascorbic acid, an essential nutrient for humans.\n• Every 100 grams (g) of blackberries contains 21 milligrams (mg) of ascorbic acid.\n• Many animals can make ascorbic acid in their bodies, but humans cannot.\n• Humans must get ascorbic acid from foods, including fruits and vegetables.\n• Ascorbic acid is also known as vitamin C.",
+      "question": "The student wants to specify how much vitamin C is in blackberries. Which choice most effectively uses relevant information from the notes to accomplish this goal?",
+      "options": {
+        "A": "Many animals can make ascorbic acid, which is also known as vitamin C, in their bodies, but humans cannot.",
+        "B": "There is 21 mg of vitamin C in every 100 g of blackberries.",
+        "C": "Since humans cannot make vitamin C in their bodies, they must get this essential nutrient from foods like blackberries.",
+        "D": "Blackberries contain vitamin C, which humans must get from food."
+      },
+      "answer": "B"
+    }
+  ]
+}

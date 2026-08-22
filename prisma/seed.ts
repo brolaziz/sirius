@@ -28,6 +28,7 @@ import { join } from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../lib/generated/prisma/client";
+import { printDatabaseBanner } from "../lib/db-banner";
 import { UNIVERSITY_SEED } from "../data/universities";
 import {
   ScorecardError,
@@ -36,6 +37,8 @@ import {
 } from "../lib/api/scorecard";
 import { fetchTopUniversitiesFromBulk } from "../lib/api/scorecard-bulk";
 import { STARTER_ROADMAP } from "../lib/user";
+
+printDatabaseBanner("prisma/seed.ts");
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -309,19 +312,6 @@ async function seedUniversitiesFromScorecard(): Promise<{
   }
 
   /*
-   * Prune API rows that have dropped out of the top of the list.
-   *
-   * NOT `prisma.university.deleteMany()`. Emptying the table would take the
-   * twelve curated rows with it — Oxford, Cambridge, UCL, Toronto, NYUAD and
-   * WIUT are not in a US federal dataset and would never come back — along
-   * with their hand-written Uzbek copy. Worse, `UniversityShortlistEntry`
-   * cascades on delete, so every student's shortlist would be silently emptied
-   * on a routine reseed.
-   *
-   * Deleting only the API-origin rows that this run did not return achieves the
-   * same "no stale rows" outcome without either loss.
-   */
-  /*
    * Repair rows an earlier version of this script mislabelled.
    *
    * It used to stamp `dataSource: "scorecard"` on every row it touched,
@@ -344,9 +334,22 @@ async function seedUniversitiesFromScorecard(): Promise<{
    * reseed.
    *
    * Deleting only the API-origin rows this run did not return achieves the same
-   * "no stale rows" outcome without either loss. `descriptionUz: null` is the
-   * second guard: a row somebody has written copy for is never dropped, however
-   * it got here.
+   * "no stale rows" outcome without either loss. Three guards, and each one is
+   * there because of a different way this could quietly destroy something:
+   *
+   *   dataSource      — never touch a curated row.
+   *   descriptionUz   — never touch a row somebody has written copy for,
+   *                     however it got here.
+   *   shortlistedBy   — NEVER TOUCH A ROW A STUDENT IS TRACKING. This is the
+   *                     one that matters most and the one that is easiest to
+   *                     forget: the delete cascades to
+   *                     `UniversityShortlistEntry`, so pruning a university
+   *                     that has slipped out of the federal top 250 would
+   *                     silently remove it from the shortlist of every student
+   *                     who had chosen it. A stale row in the explorer is a
+   *                     small problem; a shortlist that loses an entry
+   *                     overnight, with no message and no way to notice, is a
+   *                     student mistrusting the product.
    */
   const keptIds = universities.map((uni) => uni.scorecardId);
   const { count: pruned } = await prisma.university.deleteMany({
@@ -354,6 +357,7 @@ async function seedUniversitiesFromScorecard(): Promise<{
       dataSource: "scorecard",
       descriptionUz: null,
       scorecardId: { notIn: keptIds },
+      shortlistedBy: { none: {} },
     },
   });
 

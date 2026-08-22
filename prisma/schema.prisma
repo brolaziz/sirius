@@ -59,6 +59,32 @@ enum Difficulty {
 }
 
 /// The decision an admissions office returned.
+/// Where a student is in school. Sirius is built for 15–18 year olds, so the
+/// useful answer is a year rather than an age — a year says how many admissions
+/// cycles are left, which an age does not.
+enum GradeLevel {
+  GRADE_9
+  GRADE_10
+  GRADE_11
+  GRADE_12
+  GRADUATED
+}
+
+/// What the student came here for. It decides what the dashboard leads with,
+/// not what they are allowed to use.
+enum StudyPriority {
+  SAT
+  ADMISSIONS
+  BOTH
+}
+
+/// How a practice session was started. It decides where finishing it sends
+/// the student back to, and whether a study-plan task gets credited.
+enum PracticeSource {
+  SKILL
+  PLAN
+}
+
 enum ApplicationStatus {
   ACCEPTED
   REJECTED
@@ -98,8 +124,49 @@ model User {
   /// frame progress. Null until the student sets a goal.
   targetScore Int? @map("target_score")
 
+  /*
+   * What onboarding asks, in the order it asks it.
+   *
+   * Every one of these is nullable and every one is written the moment its step
+   * is answered, so a student who closes the tab on step 3 comes back to step 3
+   * rather than to the beginning. `onboardingCompletedAt` is what says the
+   * whole flow finished — a set of non-null columns cannot, because "I don't
+   * know my score" is a real answer that leaves `currentScore` null.
+   */
+  gradeLevel GradeLevel? @map("grade_level")
+
+  /// Most recent real or practice score, 400–1600. Null means the student does
+  /// not know it yet, which routes them to a diagnostic rather than to a guess.
+  currentScore Int? @map("current_score")
+
+  /// The date of the exam they are working towards. Adopted column: it was in
+  /// the database before onboarding existed.
+  targetExamDate DateTime? @map("target_exam_date")
+
+  /// How much time a week they say they can give this. Drives the plan's weekly
+  /// question count. Adopted column, and its default is deliberate: five hours
+  /// a week is the assumption the plan falls back on.
+  weeklyStudyMinutes Int @default(300) @map("weekly_study_minutes")
+
+  priority StudyPriority?
+
+  /// Set when the last step is answered. Until then the app shows onboarding
+  /// instead of the dashboard.
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+
   /// Preferred UI language. Sirius is bilingual (Uzbek / English).
   locale String @default("uz")
+
+  /*
+   * Paid access. A single boolean on purpose: Sirius has one paid tier, and
+   * modelling plans, periods and renewals before there is a payment provider
+   * would be inventing a billing system nobody has designed.
+   *
+   * It gates *content* — the essay library — and never the study tools. It is
+   * checked in server code (see `lib/premium.ts`); a locked card in the browser
+   * is a courtesy, not the lock.
+   */
+  isPremium Boolean @default(false) @map("is_premium")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -111,6 +178,9 @@ model User {
   attempts      TestAttempt[]
   savedWords    SavedWord[]
   roadmapTasks  RoadmapTask[]
+  studyPlans    StudyPlan[]
+  practice      PracticeSession[]
+  activities    UserActivity[]
   shortlist     UniversityShortlistEntry[]
 
   @@map("users")
@@ -168,6 +238,131 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+// -----------------------------------------------------------------------------
+// Content taxonomy
+// -----------------------------------------------------------------------------
+
+/// Which half of the Digital SAT a domain belongs to.
+///
+/// Deliberately not `TestType`: that enum describes a *test* and has a third
+/// value (`FULL`) no domain can take. `RW` is this enum's spelling of Reading
+/// & Writing.
+enum SatSection {
+  RW
+  MATH
+}
+
+/// A College Board content domain — the top level of the skill taxonomy.
+///
+/// ADOPTED, NOT INVENTED. These rows were already in the database when the
+/// question bank arrived: 8 domains and 31 skills, bilingual, carrying the
+/// share of the exam each part is worth. Recreating a thinner taxonomy
+/// alongside them would have left the database holding two answers to the same
+/// question, so this schema describes what is there.
+///
+/// `examWeight` is that share as a fraction of the whole test (0.175 = 17.5%),
+/// which is what lets a study plan spend a student's time where the exam
+/// actually spends its questions.
+///
+/// The rows are content, not user data: `lib/taxonomy.ts` holds the closed list
+/// of `code` values a question may be filed under, and the names and weights
+/// live here and nowhere else.
+model Domain {
+  id String @id @default(cuid())
+
+  /// Stable key, e.g. "MATH_ALGEBRA". The taxonomy in `lib/taxonomy.ts` refers
+  /// to domains and skills by code, never by name.
+  code String @unique
+
+  name   String
+  nameUz String? @map("name_uz")
+
+  section SatSection
+
+  /// Share of the whole exam, as a fraction: 0.175 = 17.5% of all questions.
+  examWeight Float @map("exam_weight")
+
+  /// Display order within its section, following the College Board's own.
+  order Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  skills Skill[]
+
+  @@index([section, order])
+  @@map("domains")
+}
+
+/// A skill inside a domain — the unit practice, roadmaps and weak-area analysis
+/// are measured in.
+///
+/// `weightInDomain` is this skill's share *of its domain* (the values in one
+/// domain sum to 1), so a question's share of the exam is
+/// `domain.examWeight * skill.weightInDomain`.
+///
+/// `baseQuestionsToMastery` is how many questions a student is expected to need
+/// before this skill can be called learned. It came with these rows, from the
+/// mastery model that was removed from the application; it is untouched and
+/// unread for now, and is the natural input when that work returns.
+model Skill {
+  id String @id @default(cuid())
+
+  /// Stable key, e.g. "RW_CRAFT_WORDS_IN_CONTEXT".
+  code String @unique
+
+  name   String
+  nameUz String? @map("name_uz")
+
+  domainId String @map("domain_id")
+  domain   Domain @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  /// Share of its domain, as a fraction. The skills in one domain sum to 1.
+  weightInDomain Float @map("weight_in_domain")
+
+  /// Questions a student is expected to need before this skill is learned.
+  baseQuestionsToMastery Int @map("base_questions_to_mastery")
+
+  order Int @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  questions Question[]
+
+  /// Weekly practice this skill has been scheduled for.
+  planTasks StudyPlanTask[]
+
+  /// Practice sessions run against this skill.
+  practiceSessions PracticeSession[]
+
+  /// Skills this one depends on.
+  prerequisites SkillPrerequisite[] @relation("SkillPrerequisiteSkill")
+
+  /// Skills that depend on this one.
+  requiredFor SkillPrerequisite[] @relation("SkillPrerequisitePrerequisite")
+
+  @@index([domainId, order])
+  @@map("skills")
+}
+
+/// "You cannot sensibly practise A before B" — one edge of the prerequisite
+/// graph. 29 of these came with the taxonomy; nothing reads them yet, and a
+/// study plan that orders topics by dependency is what they are for.
+model SkillPrerequisite {
+  skillId String @map("skill_id")
+  skill   Skill  @relation("SkillPrerequisiteSkill", fields: [skillId], references: [id], onDelete: Cascade)
+
+  prerequisiteId String @map("prerequisite_id")
+  prerequisite   Skill  @relation("SkillPrerequisitePrerequisite", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([skillId, prerequisiteId])
+  @@index([prerequisiteId])
+  @@map("skill_prerequisites")
 }
 
 // -----------------------------------------------------------------------------
@@ -239,21 +434,68 @@ model Question {
   options Json?
 
   /// For MULTIPLE_CHOICE this is the option label ("A"…"D").
-  /// For SPR it is the accepted numeric answer as a string ("3/4", "0.75").
+  /// For SPR it is the canonical accepted answer as a string ("3/4", "0.75").
+  /// This is the form shown to the student on the results screen, so it holds
+  /// one value even when several are accepted — the alternatives live in
+  /// `acceptedAnswers`.
   correctAnswer String @map("correct_answer")
+
+  /// Every form of the answer a student may type, for SPR questions. Source
+  /// banks write these as one string ("0.35 or 7/20"); the importer splits them
+  /// so the grader compares against a list instead of parsing prose. Empty for
+  /// multiple choice, where the label in `correctAnswer` is the whole answer.
+  ///
+  /// The grader also accepts arithmetically equal forms (`7/20` for `0.35`),
+  /// so this does not have to enumerate every rounding — see `lib/sat.ts`.
+  acceptedAnswers String[] @default([]) @map("accepted_answers")
 
   explanation String?
 
-  /// College Board content domain, e.g. "Information and Ideas", "Algebra".
-  domain     String?
-  skill      String?
-  difficulty Difficulty @default(MEDIUM)
+  /*
+   * Taxonomy. Three kinds of column, and the distinction between them matters:
+   *
+   *   skillId      THE AUTHORITATIVE LINK, to a `Skill` row. Roadmaps,
+   *                weak-area analysis and practice selection read this and
+   *                nothing else.
+   *   domain/skill Denormalised display labels, copied from the taxonomy rows
+   *                at import time so the simulator can label a question
+   *                without joining two tables on every render. Never group by
+   *                these: they are text, and text drifts.
+   *   sourceTopic  The raw `topic` string from the source file, kept verbatim
+   *                so a bad mapping can be found later. Never read by product
+   *                code.
+   *
+   * The relation field is `skillRef` rather than `skill` only because the
+   * cached label already occupies that name.
+   */
+  skillId  String? @map("skill_id")
+  skillRef Skill?  @relation(fields: [skillId], references: [id], onDelete: SetNull)
+
+  domain String?
+  skill  String?
+
+  sourceTopic String? @map("source_topic")
+
+  /// IRT difficulty parameter, from the adaptive engine that was removed from
+  /// the application. The column is still in the database and still empty;
+  /// declaring it keeps Prisma's view of the table honest instead of treating
+  /// it as drift to be dropped.
+  irtB Float? @map("irt_b")
+
+  /// Null means "not rated yet", which is not the same as "medium" — the
+  /// question banks Sirius imports do not carry a difficulty, and recording a
+  /// guess as a fact would mislead the adaptive module selection that will read
+  /// this later.
+  difficulty Difficulty?
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  practiceResponses PracticeResponse[]
+
   @@unique([testId, externalId])
   @@index([testId, module, order])
+  @@index([skillId])
   @@map("questions")
 }
 
@@ -282,6 +524,33 @@ model TestAttempt {
   /// Questions the student flagged for review: `["<questionId>", …]`.
   flagged Json @default("[]")
 
+  /*
+   * MODULE STATE — a full Digital SAT is four timed modules, not one clock.
+   *
+   * `modulePlan` fixes which questions belong to which module when the sitting
+   * starts: `[{ "module": 0, "questionIds": [...] }, …]`, where `module` indexes
+   * `MOCK_MODULES` in `lib/mock.ts`. Deciding it up front is what lets the
+   * server refuse an answer to a question that is not in the module currently
+   * open, without a join on every autosave.
+   *
+   * Null on a single-module practice test, which has nothing to plan.
+   */
+  modulePlan Json? @map("module_plan")
+
+  /// Position within `modulePlan` — not within `MOCK_MODULES`, because a
+  /// sitting assembled from a thin bank may not contain all four.
+  moduleIndex Int @default(0) @map("module_index")
+
+  /*
+   * When the *current* module started. This is the timer, and the only one:
+   * the countdown in the browser renders this, and every write is checked
+   * against it. A reload does not buy time and neither does a paused tab.
+   *
+   * Null on rows created before modules existed; those fall back to
+   * `startedAt`.
+   */
+  moduleStartedAt DateTime? @map("module_started_at")
+
   startedAt   DateTime  @default(now()) @map("started_at")
   completedAt DateTime? @map("completed_at")
 
@@ -308,6 +577,14 @@ model TestResult {
 
   /// Estimated scaled score on the 400–1600 SAT scale.
   scaledScore Int? @map("scaled_score")
+
+  /*
+   * Section scores, 200–800 each. Adopted columns: both were already in the
+   * database. Null on a result that did not cover that section — which is not
+   * the same as scoring 200 in it, and must never be rendered as if it were.
+   */
+  rwScore   Int? @map("rw_score")
+  mathScore Int? @map("math_score")
 
   /// Full per-question record:
   /// `{ "<questionId>": { "answer": "B", "correct": true } }`
@@ -545,6 +822,172 @@ model RoadmapTask {
 }
 
 // -----------------------------------------------------------------------------
+// Study plan
+// -----------------------------------------------------------------------------
+
+/// A generated week-by-week preparation plan.
+///
+/// The plan is a *snapshot*, not a live view. It stores the four inputs it was
+/// computed from and the projection it produced, because a student who moves
+/// their exam date should be able to see that the old plan assumed something
+/// else — a plan that silently recomputes itself is a plan nobody can argue
+/// with. Regenerating writes a new row; the previous ones stay as history, and
+/// the current plan is simply the newest.
+///
+/// The arithmetic lives in `lib/study-plan.ts` and is a pure function, so it can
+/// be tested without a database and replaced with a proper IRT model later
+/// without touching this table.
+model StudyPlan {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /* The inputs, as they were when the plan was made. */
+  currentScore       Int?     @map("current_score")
+  targetScore        Int      @map("target_score")
+  examDate           DateTime @map("exam_date")
+  weeklyStudyMinutes Int      @map("weekly_study_minutes")
+
+  /* What the model said would happen. */
+  weeks           Int
+  weeklyQuestions Int @map("weekly_questions")
+  totalQuestions  Int @map("total_questions")
+
+  /// Where the model expects the student to land by exam day. Null when they
+  /// did not know their starting score — a projection from an unknown baseline
+  /// is a number with no meaning, and showing one anyway is worse than showing
+  /// nothing.
+  projectedScore Int? @map("projected_score")
+
+  /// True when the projection reaches the target.
+  onTrack Boolean @map("on_track")
+
+  /// Extra minutes a week the target would need. Zero when on track.
+  shortfallMinutesPerWeek Int @default(0) @map("shortfall_minutes_per_week")
+
+  /// True when the plan schedules fewer questions than the student has time
+  /// for, because the question bank does not hold enough yet. Surfaced in the
+  /// UI: the honest reason a light week is light.
+  bankLimited Boolean @default(false) @map("bank_limited")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tasks StudyPlanTask[]
+
+  @@index([userId, createdAt])
+  @@map("study_plans")
+}
+
+/// One skill scheduled for one week: "40 questions of Words in Context, by the
+/// 14th".
+model StudyPlanTask {
+  id String @id @default(cuid())
+
+  planId String    @map("plan_id")
+  plan   StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  /// 1-based week within the plan.
+  week Int
+
+  startDate DateTime @map("start_date")
+  dueDate   DateTime @map("due_date")
+
+  skillId String @map("skill_id")
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  targetQuestions Int @map("target_questions")
+
+  /// Filled in by practice sessions. Progress is a count rather than a
+  /// checkbox: "18 of 40" is the answer a student actually wants.
+  completedQuestions Int @default(0) @map("completed_questions")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  /// Sessions opened from this task. What increments `completedQuestions`.
+  practiceSessions PracticeSession[]
+
+  @@unique([planId, week, skillId])
+  @@index([planId, week])
+  @@map("study_plan_tasks")
+}
+
+// -----------------------------------------------------------------------------
+// Practice
+// -----------------------------------------------------------------------------
+
+/// A run through a handful of questions on one skill.
+///
+/// Practice is not a test, and the difference is the whole design: there is no
+/// countdown, an answer is marked the moment it is given, and the explanation
+/// appears immediately after. The timed, deferred-marking flow is the simulator
+/// (`TestAttempt`), and the two share the grader in `lib/sat.ts` rather than
+/// each having their own.
+///
+/// `questionIds` fixes the running order when the session starts, which is what
+/// lets a student close the tab and come back to the same questions in the same
+/// order. It is a JSON array of `Question.id`, the same shape and for the same
+/// reason as `TestAttempt.answers`.
+model PracticeSession {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  skillId String @map("skill_id")
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  source PracticeSource @default(SKILL)
+
+  /// The study-plan task this session is working through, when it was opened
+  /// from one. Answering credits that task's `completedQuestions`.
+  planTaskId String?        @map("plan_task_id")
+  planTask   StudyPlanTask? @relation(fields: [planTaskId], references: [id], onDelete: SetNull)
+
+  /// The questions to ask, in order: `["<questionId>", …]`.
+  questionIds Json @map("question_ids")
+
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+
+  responses PracticeResponse[]
+
+  @@index([userId, startedAt])
+  @@map("practice_sessions")
+}
+
+/// One answered question.
+///
+/// Written once, when the answer is given — practice has no "change your mind"
+/// step, because the point of the mode is to find out what you know right now.
+/// Re-answering the same question in the same session is refused rather than
+/// overwritten, so the record of what was known when stays true.
+model PracticeResponse {
+  id String @id @default(cuid())
+
+  sessionId String          @map("session_id")
+  session   PracticeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  questionId String   @map("question_id")
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  /// What the student picked or typed. Null when they skipped it.
+  answer    String?
+  isCorrect Boolean @map("is_correct")
+
+  /// Wall-clock seconds on this question. Recorded even though practice is
+  /// untimed: "you knew it but it took four minutes" is a different fact from
+  /// "you knew it", and the mastery model will want both.
+  timeSpentSeconds Int @map("time_spent_seconds")
+
+  answeredAt DateTime @default(now()) @map("answered_at")
+
+  @@unique([sessionId, questionId])
+  @@index([questionId])
+  @@map("practice_responses")
+}
+
+// -----------------------------------------------------------------------------
 // Admissions evidence
 // -----------------------------------------------------------------------------
 
@@ -665,13 +1108,66 @@ model ActivityReference {
   description String?
   descriptionUz String? @map("description_uz")
 
+  /// Share of applicants who report something of this kind, 0–1.
+  ///
+  /// Null means nobody has measured it, and the UI shows nothing rather than a
+  /// number: "23% of applicants" is the kind of figure a student plans a year
+  /// around, and inventing one to fill a card would be the worst lie on the
+  /// page.
+  participationRate Float? @map("participation_rate")
+
   /// Sort position inside its tier.
   order Int @default(0)
 
   createdAt DateTime @default(now()) @map("created_at")
 
+  /// Students who picked this rung for their own list.
+  chosenBy UserActivity[]
+
   @@unique([tier, title])
   @@index([tier, order])
   @@index([category])
   @@map("activity_references")
+}
+
+/// One line of a student's own Common Application activities list.
+///
+/// The Common App allows ten activities and 150 characters to describe each,
+/// and those two limits are the whole reason this table exists rather than a
+/// free-text field: writing to the real constraint is the exercise. The limits
+/// are enforced in `lib/actions/activities.ts` and mirrored here — 150 is a
+/// `VarChar` so the database refuses an over-long description even if
+/// something else writes it.
+///
+/// `position` is the student's own ordering, 1–10, which the Common App also
+/// treats as meaningful: the first line is the one an admissions officer reads.
+model UserActivity {
+  id String @id @default(cuid())
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 1–10, in the order the student wants them read.
+  position Int
+
+  title        String
+  organisation String? @map("organisation")
+  role         String?
+
+  /// 150 characters, exactly as the Common App allows.
+  description String? @db.VarChar(150)
+
+  hoursPerWeek Int? @map("hours_per_week")
+  weeksPerYear Int? @map("weeks_per_year")
+
+  /// Optional link to the reference ladder, when the student picked from it.
+  referenceId String?            @map("reference_id")
+  reference   ActivityReference? @relation(fields: [referenceId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, position])
+  @@index([userId])
+  @@map("user_activities")
 }

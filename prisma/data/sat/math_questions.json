@@ -1,0 +1,111 @@
+{
+  "subject": "Math",
+  "questions": [
+    {
+      "id": "math-1",
+      "topic": "Linear Equations",
+      "type": "grid_in",
+      "question": "If 4(2x − 0.6) + x = 0.45 + 0.3x, what is the value of 870x?",
+      "answer": "285"
+    },
+    {
+      "id": "math-2",
+      "topic": "Linear Functions",
+      "type": "multiple_choice",
+      "question": "What is the slope of the graph of y = (7/12)x in the xy-plane?",
+      "options": {
+        "A": "0",
+        "B": "7/12",
+        "C": "-7/12",
+        "D": "12/7"
+      },
+      "answer": "B"
+    },
+    {
+      "id": "math-3",
+      "topic": "Linear Equations",
+      "type": "grid_in",
+      "question": "In the equation 9x + 17 = 9x + k, k is a constant. The equation has infinitely many solutions. What is the value of k?",
+      "answer": "17"
+    },
+    {
+      "id": "math-4",
+      "topic": "Linear Functions",
+      "type": "multiple_choice",
+      "question": "A phone plan charges a flat monthly fee plus a fixed rate per minute of calls. In January, a customer made 80 minutes of calls and was billed $22. In February, the same customer made 200 minutes of calls and was billed $40. Which of the following represents the monthly bill B, in dollars, as a function of the number of minutes m?",
+      "options": {
+        "A": "B = 0.10m + 14",
+        "B": "B = 0.15m + 10",
+        "C": "B = 0.12m + 12",
+        "D": "B = 0.20m + 6"
+      },
+      "answer": "B"
+    },
+    {
+      "id": "math-5",
+      "topic": "Linear Equations",
+      "type": "multiple_choice",
+      "question": "If 5c = 15, what is the value of 5c − 8?",
+      "options": {
+        "A": "3",
+        "B": "67",
+        "C": "7",
+        "D": "23"
+      },
+      "answer": "C"
+    },
+    {
+      "id": "math-6",
+      "topic": "Linear Equations",
+      "type": "multiple_choice",
+      "question": "If 9x + 4 = 67, what is the value of 90x + 40?",
+      "options": {
+        "A": "7",
+        "B": "70",
+        "C": "130",
+        "D": "670"
+      },
+      "answer": "D"
+    },
+    {
+      "id": "math-7",
+      "topic": "Linear Equations",
+      "type": "grid_in",
+      "question": "The equation 58 = 2x + 2y gives the perimeter of a rectangular garden that has length x, in feet, and width y, in feet. The width of the garden is 14 feet. What is the length, in feet, of the garden?",
+      "answer": "15"
+    },
+    {
+      "id": "math-8",
+      "topic": "Linear Functions",
+      "type": "multiple_choice",
+      "question": "The total cost f(x), in dollars, to lease a car for 24 months from a particular car dealership is given by f(x) = 24x + 1000, where x is the monthly payment, in dollars. What is the total cost to lease a car when the monthly payment is $300?",
+      "options": {
+        "A": "$6,200",
+        "B": "$7,000",
+        "C": "$8,200",
+        "D": "$25,300"
+      },
+      "answer": "C"
+    },
+    {
+      "id": "math-9",
+      "topic": "Quadratics",
+      "type": "multiple_choice",
+      "question": "(x + k)^2 + 31 = 31. In the given equation, k is a constant. How many distinct real solutions does this equation have?",
+      "options": {
+        "A": "Zero",
+        "B": "Exactly one",
+        "C": "Exactly two",
+        "D": "Infinitely many"
+      },
+      "answer": "B"
+    },
+    {
+      "id": "math-10",
+      "topic": "Percent, Ratio & Proportion",
+      "type": "grid_in",
+      "question": "An entomologist placed an initial population of 40 Tenebrio molitor, a type of beetle, into a habitat and monitored the population over time. When the number of Tenebrio molitor in the habitat reached 170% of the initial population, the entomologist moved 75% of the Tenebrio molitor to a second habitat. How many Tenebrio molitor did the entomologist move to the second habitat at this time?",
+      "answer": "51"
+    }
+  ]
+}
