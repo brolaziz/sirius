@@ -164,9 +164,26 @@ export interface ClippedControl {
   overflow: string;
 }
 
+/**
+ * Proof that the run was capable of observing what it claims to have measured.
+ *
+ * Recorded in every report so a saved number carries its own provenance. A
+ * report without this block predates the liveness gate and cannot be trusted —
+ * see `assertProbeCanFail`.
+ */
+export interface Liveness {
+  visibilityState: string;
+  /** Measured, not assumed. Zero means the frame was never painted. */
+  framesPerSecond: number;
+  /** False means no `::after` halo in this run's stylesheet existed at all. */
+  pointerCoarse: boolean;
+}
+
 export interface TapTargetReport {
   url: string;
   viewport: { w: number; h: number };
+  /** What the run proved about itself before measuring anything. */
+  liveness: Liveness;
   checked: number;
   skipped: number;
   failures: TapTargetFinding[];
@@ -234,7 +251,123 @@ export interface TapTargetReport {
  * serialised with `Function.prototype.toString()` and injected as-is. What is
  * committed here is exactly what runs.
  */
-export function auditTapTargets(minSize: number = MIN_TAP_SIZE): TapTargetReport {
+export async function auditTapTargets(
+  minSize: number = MIN_TAP_SIZE,
+): Promise<TapTargetReport> {
+  /* ======================================================================== *
+   * THE LIVENESS GATE — read this before you weaken it
+   *
+   * This refuses to produce a report unless the run could have produced a
+   * failing one. It is a hard throw, not a warning, because every incident
+   * below was a *silent pass*: a plausible number, in a table, describing the
+   * instrument instead of the page. A warning would have been scrolled past in
+   * all three.
+   *
+   *   1. `pointer: coarse`. Every `tap-target` halo in `globals.css` is gated
+   *      on it. A plain CDP window or a resized desktop browser reports
+   *      `pointer: fine`, so the halos do not exist at all and the probe
+   *      measures naked 28px controls. The committed "70 findings to 17" figure
+   *      was obtained by re-declaring those media-query rules by hand, which
+   *      makes it a measurement of a stylesheet nobody ships.
+   *
+   *   2. Frames actually painting. A backgrounded tab reports
+   *      `visibilityState: "hidden"` and rAF stops entirely — measured at 0
+   *      ticks/sec. Nothing driven by an animation frame has run in that tab:
+   *      no GSAP ticker, no ScrollTrigger, and no CSS transition advancing.
+   *      This produced two separate false readings in one session. First, "no
+   *      ScrollTrigger fires anywhere on the landing page, 48 elements stuck at
+   *      opacity 0" — which was very nearly filed as a page-wide bug and was
+   *      entirely the dead frame. Second, `getComputedStyle` returning an
+   *      identity transform while the inline style said `translate(16px, 0px)`:
+   *      the element had a 300ms CSS transition on `transform` that could not
+   *      advance, so the computed value was frozen mid-flight. Both readings
+   *      looked exactly like evidence.
+   *
+   *      HANDOFF.md records the same signature from the original pass:
+   *      "ScrollTrigger did not fire inside the measurement frame either, and
+   *      *both* captured runs were the resting state." That was written down as
+   *      a caveat about the page. It was a broken instrument, and the caveat
+   *      became a live bug on a real phone.
+   *
+   * A check that cannot fail is not a check. If this gate is in your way, fix
+   * the harness it is describing — device mode with touch emulation, and a tab
+   * that is actually in front — rather than deleting the only thing that would
+   * notice.
+   * ======================================================================== */
+  const visibilityState = document.visibilityState;
+
+  /*
+   * Measured over a real interval, because there is no synchronous way to ask
+   * whether frames are being painted. The `setTimeout` race matters as much as
+   * the measurement: when rAF never fires, the callback never runs, and without
+   * a deadline this would hang forever instead of refusing. Timers are
+   * throttled in a hidden tab but they still run, so the deadline is what turns
+   * a dead frame into a report you cannot get rather than a probe you cannot
+   * kill.
+   */
+  const framesPerSecond = await new Promise<number>((resolve) => {
+    let frames = 0;
+    const started = performance.now();
+    let settled = false;
+
+    const finish = (value: number) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+
+    const tick = () => {
+      frames += 1;
+      const elapsed = performance.now() - started;
+      if (elapsed >= 500) finish((frames / elapsed) * 1000);
+      else requestAnimationFrame(tick);
+    };
+
+    requestAnimationFrame(tick);
+    setTimeout(() => finish(0), 2000);
+  });
+
+  const pointerCoarse = matchMedia("(pointer: coarse)").matches;
+
+  const problems: string[] = [];
+  if (visibilityState !== "visible") {
+    problems.push(
+      `  - document.visibilityState is "${visibilityState}", not "visible".` +
+        " The tab is not being painted, so nothing driven by an animation" +
+        " frame has run in it.",
+    );
+  }
+  if (framesPerSecond < 30) {
+    problems.push(
+      `  - requestAnimationFrame is ticking at ${framesPerSecond.toFixed(1)}/sec,` +
+        " under the 30/sec floor. Animations, transitions and ScrollTriggers" +
+        " are frozen; computed styles will disagree with inline styles.",
+    );
+  }
+  if (!pointerCoarse) {
+    problems.push(
+      "  - matchMedia('(pointer: coarse)') is false. Every tap-target halo in" +
+        " globals.css is gated on it, so no halo exists in this run and every" +
+        " measurement below would be of the naked control.",
+    );
+  }
+
+  if (problems.length > 0) {
+    throw new Error(
+      [
+        "Tap-target probe refused to run: this harness could not have produced",
+        "a failing report, so it must not produce a passing one.",
+        "",
+        ...problems,
+        "",
+        "Fix: drive Chrome with Emulation.setDeviceMetricsOverride({ mobile: true })",
+        "and Emulation.setTouchEmulationEnabled({ enabled: true }), and keep the",
+        "tab foregrounded. See the long note above this check for the three",
+        "silent passes that made it necessary.",
+      ].join("\n"),
+    );
+  }
+
   /**
    * What one walk returns, before it is rounded for reporting.
    *
@@ -784,6 +917,7 @@ export function auditTapTargets(minSize: number = MIN_TAP_SIZE): TapTargetReport
   return {
     url: location.pathname,
     viewport: { w: vw, h: vh },
+    liveness: { visibilityState, framesPerSecond, pointerCoarse },
     checked,
     skipped,
     failures,
@@ -832,6 +966,17 @@ console.log(
     "Tap-target probe — paste the expression below into a DevTools console on",
     "the page you want to audit, or inject it with a browser automation tool.",
     `Anything whose hit area is under ${MIN_TAP_SIZE}×${MIN_TAP_SIZE} is reported.`,
+    "",
+    "The expression RESOLVES TO A PROMISE — it spends half a second measuring",
+    "whether animation frames are being painted before it will measure anything",
+    "else. `await` it in a console; pass `awaitPromise: true` to CDP's",
+    "Runtime.evaluate.",
+    "",
+    "It THROWS rather than reporting if the tab is not visible, if rAF is under",
+    "30/sec, or if `(pointer: coarse)` does not match — the last of which is the",
+    "difference between measuring the halos this product ships and measuring the",
+    "naked controls underneath them. Drive it with device metrics overridden to",
+    "mobile and touch emulation on. The refusal message says exactly this.",
     "",
     probeSource(),
   ].join("\n"),

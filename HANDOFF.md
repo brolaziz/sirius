@@ -19,8 +19,10 @@ Source of truth is `TASK-2.md`. **A2 is the next piece of work.**
       A0  audit ......................... done
       A1  landing responsive ............ done; device regression (bug 1) fixed
       A2  post-login responsive ......... NOT STARTED  <- next
-      A3  tap targets ................... done (groups A and B); the 17
-                                          remaining are classified, not failures
+      A3  tap targets ................... PARTLY done. The "70 to 17" figure is
+                                          RETRACTED — see Touch targets. 6 real
+                                          failures stand on /sign-in and
+                                          /sign-up; 12 surfaces are unmeasured
       A4  university card fully clickable  NOT STARTED (only the cover opens it)
       A5  target score editing .......... NOT STARTED (blocked: no profile or
                                           settings route exists at all)
@@ -103,9 +105,10 @@ The last week landed in six commits, `23f0699`…`e034a29`: the migration histor
 the data/domain layer, the feature screens, the touch-target pass, the database
 banner, and the Netlify migrate step. `TASK-2.md` itself followed in `5e4bc57`.
 
-The two device bugs and the reveal sweep sit on **`fix/device-responsive-defects`**,
-branched from `5e4bc57` and not yet merged. All four gates are green on it:
-`tsc --noEmit`, `npm run check` (35 passed), `npm run lint`, and 159 vitest tests.
+The two device bugs and the reveal sweep landed in `4bdb1e2` and `af9cd3f`, via
+`fix/device-responsive-defects`, fast-forwarded onto `main` and pushed. All four
+gates are green: `tsc --noEmit`, `npm run check` (35 passed), `npm run lint`, and
+159 vitest tests.
 
 ## Database, as it now stands
 
@@ -135,16 +138,66 @@ actually hit — pseudo-element halos included, overlays and clipping accounted
 for — because none of that is visible in review or in a screenshot. Its header
 explains the five outcomes it reports and why three of them are not failures.
 
-The pass took 16 surfaces from 70 findings to 17, then fixed the simulator tab
-strip, the onboarding logo, and reverted a halo on the university filter labels
-that was shrinking the search input beneath it. What remains is labelled, not
-lost: small `label[for]` rows are now classified as `smallLabels` rather than
-failures. Two surfaces were deferred for want of fixtures — the break screen
-(needs a full modular test) and `/essays/[id]` (needs essay content).
+The pass fixed the simulator tab strip, the onboarding logo, and reverted a halo
+on the university filter labels that was shrinking the search input beneath it.
+Small `label[for]` rows are classified as `smallLabels` rather than failures. Two
+surfaces were deferred for want of fixtures — the break screen (needs a full
+modular test) and `/essays/[id]` (needs essay content).
 
-**The runner is not committed.** The probe is; the harness that drove it was
-scratch — Chrome over CDP on port 9222, a JSON list of target screens, and a
-session cookie minted directly in the database. Rebuild it or ask.
+### Retract the "70 findings to 17"
+
+That figure was measured in a plain CDP window, where `(pointer: coarse)` does
+not match, so the `tap-target` halos did not exist and the media-query rules were
+re-declared by hand to compensate. It describes a stylesheet nobody ships. The
+probe now **refuses to run** in exactly that configuration — verified, it throws
+on a 390px window without touch emulation — so the number cannot be reproduced
+even in principle. Do not quote it.
+
+### The real numbers
+
+Re-measured with device metrics overridden to mobile and touch emulation on, so
+`(pointer: coarse)` genuinely matched (`coarse=true`, rAF 60–63/sec, visible,
+recorded in each report's `liveness` block). Both runs on webpack so the bundler
+is not a variable. Before is `5a6516d`, the commit before the touch-target pass;
+after is `af9cd3f`.
+
+    surface          before  after
+    /                    13      0
+    /sign-in              3      3
+    /sign-up              3      3
+    /design-system       84     54
+                       ----   ----
+    total               103     60
+
+**The landing page work is real** — 13 to 0. **`/sign-in` and `/sign-up` were
+never touched**: identical before and after, and all six are genuine failures,
+not `smallLabels`. They are the mobile-only row in the auth shell, which is the
+one place a phone user sees:
+
+    app/(auth)/layout.tsx:69        logo link, 74.66×28   — no tap-target
+    app/(auth)/layout.tsx:72        "Home" back link, 60.2×20 — no tap-target
+    components/auth/auth-panel.tsx:118  sign-in/up switch, 83.73×17 — no tap-target
+
+The app shell's equivalent mobile logo (`app/(app)/layout.tsx:181`) *did* get
+`tap-target`. The auth shell's did not. Unfixed — this is A3 work and was not in
+scope for the harness pass.
+
+`/design-system` is publicly reachable in production (it is not in
+`PROTECTED_PREFIXES`) and carries 54 failures. Whether that page should ship at
+all is the prior question.
+
+**This covers 4 surfaces, not 16.** Everything else is behind
+`isProtectedPath()`, and reaching it needs a session cookie minted in the
+database, which is deliberately not done yet. The 12 authenticated surfaces are
+**unmeasured under correct conditions** — treat their tap-target status as
+unknown, not as passing.
+
+**The runner is not committed.** The probe is. The harness that drove this run
+was scratch: Chrome headless over CDP, `Emulation.setDeviceMetricsOverride({
+mobile: true })` plus `Emulation.setTouchEmulationEnabled`, and
+`Runtime.evaluate` with `awaitPromise: true` because the probe is now async.
+Those two Emulation calls are the whole difference between a real number and the
+retracted one.
 
 ## Two sweeps, both closed
 
