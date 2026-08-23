@@ -18,7 +18,12 @@
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { parseQuestionOptions, type SimulatorOption } from "@/lib/simulator";
 import { rankWeakSkills, type SkillAccuracy } from "@/lib/practice";
-import type { PracticeSource, QuestionFormat } from "@/lib/generated/prisma/enums";
+import type {
+  PracticeSource,
+  QuestionFormat,
+  TestModule,
+} from "@/lib/generated/prisma/enums";
+import type { BankCounts, MockSection } from "@/lib/mock";
 
 /* -------------------------------------------------------------------------- */
 /* Choosing a topic                                                            */
@@ -152,10 +157,11 @@ export interface PracticeSessionView {
   id: string;
   source: PracticeSource;
   planTaskId: string | null;
-  skillCode: string;
-  skillName: string;
+  /** Null on a `MIXED` session, which spans every topic. */
+  skillCode: string | null;
+  skillName: string | null;
   skillNameUz: string | null;
-  domainName: string;
+  domainName: string | null;
   completedAt: Date | null;
   questions: PracticeQuestionView[];
   /** Keyed by question id. Only holds questions that have been answered. */
@@ -251,10 +257,10 @@ export async function getPracticeSession(
     id: session.id,
     source: session.source,
     planTaskId: session.planTaskId,
-    skillCode: session.skill.code,
-    skillName: session.skill.name,
-    skillNameUz: session.skill.nameUz,
-    domainName: session.skill.domain.name,
+    skillCode: session.skill?.code ?? null,
+    skillName: session.skill?.name ?? null,
+    skillNameUz: session.skill?.nameUz ?? null,
+    domainName: session.skill?.domain.name ?? null,
     completedAt: session.completedAt,
     questions: orderedIds.flatMap((id) => {
       const question = byId.get(id);
@@ -283,4 +289,64 @@ export async function getPracticeSession(
 export function asQuestionIds(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((entry): entry is string => typeof entry === "string");
+}
+
+/* -------------------------------------------------------------------------- */
+/* What the question bank can fill                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Count the whole bank by section and module.
+ *
+ * Across every test, published or not. The bank was imported into two
+ * *unpublished* container tests ("SAT question bank — Math" and "— Reading &
+ * Writing"), so a query filtered on `isPublished` sees 40 questions as zero and
+ * the practice page offered a two-question demo as the only thing to sit. A
+ * question's availability is a property of the question, not of the row it was
+ * imported under.
+ *
+ * `section` comes through skill → domain, so a question with no skill is
+ * counted nowhere — which is correct: it cannot be placed in a blueprint module
+ * either.
+ */
+export async function getBankCounts(): Promise<BankCounts> {
+  if (!isDatabaseConfigured()) return [];
+
+  /*
+   * Prisma cannot group by a field two relations away, so the section has to
+   * come back per question. The bank is small enough that this is one cheap
+   * read; if it ever is not, this becomes a raw `count(*) ... group by` and the
+   * shape it returns does not change.
+   */
+  const questions = await prisma.question.findMany({
+    where: { skillRef: { isNot: null } },
+    select: {
+      module: true,
+      skillRef: { select: { domain: { select: { section: true } } } },
+    },
+  });
+
+  const tally = new Map<string, number>();
+  for (const question of questions) {
+    const section = mockSectionOf(question.skillRef?.domain.section ?? null);
+    if (!section) continue;
+    const key = `${section}|${question.module}`;
+    tally.set(key, (tally.get(key) ?? 0) + 1);
+  }
+
+  return [...tally.entries()].map(([key, count]) => {
+    const [section, module] = key.split("|");
+    return {
+      section: section as MockSection,
+      module: module as TestModule,
+      count,
+    };
+  });
+}
+
+/** `SatSection` (RW/MATH) to the names the blueprint uses. */
+function mockSectionOf(section: "RW" | "MATH" | null): MockSection | null {
+  if (section === "RW") return "READING";
+  if (section === "MATH") return "MATH";
+  return null;
 }

@@ -15,7 +15,7 @@ import { notFound } from "next/navigation";
 import { PracticeRunner } from "@/components/practice/practice-runner";
 import { getPracticeSession } from "@/lib/queries/practice";
 import { requireUserId } from "@/lib/user";
-import { getLang } from "@/lib/i18n";
+import { getDictionary, getLang } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Practice session",
@@ -23,9 +23,14 @@ export const metadata: Metadata = {
 
 export default async function PracticeSessionPage({
   params,
+  searchParams,
 }: PageProps<"/practice/session/[sessionId]">) {
   const userId = await requireUserId();
   const { sessionId } = await params;
+
+  /* The practice clock is a display preference carried in the URL. */
+  const { minutes } = await searchParams;
+  const requestedMinutes = Number(Array.isArray(minutes) ? minutes[0] : minutes);
 
   const session = await getPracticeSession(userId, sessionId);
   if (!session) notFound();
@@ -37,8 +42,28 @@ export default async function PracticeSessionPage({
    * rather than translates. Done here rather than in the client component to
    * keep the language decision on the server with the rest of the dictionary.
    */
-  const skillLabel =
-    lang === "uz" && session.skillNameUz ? session.skillNameUz : session.skillName;
+  const t = getDictionary(lang);
 
-  return <PracticeRunner session={session} skillLabel={skillLabel} />;
+  /*
+   * A mixed session has no skill, so it is labelled by what it is rather than
+   * by a topic it does not have.
+   */
+  const skillLabel =
+    session.skillName === null
+      ? t.practice.randomTitle
+      : lang === "uz" && session.skillNameUz
+        ? session.skillNameUz
+        : session.skillName;
+
+  return (
+    <PracticeRunner
+      session={session}
+      skillLabel={skillLabel}
+      minutes={
+        Number.isFinite(requestedMinutes) && requestedMinutes > 0
+          ? Math.min(requestedMinutes, 120)
+          : undefined
+      }
+    />
+  );
 }

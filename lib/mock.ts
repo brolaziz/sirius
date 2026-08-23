@@ -24,7 +24,11 @@
  */
 
 import type { TestModule } from "@/lib/generated/prisma/enums";
-import { MODULE_MINUTES, estimateScaledScore } from "@/lib/sat";
+import {
+  MODULE_MINUTES,
+  MODULE_QUESTION_COUNT,
+  estimateScaledScore,
+} from "@/lib/sat";
 
 /** The two halves of the exam. Matches `TestType`'s first two values. */
 export type MockSection = "READING" | "MATH";
@@ -409,6 +413,160 @@ export function selectModule2(outcome: ModuleOutcome): ModuleRouting {
    */
   void outcome;
   return "STANDARD";
+}
+
+/* -------------------------------------------------------------------------- */
+/* What the bank can actually fill                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How many questions one module of the blueprint wants.
+ *
+ * Reads from `MODULE_QUESTION_COUNT`, so the blueprint is stated once: 27 per
+ * Reading & Writing module, 22 per Math module, four modules, 98 in total.
+ */
+export function questionsNeeded(spec: MockModuleSpec): number {
+  return MODULE_QUESTION_COUNT[spec.section === "READING" ? "READING" : "MATH"];
+}
+
+/** Total questions in a complete sitting: 27 + 27 + 22 + 22. */
+export const MOCK_TOTAL_QUESTIONS = MOCK_MODULES.reduce(
+  (sum, spec) => sum + questionsNeeded(spec),
+  0,
+);
+
+/**
+ * Testing minutes in a complete sitting, break excluded: 32 + 32 + 35 + 35 =
+ * 134. Distinct from `MOCK_TOTAL_MINUTES` above, which adds the 10-minute break
+ * and is what a student should budget — 144. The brief quotes both, and telling
+ * someone a mock takes 134 minutes when they will be sitting for 144 is the
+ * kind of small dishonesty this section is meant to avoid.
+ */
+export const MOCK_TESTING_MINUTES = MOCK_MODULES.reduce(
+  (sum, spec) => sum + spec.minutes,
+  0,
+);
+
+/** How many questions the bank holds for one section-and-module slot. */
+export type BankCounts = ReadonlyArray<{
+  section: MockSection;
+  module: TestModule;
+  count: number;
+}>;
+
+export interface ModuleAvailability {
+  index: number;
+  section: MockSection;
+  module: TestModule;
+  needed: number;
+  available: number;
+  /** Zero when the slot is full. */
+  short: number;
+}
+
+export interface MockAvailability {
+  modules: ModuleAvailability[];
+  neededTotal: number;
+  availableTotal: number;
+  shortTotal: number;
+  /** True only when every module can be filled to blueprint. */
+  complete: boolean;
+}
+
+/**
+ * Compare the bank against the blueprint, module by module.
+ *
+ * This exists so the practice page can say what is missing instead of quietly
+ * serving whatever it has. A student who is told "this is a full mock" and sits
+ * 40 questions learns two false things: what a mock is, and what their score
+ * means. Being short is not the failure — pretending otherwise is.
+ *
+ * Pure, so it is the same answer in a test, in a Server Component and in a
+ * script that checks whether an import was enough.
+ */
+export function mockAvailability(counts: BankCounts): MockAvailability {
+  const modules = MOCK_MODULES.map((spec) => {
+    const needed = questionsNeeded(spec);
+    const available =
+      counts.find(
+        (row) => row.section === spec.section && row.module === spec.module,
+      )?.count ?? 0;
+
+    return {
+      index: spec.index,
+      section: spec.section,
+      module: spec.module,
+      needed,
+      available,
+      short: Math.max(0, needed - available),
+    };
+  });
+
+  const neededTotal = modules.reduce((sum, m) => sum + m.needed, 0);
+  const availableTotal = modules.reduce(
+    (sum, m) => sum + Math.min(m.available, m.needed),
+    0,
+  );
+
+  return {
+    modules,
+    neededTotal,
+    availableTotal,
+    shortTotal: modules.reduce((sum, m) => sum + m.short, 0),
+    complete: modules.every((m) => m.short === 0),
+  };
+}
+
+/**
+ * Assemble a sitting from the whole question bank.
+ *
+ * `buildModulePlan` above takes the questions of one *test*, which is how the
+ * mock worked when a test was a fixed list someone had curated. This one takes
+ * every question the bank holds and fills each module of the blueprint to its
+ * own count — so importing more questions makes the mock longer without anyone
+ * editing a list.
+ *
+ * A module is filled to `needed` and no further: a bank with 200 Math questions
+ * still yields a 22-question Math module, because the blueprint is the exam's
+ * shape and not a function of what we happen to have.
+ *
+ * Short modules are included at whatever they hold rather than dropped. The
+ * caller is expected to have asked `mockAvailability` first and told the
+ * student what they are about to sit; dropping a module here would hide that
+ * from a caller who did ask.
+ *
+ * `pick` decides which questions from a slot are used — a seeded shuffle in
+ * production, identity in tests. Kept as a parameter so assembly is
+ * deterministic under test without a global.
+ */
+export function assembleMockFromBank(
+  pool: ReadonlyArray<{
+    id: string;
+    section: MockSection | null;
+    module: TestModule;
+  }>,
+  pick: (ids: string[], take: number) => string[] = (ids, take) =>
+    ids.slice(0, take),
+): MockModulePlan {
+  const plan: MockModulePlan = [];
+
+  for (const spec of MOCK_MODULES) {
+    const candidates = pool
+      .filter(
+        (question) =>
+          question.section === spec.section && question.module === spec.module,
+      )
+      .map((question) => question.id);
+
+    if (candidates.length === 0) continue;
+
+    plan.push({
+      module: spec.index,
+      questionIds: pick(candidates, questionsNeeded(spec)),
+    });
+  }
+
+  return plan;
 }
 
 /* -------------------------------------------------------------------------- */

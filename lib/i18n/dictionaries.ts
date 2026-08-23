@@ -323,6 +323,37 @@ export const uz = {
   },
 
   practice: {
+    /* ---- Full mock, the top section ------------------------------------ */
+    resultsTitle: "Natijalaringiz",
+    timeUpSoft: "Vaqt tugadi",
+    mockTitle: "To'liq sinov imtihoni",
+    mockBody:
+      "Haqiqiy Digital SAT bilan bir xil: ikkita bo'lim, har birida ikki modul, o'rtada 10 daqiqa tanaffus. Vaqt haqiqiy imtihondagidek yuradi va to'xtatib bo'lmaydi — shuning uchun bu yerdagi ball nimani bildirishini bilasiz.",
+    mockShape: "{questions} savol · {minutes} daqiqa · {breakMinutes} daqiqa tanaffus",
+    mockStart: "Sinov imtihonini boshlash",
+
+    /* ---- and what to say when the bank cannot fill it ------------------- */
+    mockShortTitle: "To'liq sinov uchun savollar yetarli emas",
+    mockShortBody:
+      "Bankda hozir {available} ta savol bor, to'liq sinov uchun {needed} ta kerak — {short} tasi yetishmaydi. Qisqa testni “to'liq sinov” deb atamaymiz: unday ball haqiqiy imtihon haqida noto'g'ri tasavvur beradi.",
+    mockShortMeanwhile:
+      "Shu vaqtgacha quyidagi mashqlardan foydalaning — bankdagi har bir savol o'sha yerda mavjud.",
+    mockModuleRow: "{section}, {module}-modul",
+    mockModuleCount: "{available} / {needed}",
+    sectionReading: "O'qish va yozish",
+    sectionMath: "Matematika",
+
+    /* ---- Practice, the lower section ------------------------------------ */
+    practiceTitle: "Mashq",
+    practiceBody:
+      "Qisqa mashq: savollar bittalab keladi, javobdan keyin darhol tushuntirish chiqadi. Vaqt ixtiyoriy.",
+    randomTitle: "Aralash mashq",
+    randomBody: "Barcha mavzulardan tasodifiy savollar.",
+    randomStart: "Aralash mashqni boshlash",
+    countLabel: "Nechta savol",
+    timerLabel: "Vaqtni yoqish",
+    timerOff: "Vaqtsiz",
+
     topicsTitle: "Mavzular",
     topicsBody:
       "Bitta mavzuni tanlang — savollar bittalab keladi, javobdan keyin darhol tushuntirish chiqadi.",
@@ -1042,6 +1073,37 @@ export const en: Dictionary = {
   },
 
   practice: {
+    /* ---- Full mock, the top section ------------------------------------ */
+    resultsTitle: "Your results",
+    timeUpSoft: "Time is up",
+    mockTitle: "Full mock exam",
+    mockBody:
+      "The same shape as the real Digital SAT: two sections, two modules each, with a 10-minute break between them. The clock runs the way it runs on test day and cannot be paused — which is what makes the score here mean something.",
+    mockShape: "{questions} questions · {minutes} minutes · {breakMinutes}-minute break",
+    mockStart: "Start the mock exam",
+
+    /* ---- and what to say when the bank cannot fill it ------------------- */
+    mockShortTitle: "Not enough questions for a full mock",
+    mockShortBody:
+      "The bank holds {available} questions and a full sitting needs {needed} — {short} short. We will not serve a short test and call it a mock: a score from one would teach you the wrong thing about the real exam.",
+    mockShortMeanwhile:
+      "Until then, use the practice below — every question in the bank is reachable there.",
+    mockModuleRow: "{section}, module {module}",
+    mockModuleCount: "{available} / {needed}",
+    sectionReading: "Reading & Writing",
+    sectionMath: "Math",
+
+    /* ---- Practice, the lower section ------------------------------------ */
+    practiceTitle: "Practice",
+    practiceBody:
+      "Short sessions: one question at a time, with the explanation straight after you answer. The timer is optional.",
+    randomTitle: "Mixed practice",
+    randomBody: "Random questions across every topic.",
+    randomStart: "Start mixed practice",
+    countLabel: "How many questions",
+    timerLabel: "Use a timer",
+    timerOff: "No timer",
+
     topicsTitle: "Topics",
     topicsBody:
       "Pick one topic. Questions come one at a time, and the explanation appears the moment you answer.",

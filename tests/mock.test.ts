@@ -12,8 +12,13 @@ import {
   BREAK_MINUTES,
   DEADLINE_GRACE_SECONDS,
   MOCK_MODULES,
+  MOCK_TESTING_MINUTES,
   MOCK_TOTAL_MINUTES,
+  MOCK_TOTAL_QUESTIONS,
+  assembleMockFromBank,
   buildModulePlan,
+  mockAvailability,
+  questionsNeeded,
   hasNextModule,
   isModuleExpired,
   isPastDeadline,
@@ -336,5 +341,112 @@ describe("mergeModuleAnswers", () => {
     expect(
       mergeModuleAnswers({ rw1: "A", rw2: "B" }, { rw2: "B" }, openOnFirst),
     ).toEqual({ rw2: "B" });
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* The blueprint, and being honest about what the bank can fill                */
+/* -------------------------------------------------------------------------- */
+
+describe("the Digital SAT blueprint", () => {
+  it("is 98 questions across four modules", () => {
+    expect(MOCK_TOTAL_QUESTIONS).toBe(98);
+    expect(MOCK_MODULES.map(questionsNeeded)).toEqual([27, 27, 22, 22]);
+  });
+
+  it("is 134 minutes of testing and 144 with the break", () => {
+    expect(MOCK_TESTING_MINUTES).toBe(134);
+    expect(MOCK_TOTAL_MINUTES).toBe(144);
+    expect(MOCK_TOTAL_MINUTES - MOCK_TESTING_MINUTES).toBe(BREAK_MINUTES);
+  });
+});
+
+describe("mockAvailability", () => {
+  const full = [
+    { section: "READING" as const, module: "MODULE_1" as const, count: 27 },
+    { section: "READING" as const, module: "MODULE_2" as const, count: 27 },
+    { section: "MATH" as const, module: "MODULE_1" as const, count: 22 },
+    { section: "MATH" as const, module: "MODULE_2" as const, count: 22 },
+  ];
+
+  it("reports a complete bank as complete", () => {
+    const result = mockAvailability(full);
+    expect(result.complete).toBe(true);
+    expect(result.shortTotal).toBe(0);
+    expect(result.availableTotal).toBe(98);
+  });
+
+  it("reports an empty bank as 98 short, not as zero modules", () => {
+    const result = mockAvailability([]);
+    expect(result.complete).toBe(false);
+    expect(result.shortTotal).toBe(98);
+    expect(result.modules).toHaveLength(4);
+  });
+
+  /*
+   * The state the product is actually in: 20 Reading and 20 Math questions,
+   * all of them module 1. This is the case the practice page has to describe
+   * honestly rather than serve as "a full mock".
+   */
+  it("describes today's bank exactly", () => {
+    const result = mockAvailability([
+      { section: "READING", module: "MODULE_1", count: 20 },
+      { section: "MATH", module: "MODULE_1", count: 20 },
+    ]);
+
+    expect(result.complete).toBe(false);
+    expect(result.availableTotal).toBe(40);
+    expect(result.shortTotal).toBe(58);
+    expect(result.modules.map((m) => m.short)).toEqual([7, 27, 2, 22]);
+  });
+
+  it("does not let a surplus in one module hide a shortfall in another", () => {
+    const result = mockAvailability([
+      { section: "READING", module: "MODULE_1", count: 500 },
+    ]);
+
+    expect(result.availableTotal).toBe(27);
+    expect(result.complete).toBe(false);
+    expect(result.shortTotal).toBe(71);
+  });
+});
+
+describe("assembleMockFromBank", () => {
+  const pool = [
+    ...Array.from({ length: 40 }, (_, i) => ({
+      id: `rw1-${i}`,
+      section: "READING" as const,
+      module: "MODULE_1" as const,
+    })),
+    ...Array.from({ length: 5 }, (_, i) => ({
+      id: `m1-${i}`,
+      section: "MATH" as const,
+      module: "MODULE_1" as const,
+    })),
+  ];
+
+  it("fills a module to the blueprint and no further", () => {
+    const plan = assembleMockFromBank(pool);
+    const reading = plan.find((entry) => entry.module === 0);
+    expect(reading?.questionIds).toHaveLength(27);
+  });
+
+  it("includes a short module at what it holds rather than dropping it", () => {
+    const plan = assembleMockFromBank(pool);
+    const math = plan.find((entry) => entry.module === 2);
+    expect(math?.questionIds).toHaveLength(5);
+  });
+
+  it("omits a module the bank cannot supply at all", () => {
+    const plan = assembleMockFromBank(pool);
+    expect(plan.find((entry) => entry.module === 1)).toBeUndefined();
+    expect(plan.find((entry) => entry.module === 3)).toBeUndefined();
+  });
+
+  it("draws across tests, not from one", () => {
+    // Every id here would live under a different `testId` in the database;
+    // assembly only cares about section and module.
+    const plan = assembleMockFromBank(pool);
+    expect(plan.flatMap((entry) => entry.questionIds).length).toBe(32);
   });
 });

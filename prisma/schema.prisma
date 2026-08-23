@@ -83,6 +83,9 @@ enum StudyPriority {
 enum PracticeSource {
   SKILL
   PLAN
+  /// Mixed practice: questions drawn across every topic, so the session has no
+  /// single skill. `PracticeSession.skillId` is null for these.
+  MIXED
 }
 
 enum ApplicationStatus {
@@ -934,8 +937,12 @@ model PracticeSession {
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  skillId String @map("skill_id")
-  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  /// Null for `MIXED` sessions, which span every topic and therefore belong to
+  /// no single skill. Nullable rather than pointing at an arbitrary skill: a
+  /// wrong attribution would poison the per-skill accuracy the study plan and
+  /// the weak-topics list are built on.
+  skillId String? @map("skill_id")
+  skill   Skill?  @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   source PracticeSource @default(SKILL)
 

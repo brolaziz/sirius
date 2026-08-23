@@ -25,9 +25,10 @@ import { formatDuration, testTypeLabel } from "@/lib/sat";
 import { parseQuestionOptions } from "@/lib/simulator";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Your results",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getDictionary(await getLang());
+  return { title: t.practice.resultsTitle };
+}
 
 /** One question's outcome, as stored in `TestResult.answersRecord`. */
 interface AnswerRecord {

@@ -49,12 +49,38 @@ import type {
 export function PracticeRunner({
   session,
   skillLabel,
+  minutes,
 }: {
   session: PracticeSessionView;
   /** Already resolved to the interface language by the page. */
   skillLabel: string;
+  /**
+   * Optional practice clock, in minutes, chosen on the practice page.
+   *
+   * Display only, and deliberately so. Practice is not an exam: nothing is
+   * graded against this and the server does not enforce it, so when it reaches
+   * zero it says so and stops rather than submitting anything. A student who
+   * wants to keep going should be able to keep going.
+   */
+  minutes?: number;
 }) {
   const { t } = useT();
+  const [secondsLeft, setSecondsLeft] = React.useState<number | null>(
+    minutes && minutes > 0 ? minutes * 60 : null,
+  );
+
+  React.useEffect(() => {
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) return;
+
+    const timer = window.setInterval(() => {
+      setSecondsLeft((previous) =>
+        previous === null ? null : Math.max(0, previous - 1),
+      );
+    }, 1_000);
+
+    return () => window.clearInterval(timer);
+  }, [secondsLeft]);
   const router = useRouter();
 
   const [feedback, setFeedback] = React.useState<
@@ -79,7 +105,7 @@ export function PracticeRunner({
   async function handleSaveWord(word: string) {
     const result = await saveWord(word);
     if (!result.ok) {
-      toast.error(result.error ?? "Could not save that word.");
+      toast.error(result.error ?? t.simulator.saveWordFailed);
       throw new Error(result.error ?? "save failed");
     }
   }
@@ -186,6 +212,18 @@ export function PracticeRunner({
         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
           {fill(t.practice.questionOf, { current: index + 1, total })}
         </span>
+        {secondsLeft !== null && (
+          <span
+            className={cn(
+              "shrink-0 text-xs font-medium tabular-nums",
+              secondsLeft === 0 ? "text-viz-rose" : "text-muted-foreground",
+            )}
+          >
+            {secondsLeft === 0
+              ? t.practice.timeUpSoft
+              : formatDuration(secondsLeft)}
+          </span>
+        )}
       </div>
 
       {/* Passage */}

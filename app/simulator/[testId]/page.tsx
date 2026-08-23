@@ -191,11 +191,46 @@ export default async function SimulatorPage({
   const spec = plan.length > 0 ? specForPlanIndex(plan, attempt?.moduleIndex ?? 0) : null;
 
   const moduleQuestionIds = spec
-    ? new Set(questionIdsAt(plan, attempt?.moduleIndex ?? 0))
+    ? questionIdsAt(plan, attempt?.moduleIndex ?? 0)
     : null;
 
+  /*
+   * A sitting's questions are read by the plan's ids, not by `testId`.
+   *
+   * The plan is assembled from the whole bank (see `startAttempt`), and the
+   * bank lives under container test rows that are not this one — so filtering
+   * `test.questions` would silently drop every question that came from
+   * somewhere else, which is most of them. A single-clock practice test still
+   * uses its own questions, because for those the test *is* the list.
+   */
   const visibleQuestions = moduleQuestionIds
-    ? test.questions.filter((question) => moduleQuestionIds.has(question.id))
+    ? await prisma.question
+        .findMany({
+          where: { id: { in: moduleQuestionIds } },
+          // NOTE: `correctAnswer` and `explanation` are intentionally absent,
+          // for the same reason as the select above.
+          select: {
+            id: true,
+            order: true,
+            module: true,
+            passageText: true,
+            passageTitle: true,
+            questionText: true,
+            format: true,
+            options: true,
+            domain: true,
+          },
+        })
+        .then((rows) =>
+          /*
+           * `IN` does not preserve order, and a student must meet the questions
+           * in the order the plan fixed — otherwise a reload reshuffles the
+           * module underneath them.
+           */
+          moduleQuestionIds
+            .map((id) => rows.find((row) => row.id === id))
+            .filter((row): row is (typeof rows)[number] => row !== undefined),
+        )
     : test.questions;
 
   if (spec && visibleQuestions.length === 0) {

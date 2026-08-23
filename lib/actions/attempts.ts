@@ -32,7 +32,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUserId, getOrCreateCurrentUser } from "@/lib/user";
 import { estimateScaledScore, isAnswerCorrect } from "@/lib/sat";
 import {
-  buildModulePlan,
+  assembleMockFromBank,
   mergeModuleAnswers,
   parseModulePlan,
   readAttemptClock,
@@ -118,8 +118,20 @@ export async function startAttempt(testId: string): Promise<StartAttemptResult> 
   let modulePlan: MockModulePlan = [];
 
   if (test.type === "FULL") {
+    /*
+     * A full sitting draws from the WHOLE BANK, not from this test's own rows.
+     *
+     * The bank was imported into two unpublished container tests, so assembling
+     * from `testId` gave the demo test its two questions and called that a
+     * mock. A question's fitness for a module is a property of the question —
+     * its section and its module — not of the row it was imported under.
+     *
+     * `assembleMockFromBank` fills each module to the blueprint (27/27/22/22)
+     * and no further, so importing more questions lengthens the mock without
+     * anyone editing a list. That is what makes turning this on a data change.
+     */
     const questions = await prisma.question.findMany({
-      where: { testId: test.id },
+      where: { skillRef: { isNot: null } },
       orderBy: [{ module: "asc" }, { order: "asc" }],
       select: {
         id: true,
@@ -128,7 +140,7 @@ export async function startAttempt(testId: string): Promise<StartAttemptResult> 
       },
     });
 
-    modulePlan = buildModulePlan(
+    modulePlan = assembleMockFromBank(
       questions.map((question) => ({
         id: question.id,
         module: question.module,

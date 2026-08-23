@@ -1,10 +1,20 @@
 /**
- * Practice — pick a topic, sit a test, or review a past one.
+ * Practice — two sections, and one of them is honest about being unavailable.
  *
- * The page leads with topics rather than with tests. A student with twenty
- * minutes wants to practise something specific, and the weak-topic list above
- * it answers "something specific" for them when there is enough evidence to
- * answer it honestly.
+ * TOP: the full mock. The exam's own shape, stated whether or not the bank can
+ * fill it, and offered only when it can. See `components/practice/mock-panel`
+ * for why a short sitting is not served as a mock.
+ *
+ * BELOW: practice. Mixed questions across every topic, or one topic chosen from
+ * the taxonomy, with the student choosing the length and whether there is a
+ * clock. That is the line between the two sections — the mock's shape belongs
+ * to the exam, a practice session's belongs to whoever has twenty minutes.
+ *
+ * The list of individual "tests" that used to sit here is gone. A test was a
+ * fixed list somebody curated, which is why the page could offer a
+ * two-question demo as the only thing to sit while forty real questions were
+ * unreachable behind an unpublished container row. Questions are now reached
+ * through practice and through the mock, both of which draw from the bank.
  *
  * Every section has a real empty state, because a fresh install legitimately
  * has no questions, no history and no weaknesses to report.
@@ -12,22 +22,23 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Clock, FileJson, History, Play } from "lucide-react";
+import { ArrowRight, History } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { StartPracticeButton } from "@/components/practice/start-practice-button";
-import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
+import { PracticeControls } from "@/components/practice/practice-controls";
+import { MockPanel } from "@/components/practice/mock-panel";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/i18n/config";
 import { formatDuration, testTypeLabel } from "@/lib/sat";
 import {
+  getBankCounts,
   getPracticeSkills,
   getWeakSkills,
   type PracticeSkillOption,
 } from "@/lib/queries/practice";
+import { mockAvailability } from "@/lib/mock";
 import type { Lang } from "@/lib/i18n/config";
 
 export const metadata: Metadata = {
@@ -44,6 +55,10 @@ export default async function PracticePage() {
     ? await Promise.all([getPracticeSkills(userId), getWeakSkills(userId, 3)])
     : [[], []];
 
+  const availability = mockAvailability(
+    databaseReady ? await getBankCounts() : [],
+  );
+
   const byDomain = new Map<string, PracticeSkillOption[]>();
   for (const skill of skills) {
     const group = byDomain.get(skill.domainName) ?? [];
@@ -51,19 +66,17 @@ export default async function PracticePage() {
     byDomain.set(skill.domainName, group);
   }
 
-  const [tests, results] = databaseReady
+  const [mockTest, results] = databaseReady
     ? await prisma.$transaction([
-        prisma.test.findMany({
-          where: { isPublished: true },
-          orderBy: [{ type: "asc" }, { createdAt: "desc" }],
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            type: true,
-            durationMinutes: true,
-            _count: { select: { questions: true } },
-          },
+        /*
+         * The row a sitting is recorded against. Its own questions are not the
+         * mock — `startAttempt` assembles that from the whole bank — so this is
+         * a container, not a curated list.
+         */
+        prisma.test.findFirst({
+          where: { type: "FULL", isPublished: true },
+          orderBy: { createdAt: "desc" },
+          select: { id: true },
         }),
         prisma.testResult.findMany({
           where: { userId: userId ?? "__none__" },
@@ -80,7 +93,7 @@ export default async function PracticePage() {
           },
         }),
       ])
-    : [[], []];
+    : [null, []];
 
   return (
     <div className="mx-auto max-w-7xl space-y-14">
@@ -95,6 +108,24 @@ export default async function PracticePage() {
           {t.pages.practiceBody}
         </p>
       </div>
+
+      <MockPanel
+        availability={availability}
+        mockTestId={mockTest?.id ?? null}
+        t={t}
+      />
+
+      {/* Practice: mixed first, then one topic at a time. */}
+      <section>
+        <h2 className="text-sm font-semibold text-muted-foreground">
+          {t.practice.practiceTitle}
+        </h2>
+        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+          {t.practice.practiceBody}
+        </p>
+
+        <PracticeControls className="mt-5" />
+      </section>
 
       {/* Weak topics — only when there is enough evidence to name one. */}
       {weak.length > 0 && (
@@ -197,82 +228,6 @@ export default async function PracticePage() {
         )}
       </section>
 
-      {/* Available tests */}
-      <section>
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          {t.pages.practiceAvailable}
-        </h2>
-
-        {tests.length === 0 ? (
-          <div className="mt-5 rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-            <span className="inline-flex size-11 items-center justify-center rounded-xl bg-muted text-muted-foreground">
-              <FileJson className="size-5" />
-            </span>
-            <h3 className="mt-4 text-base font-semibold">
-              {t.pages.practiceEmptyTitle}
-            </h3>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Sirius ships without question content. Post your own JSON question
-              bank to <code className="font-mono text-xs">/api/tests/import</code>{" "}
-              and your tests appear here. Send a{" "}
-              <code className="font-mono text-xs">GET</code> to the same URL to
-              see the accepted payload shape.
-            </p>
-          </div>
-        ) : (
-          <StaggerGroup
-            immediate
-            className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {tests.map((test) => (
-              <StaggerItem key={test.id}>
-                <article className="flex h-full flex-col justify-between rounded-2xl bg-card p-6 shadow-card transition-[box-shadow,transform] duration-300 hover:-translate-y-1 hover:shadow-card-hover">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">
-                        {testTypeLabel(test.type, t)}
-                      </Badge>
-                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="size-3.5" />
-                        {test.durationMinutes} min
-                      </span>
-                    </div>
-
-                    <h3 className="mt-4 text-lg font-bold tracking-tight text-balance">
-                      {test.title}
-                    </h3>
-
-                    {test.description && (
-                      <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                        {test.description}
-                      </p>
-                    )}
-
-                    <p className="mt-3 text-xs text-muted-foreground tnum">
-                      {test._count.questions} question
-                      {test._count.questions === 1 ? "" : "s"}
-                    </p>
-                  </div>
-
-                  <Button
-                    asChild
-                    size="lg"
-                    className="group mt-6 h-11 w-full rounded-xl shadow-glow"
-                    disabled={test._count.questions === 0}
-                  >
-                    <Link href={`/simulator/${test.id}`}>
-                      <Play className="size-4" />
-                      Start
-                      <ArrowRight className="ml-0.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-                    </Link>
-                  </Button>
-                </article>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-        )}
-      </section>
-
       {/* History */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground">
@@ -310,13 +265,13 @@ export default async function PracticePage() {
 
                   <div className="flex items-center gap-6">
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Raw</p>
+                      <p className="text-xs text-muted-foreground">{t.dash.raw}</p>
                       <p className="text-sm font-semibold tnum">
                         {result.score}/{result.totalQuestions}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground">Estimated</p>
+                      <p className="text-xs text-muted-foreground">{t.dash.estimated}</p>
                       <p className="text-sm font-semibold tnum">
                         {result.scaledScore ?? "—"}
                       </p>

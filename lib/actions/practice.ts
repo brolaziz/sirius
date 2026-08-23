@@ -40,10 +40,19 @@ const startSchema = z
   .object({
     skillCode: z.string().min(1).max(100).optional(),
     planTaskId: z.string().min(1).max(60).optional(),
+    /** Mixed practice: every topic, no skill. */
+    mixed: z.boolean().optional(),
+    /** How many questions the student asked for. */
+    count: z.number().int().min(5).max(50).optional(),
   })
   .refine(
-    (input) => Boolean(input.skillCode) !== Boolean(input.planTaskId),
-    { error: "Start a session from a skill or from a plan task, not both." },
+    (input) =>
+      [input.skillCode, input.planTaskId, input.mixed].filter(Boolean)
+        .length === 1,
+    {
+      error:
+        "Start a session from a skill, a plan task or mixed practice — exactly one.",
+    },
   );
 
 export interface StartPracticeResult extends ActionResult {
@@ -69,11 +78,14 @@ export async function startPracticeSession(
   if (!userId) return { ok: false, error: "Not signed in." };
 
   /* Which skill, and how much of a plan task is left to do. */
-  let skillId: string;
+  let skillId: string | null = null;
   let planTaskId: string | null = null;
   let remainingInTask: number | null = null;
 
-  if (parsed.data.planTaskId) {
+  if (parsed.data.mixed) {
+    /* Mixed practice has no skill — see the note on `PracticeSession.skillId`. */
+    skillId = null;
+  } else if (parsed.data.planTaskId) {
     const task = await prisma.studyPlanTask.findFirst({
       // Ownership is checked through the plan: tasks have no user of their own.
       where: { id: parsed.data.planTaskId, plan: { userId } },
@@ -101,15 +113,26 @@ export async function startPracticeSession(
   }
 
   const open = await prisma.practiceSession.findFirst({
-    where: { userId, skillId, planTaskId, completedAt: null },
+    where: {
+      userId,
+      skillId,
+      planTaskId,
+      source: parsed.data.mixed ? "MIXED" : undefined,
+      completedAt: null,
+    },
     orderBy: { startedAt: "desc" },
     select: { id: true },
   });
 
   if (open) return { ok: true, sessionId: open.id };
 
+  /*
+   * Mixed practice draws from every question that carries a skill, which is the
+   * whole usable bank. A question with no skill is excluded for the same reason
+   * the blueprint cannot place it: nothing knows what it tests.
+   */
   const candidates = await prisma.question.findMany({
-    where: { skillId },
+    where: skillId === null ? { skillRef: { isNot: null } } : { skillId },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });
@@ -142,10 +165,19 @@ export async function startPracticeSession(
     history.set(response.questionId, entry);
   }
 
+  /*
+   * The student's chosen length wins when they set one, clamped to what the
+   * bank actually holds. Without a choice this falls back to `sessionLength`,
+   * which is what a plan task or a bare topic tap has always used.
+   */
+  const requested = parsed.data.count
+    ? Math.min(parsed.data.count, candidates.length)
+    : sessionLength(candidates.length, remainingInTask);
+
   const questionIds = selectPracticeQuestions(
     candidates.map((question) => question.id),
     history,
-    sessionLength(candidates.length, remainingInTask),
+    requested,
   );
 
   if (questionIds.length === 0) {
@@ -157,7 +189,7 @@ export async function startPracticeSession(
       userId,
       skillId,
       planTaskId,
-      source: planTaskId ? "PLAN" : "SKILL",
+      source: parsed.data.mixed ? "MIXED" : planTaskId ? "PLAN" : "SKILL",
       questionIds,
     },
     select: { id: true },
