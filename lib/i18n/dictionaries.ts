@@ -368,8 +368,97 @@ export const uz = {
    * time pressure, and it is shorter in Uzbek than in English, which also buys
    * back room in the header at 320px.
    */
+  /*
+   * The timed test screen.
+   *
+   * WRITE SHORT HERE, SHORTER THAN ANYWHERE ELSE IN THE PRODUCT.
+   *
+   * Every string below is read by someone with a clock running, and several are
+   * read at the moment the clock hits zero. That is not the moment to be
+   * eloquent. `timeUp` in particular is the sentence a student sees at second
+   * zero: it says the time went and the work was kept, in that order, because
+   * the second half is the part that stops a panic.
+   *
+   * These are not literal translations of the English. Uzbek phrasing that is
+   * natural at reading speed beats phrasing that maps word-for-word.
+   */
   simulator: {
+    tabTitle: "Test davom etmoqda",
     sectionModule: "{section}-bo'lim, {module}-modul",
+    module1: "1-modul",
+    module2: "2-modul",
+
+    typeReading: "O'qish va yozish",
+    typeMath: "Matematika",
+    typeFull: "To'liq test",
+
+    passageLabel: "Matn",
+    questionLabel: "Savol",
+    questionOf: "{current}-savol / {total}",
+    questionNumber: "{index}-savol",
+    answered: "javob berilgan",
+    notAnswered: "javob berilmagan",
+    flaggedForReview: "belgilangan",
+    current: "joriy",
+
+    flagged: "Belgilangan",
+    markForReview: "Belgilab qo'yish",
+    removeFlag: "Belgini olib tashlash",
+    addFlag: "Keyin qaytish uchun belgilang",
+    crossOut: "Variantni o'chirish",
+    undoCrossOut: "O'chirishni bekor qilish",
+
+    timerShow: "Vaqtni ko'rsatish",
+    timerHide: "Vaqtni yashirish",
+    timerHidden: "Yashirilgan",
+    timerWarning: "5 daqiqa qoldi",
+
+    dictionaryToggle: "O'zbekcha lug'atni yoqish",
+    dictionaryOn: "Belgilangan so'zga bosing — tarjimasi chiqadi",
+    dictionaryOff: "Inglizcha → o'zbekcha lug'atni yoqing",
+    saveWord: "So'z bazasiga saqlash",
+    savedWord: "Saqlandi",
+    saveWordFailed: "So'z saqlanmadi.",
+
+    finishModule: "Modulni yakunlash",
+    finishSection: "Bo'limni yakunlash",
+    finishShort: "Yakunlash",
+    finishModuleTitle: "Modul yakunlansinmi?",
+    finishSectionTitle: "Bo'lim yakunlansinmi?",
+    finishBlank:
+      "{count} ta savol bo'sh qoldi. Bo'sh javob xato deb hisoblanadi.",
+    finishAllModule:
+      "Hamma savolga javob berilgan. Bu modulga qaytib bo'lmaydi.",
+    finishAllSection: "Hamma savolga javob berilgan. Natija darhol chiqadi.",
+    statAnswered: "Javob berilgan",
+    statBlank: "Bo'sh",
+    statFlagged: "Belgilangan",
+    cancel: "Bekor qilish",
+    closing: "Yakunlanmoqda…",
+    scoring: "Baholanmoqda…",
+    submitSection: "Bo'limni topshirish",
+
+    /* Read at second zero. Short, and the reassurance comes second. */
+    timeUp: "Vaqt tugadi. Javoblaringiz saqlandi.",
+    submitFailed: "Test topshirilmadi. Qayta urinib ko'ring.",
+    nextModuleFailed: "Keyingi modul boshlanmadi.",
+
+    breakTitle: "Tanaffus",
+    breakBody:
+      "Turing, uzoqqa qarang, suv iching. Keyingi bo'lim siz tayyor bo'lganda boshlanadi — bu sanoq undan vaqt olmaydi.",
+    breakStart: "Keyingi modulni boshlash",
+    breakStarting: "Boshlanmoqda…",
+
+    errorNoDatabase: "Ma'lumotlar bazasi ulanmagan",
+    errorNoQuestions: "Bu testda savollar yo'q",
+    errorNoQuestionsBody:
+      "Avval bu test uchun savollar bazasini import qiling.",
+    errorCannotStart: "Test boshlanmadi",
+    errorCannotStartBody: "Nimadir noto'g'ri ketdi. Qayta urinib ko'ring.",
+    errorNoModuleQuestions: "Bu modulda savollar yo'q",
+    errorNoModuleQuestionsBody:
+      "Sessiya yig'ilmadi. Savollar bazasini to'ldirib, qaytadan boshlang.",
+    backToPractice: "Mashqqa qaytish",
   },
 
   plan: {
@@ -992,8 +1081,84 @@ export const en: Dictionary = {
   },
 
   /** See the note on the Uzbek side. */
+  /** See the note on the Uzbek side: shortest wording that is still clear. */
   simulator: {
+    tabTitle: "Test in progress",
     sectionModule: "Section {section}, Module {module}",
+    module1: "Module 1",
+    module2: "Module 2",
+
+    typeReading: "Reading & Writing",
+    typeMath: "Math",
+    typeFull: "Full test",
+
+    passageLabel: "Passage",
+    questionLabel: "Question",
+    questionOf: "Question {current} of {total}",
+    questionNumber: "Question {index}",
+    answered: "answered",
+    notAnswered: "not answered",
+    flaggedForReview: "flagged for review",
+    current: "current",
+
+    flagged: "Flagged",
+    markForReview: "Mark for review",
+    removeFlag: "Remove the review flag",
+    addFlag: "Flag this question to come back to it",
+    crossOut: "Cross out this option",
+    undoCrossOut: "Undo cross-out",
+
+    timerShow: "Show timer",
+    timerHide: "Hide timer",
+    timerHidden: "Hidden",
+    timerWarning: "5 min left",
+
+    dictionaryToggle: "Toggle Uzbek dictionary",
+    dictionaryOn: "Tap a highlighted word for its Uzbek translation",
+    dictionaryOff: "Turn on the English → Uzbek dictionary",
+    saveWord: "Save to word bank",
+    savedWord: "Saved",
+    saveWordFailed: "Could not save that word.",
+
+    finishModule: "Finish module",
+    finishSection: "Finish section",
+    finishShort: "Finish",
+    finishModuleTitle: "Finish this module?",
+    finishSectionTitle: "Finish this section?",
+    finishBlank: "{count} still blank. Blank answers are marked incorrect.",
+    finishAllModule:
+      "Every question has an answer. You cannot come back to this module.",
+    finishAllSection:
+      "Every question has an answer. Your test will be scored immediately.",
+    statAnswered: "Answered",
+    statBlank: "Blank",
+    statFlagged: "Flagged",
+    cancel: "Cancel",
+    closing: "Closing…",
+    scoring: "Scoring…",
+    submitSection: "Submit section",
+
+    /* Read at second zero. Short, and the reassurance comes second. */
+    timeUp: "Time is up. Your answers are saved.",
+    submitFailed: "Could not submit your test. Try again.",
+    nextModuleFailed: "Could not start the next module.",
+
+    breakTitle: "Break",
+    breakBody:
+      "Stand up, look out of a window, drink something. The next section starts when you say so — this countdown does not take time away from it.",
+    breakStart: "Start the next module",
+    breakStarting: "Starting…",
+
+    errorNoDatabase: "No database connected",
+    errorNoQuestions: "This test has no questions",
+    errorNoQuestionsBody:
+      "Import a question bank for this test, then try again.",
+    errorCannotStart: "Could not start this test",
+    errorCannotStartBody: "Something went wrong. Please try again.",
+    errorNoModuleQuestions: "This module has no questions",
+    errorNoModuleQuestionsBody:
+      "The sitting could not be assembled. Import more of the question bank and start again.",
+    backToPractice: "Back to practice",
   },
 
   plan: {

@@ -230,7 +230,7 @@ export default async function PracticePage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <Badge variant="secondary">
-                        {testTypeLabel(test.type)}
+                        {testTypeLabel(test.type, t)}
                       </Badge>
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="size-3.5" />
@@ -301,7 +301,7 @@ export default async function PracticePage() {
                       {result.test.title}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {testTypeLabel(result.test.type)}
+                      {testTypeLabel(result.test.type, t)}
                       {result.durationSeconds
                         ? ` · ${formatDuration(result.durationSeconds)}`
                         : ""}

@@ -82,7 +82,7 @@ export function StartTestCard({ test, className }: StartTestCardProps) {
       <div className="relative">
         <span className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1.5 text-xs font-semibold text-white">
           <Clock className="size-3.5" />
-          {test.durationMinutes} min · {testTypeLabel(test.type)}
+          {test.durationMinutes} min · {testTypeLabel(test.type, t)}
         </span>
 
         <h2 className="mt-6 text-3xl leading-[1.05] font-extrabold tracking-tightest text-balance text-white">

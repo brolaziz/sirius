@@ -31,11 +31,19 @@ import {
   specForPlanIndex,
 } from "@/lib/mock";
 
-export const metadata: Metadata = {
-  title: "Test in progress",
-  // Keep an in-progress test out of search results and browser history previews.
-  robots: { index: false, follow: false },
-};
+/**
+ * Async so the tab title follows the interface language — a student glancing at
+ * their tabs mid-test should not find the one screen they cannot leave labelled
+ * in the language they are still learning.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const t = getDictionary(await getLang());
+  return {
+    title: t.simulator.tabTitle,
+    // Keep an in-progress test out of search results and history previews.
+    robots: { index: false, follow: false },
+  };
+}
 
 /** Coerce a Prisma `Json` column into `Record<string, string>`. */
 function asAnswerMap(value: unknown): Record<string, string> {
@@ -60,9 +68,11 @@ function asFlaggedList(value: unknown): string[] {
 function SimulatorError({
   title,
   body,
+  backLabel,
 }: {
   title: string;
   body: React.ReactNode;
+  backLabel: string;
 }) {
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">
@@ -72,7 +82,7 @@ function SimulatorError({
           {body}
         </div>
         <Button asChild size="lg" className="mt-6 h-10">
-          <Link href="/practice">Back to practice</Link>
+          <Link href="/practice">{backLabel}</Link>
         </Button>
       </div>
     </div>
@@ -89,10 +99,13 @@ export default async function SimulatorPage({
   // In Next.js 16 route params are a Promise and must be awaited.
   const { testId } = await params;
 
+  const t = getDictionary(await getLang());
+
   if (!isDatabaseConfigured()) {
     return (
       <SimulatorError
-        title="No database connected"
+        backLabel={t.simulator.backToPractice}
+        title={t.simulator.errorNoDatabase}
         body={
           <>
             Set <code className="font-mono text-xs">DATABASE_URL</code> in{" "}
@@ -136,8 +149,9 @@ export default async function SimulatorPage({
   if (test.questions.length === 0) {
     return (
       <SimulatorError
-        title="This test has no questions"
-        body="Import a question bank for this test, then try again."
+        backLabel={t.simulator.backToPractice}
+        title={t.simulator.errorNoQuestions}
+        body={t.simulator.errorNoQuestionsBody}
       />
     );
   }
@@ -146,8 +160,9 @@ export default async function SimulatorPage({
   if (!started.ok || !started.attemptId || !started.startedAtMs) {
     return (
       <SimulatorError
-        title="Could not start this test"
-        body={started.error ?? "Something went wrong. Please try again."}
+        backLabel={t.simulator.backToPractice}
+        title={t.simulator.errorCannotStart}
+        body={started.error ?? t.simulator.errorCannotStartBody}
       />
     );
   }
@@ -186,15 +201,14 @@ export default async function SimulatorPage({
   if (spec && visibleQuestions.length === 0) {
     return (
       <SimulatorError
-        title="This module has no questions"
-        body="The sitting could not be assembled. Import more of the question bank and start again."
+        backLabel={t.simulator.backToPractice}
+        title={t.simulator.errorNoModuleQuestions}
+        body={t.simulator.errorNoModuleQuestionsBody}
       />
     );
   }
 
   const moduleStartedAt = attempt?.moduleStartedAt ?? attempt?.startedAt ?? null;
-
-  const t = getDictionary(await getLang());
 
   const moduleProps =
     spec && moduleStartedAt

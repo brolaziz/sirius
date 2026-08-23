@@ -35,6 +35,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/lang-provider";
 import {
   splitParagraphs,
   tokenizePassage,
@@ -91,6 +92,7 @@ function TranslationCard({
   surfaceForm: string;
   onSaveWord?: (word: string) => Promise<void> | void;
 }) {
+  const { t } = useT();
   const [state, setState] = React.useState<"idle" | "saving" | "saved">("idle");
 
   async function handleSave() {
@@ -158,7 +160,7 @@ function TranslationCard({
           {state === "saving" && <Loader2 className="size-3.5 animate-spin" />}
           {state === "saved" && <Check className="size-3.5" />}
           {state === "idle" && <BookmarkPlus className="size-3.5" />}
-          {state === "saved" ? "Saved to word bank" : "Save to word bank"}
+          {state === "saved" ? t.simulator.savedWord : t.simulator.saveWord}
         </button>
       )}
     </div>

@@ -21,6 +21,7 @@ import { Clock, Eye, EyeOff } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/sat";
+import { useT } from "@/components/i18n/lang-provider";
 
 /** Show the warning state at five minutes remaining. */
 const WARNING_THRESHOLD_SECONDS = 5 * 60;
@@ -38,6 +39,7 @@ export function CountdownTimer({
   onExpire,
   className,
 }: CountdownTimerProps) {
+  const { t } = useT();
   const [isHidden, setIsHidden] = React.useState(false);
 
   const computeRemaining = React.useCallback(
@@ -93,7 +95,7 @@ export function CountdownTimer({
 
         {isHidden ? (
           <span className="text-sm font-medium">
-            {isWarning ? "5 min left" : "Hidden"}
+            {isWarning ? t.simulator.timerWarning : t.simulator.timerHidden}
           </span>
         ) : (
           <span className="text-sm font-semibold tnum">
@@ -112,8 +114,8 @@ export function CountdownTimer({
          * enough to lose a tap to it.
          */
         className="tap-target inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        aria-label={isHidden ? "Show timer" : "Hide timer"}
-        title={isHidden ? "Show timer" : "Hide timer"}
+        aria-label={isHidden ? t.simulator.timerShow : t.simulator.timerHide}
+        title={isHidden ? t.simulator.timerShow : t.simulator.timerHide}
       >
         {isHidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
       </button>

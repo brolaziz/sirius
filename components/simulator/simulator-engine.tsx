@@ -49,6 +49,7 @@ import { CountdownTimer } from "@/components/simulator/countdown-timer";
 import { QuestionNavigator } from "@/components/simulator/question-navigator";
 import { QuestionPane } from "@/components/simulator/question-pane";
 import { Logo } from "@/components/brand/logo";
+import { useT } from "@/components/i18n/lang-provider";
 import {
   advanceModule,
   saveAttemptProgress,
@@ -104,6 +105,7 @@ export function SimulatorEngine({
   initialAnswers,
   initialFlagged,
 }: SimulatorEngineProps) {
+  const { t } = useT();
   const router = useRouter();
   const reduce = useReducedMotion();
 
@@ -178,7 +180,7 @@ export function SimulatorEngine({
       setIsSubmitting(true);
 
       if (reason === "expired") {
-        toast.info("Time is up — submitting your answers.");
+        toast.info(t.simulator.timeUp);
       }
 
       const result = await submitAttempt({
@@ -196,9 +198,14 @@ export function SimulatorEngine({
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setIsFinishOpen(false);
-      toast.error(result.error ?? "Could not submit your test. Try again.");
+      toast.error(result.error ?? t.simulator.submitFailed);
     },
-    [attemptId, router],
+    /*
+     * The dictionary strings are dependencies but not churn: they are plain
+     * strings that only change when the student switches language, so this
+     * callback keeps the referential stability the countdown's interval needs.
+     */
+    [attemptId, router, t.simulator.submitFailed, t.simulator.timeUp],
   );
 
   /**
@@ -225,7 +232,7 @@ export function SimulatorEngine({
     if (!result.ok) {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
-      toast.error(result.error ?? "Could not start the next module.");
+      toast.error(result.error ?? t.simulator.nextModuleFailed);
       return;
     }
 
@@ -236,7 +243,7 @@ export function SimulatorEngine({
 
     // The page re-reads the attempt and renders the next module's questions.
     router.refresh();
-  }, [attemptId, router]);
+  }, [attemptId, router, t.simulator.nextModuleFailed]);
 
   /**
    * Time is up, or the student says they are done.
@@ -355,7 +362,7 @@ export function SimulatorEngine({
   async function handleSaveWord(word: string) {
     const result = await saveWord(word);
     if (!result.ok) {
-      toast.error(result.error ?? "Could not save that word.");
+      toast.error(result.error ?? t.simulator.saveWordFailed);
       throw new Error(result.error ?? "save failed");
     }
   }
@@ -480,11 +487,11 @@ export function SimulatorEngine({
             <p className="text-sm leading-tight font-medium sm:truncate sm:leading-normal">
               {module?.label ??
                 (currentQuestion.module === "MODULE_2"
-                  ? "Module 2"
-                  : "Module 1")}
+                  ? t.simulator.module2
+                  : t.simulator.module1)}
             </p>
             <p className="hidden truncate text-xs text-muted-foreground sm:block">
-              {testTypeLabel(test.type)}
+              {testTypeLabel(test.type, t)}
             </p>
           </div>
         </div>
@@ -507,9 +514,9 @@ export function SimulatorEngine({
             onClick={() => setIsFinishOpen(true)}
           >
             <span className="hidden sm:inline">
-              {module?.hasNext ? "Finish module" : "Finish section"}
+              {module?.hasNext ? t.simulator.finishModule : t.simulator.finishSection}
             </span>
-            <span className="sm:hidden">Finish</span>
+            <span className="sm:hidden">{t.simulator.finishShort}</span>
           </Button>
         </div>
       </header>
@@ -524,14 +531,14 @@ export function SimulatorEngine({
             <div className="hidden h-full md:grid md:grid-cols-2">
               <section
                 className="h-full overflow-y-auto border-r border-border px-6 py-8 lg:px-10"
-                aria-label="Reading passage"
+                aria-label={t.simulator.passageLabel}
               >
                 {passageNode}
               </section>
 
               <section
                 className="h-full overflow-y-auto px-6 py-8 lg:px-10"
-                aria-label="Question"
+                aria-label={t.simulator.questionLabel}
               >
                 <AnimatedQuestion index={currentIndex} reduce={reduce}>
                   {questionNode}
@@ -568,7 +575,7 @@ export function SimulatorEngine({
           /* No passage (typical for Math) — one centred column */
           <section
             className="h-full overflow-y-auto px-4 py-8 sm:px-6 lg:px-10"
-            aria-label="Question"
+            aria-label={t.simulator.questionLabel}
           >
             <AnimatedQuestion index={currentIndex} reduce={reduce}>
               {questionNode}
@@ -633,22 +640,22 @@ export function SimulatorEngine({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {module?.hasNext ? "Finish this module?" : "Finish this section?"}
+              {module?.hasNext ? t.simulator.finishModuleTitle : t.simulator.finishSectionTitle}
             </DialogTitle>
             <DialogDescription>
               {unansweredCount > 0
                 ? `${unansweredCount} question${unansweredCount === 1 ? "" : "s"} ${unansweredCount === 1 ? "is" : "are"} still blank. Blank answers are marked incorrect.`
                 : module?.hasNext
-                  ? "Every question has an answer. You cannot come back to this module."
-                  : "Every question has an answer. Your test will be scored immediately."}
+                  ? t.simulator.finishAllModule
+                  : t.simulator.finishAllSection}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-3 gap-3 py-2 text-center">
             {[
-              { label: "Answered", value: answeredCount },
-              { label: "Blank", value: unansweredCount },
-              { label: "Flagged", value: flagged.size },
+              { label: t.simulator.statAnswered, value: answeredCount },
+              { label: t.simulator.statBlank, value: unansweredCount },
+              { label: t.simulator.statFlagged, value: flagged.size },
             ].map((stat) => (
               <div
                 key={stat.label}
@@ -670,7 +677,7 @@ export function SimulatorEngine({
               onClick={() => setIsFinishOpen(false)}
               disabled={isSubmitting}
             >
-              Keep working
+              {t.simulator.cancel}
             </Button>
             <Button
               size="lg"
@@ -681,11 +688,11 @@ export function SimulatorEngine({
               {isSubmitting && <Loader2 className="size-4 animate-spin" />}
               {isSubmitting
                 ? module?.hasNext
-                  ? "Closing…"
-                  : "Scoring…"
+                  ? t.simulator.closing
+                  : t.simulator.scoring
                 : module?.hasNext
-                  ? "Finish module"
-                  : "Submit section"}
+                  ? t.simulator.finishModule
+                  : t.simulator.submitSection}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -749,6 +756,7 @@ function BreakScreen({
   isPending: boolean;
   onContinue: () => void;
 }) {
+  const { t } = useT();
   const [secondsLeft, setSecondsLeft] = React.useState(minutes * 60);
 
   React.useEffect(() => {
@@ -764,11 +772,10 @@ function BreakScreen({
       <Logo />
 
       <h1 className="mt-10 text-3xl font-extrabold tracking-tightest sm:text-4xl">
-        Break
+        {t.simulator.breakTitle}
       </h1>
       <p className="mt-3 max-w-md text-base leading-relaxed text-muted-foreground">
-        Stand up, look out of a window, drink something. The Math section starts
-        when you say so — this countdown does not take time away from it.
+        {t.simulator.breakBody}
       </p>
 
       <p className="mt-10 font-mono text-6xl font-semibold tabular-nums">
@@ -782,7 +789,7 @@ function BreakScreen({
         onClick={onContinue}
       >
         {isPending && <Loader2 className="size-4 animate-spin" />}
-        {isPending ? "Starting…" : "Start the next module"}
+        {isPending ? t.simulator.breakStarting : t.simulator.breakStart}
       </Button>
     </div>
   );

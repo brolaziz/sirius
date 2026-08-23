@@ -281,14 +281,17 @@ export function gradeAttempt(
 }
 
 /** Human label for a test type. */
-export function testTypeLabel(type: TestType): string {
+export function testTypeLabel(
+  type: TestType,
+  t: { simulator: { typeReading: string; typeMath: string; typeFull: string } },
+): string {
   switch (type) {
     case "READING":
-      return "Reading & Writing";
+      return t.simulator.typeReading;
     case "MATH":
-      return "Math";
+      return t.simulator.typeMath;
     case "FULL":
-      return "Full test";
+      return t.simulator.typeFull;
   }
 }
 

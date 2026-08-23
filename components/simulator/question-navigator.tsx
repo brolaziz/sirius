@@ -18,6 +18,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/lang-provider";
+import { fill } from "@/lib/i18n/config";
 
 interface QuestionNavigatorProps {
   /** Ordered question ids. Position in this array is the question number. */
@@ -35,6 +37,7 @@ export function QuestionNavigator({
   currentIndex,
   onJump,
 }: QuestionNavigatorProps) {
+  const { t } = useT();
   const [open, setOpen] = React.useState(false);
 
   const answeredCount = questionIds.filter((id) => Boolean(answers[id])).length;
@@ -47,7 +50,10 @@ export function QuestionNavigator({
           className="tap-target inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span className="tnum">
-            Question {currentIndex + 1} of {questionIds.length}
+            {fill(t.simulator.questionOf, {
+              current: currentIndex + 1,
+              total: questionIds.length,
+            })}
           </span>
           <ChevronUp
             className={cn(
@@ -90,10 +96,10 @@ export function QuestionNavigator({
                   setOpen(false);
                 }}
                 aria-label={[
-                  `Question ${index + 1}`,
-                  isAnswered ? "answered" : "not answered",
-                  isFlagged ? "flagged for review" : null,
-                  isCurrent ? "current" : null,
+                  fill(t.simulator.questionNumber, { index: index + 1 }),
+                  isAnswered ? t.simulator.answered : t.simulator.notAnswered,
+                  isFlagged ? t.simulator.flaggedForReview : null,
+                  isCurrent ? t.simulator.current : null,
                 ]
                   .filter(Boolean)
                   .join(", ")}

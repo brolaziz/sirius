@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n/lang-provider";
 
 interface DictionaryToggleProps {
   enabled: boolean;
@@ -35,6 +36,7 @@ export function DictionaryToggle({
   termCount,
   className,
 }: DictionaryToggleProps) {
+  const { t } = useT();
 
   return (
     <Tooltip>
@@ -68,7 +70,7 @@ export function DictionaryToggle({
           <Switch
             checked={enabled}
             onCheckedChange={onChange}
-            aria-label="Toggle Uzbek dictionary"
+            aria-label={t.simulator.dictionaryToggle}
             className="ml-0.5"
           />
         </label>
@@ -76,10 +78,10 @@ export function DictionaryToggle({
 
       <TooltipContent side="bottom">
         {enabled
-          ? "Tap a highlighted word for its Uzbek translation"
+          ? t.simulator.dictionaryOn
           : termCount && termCount > 0
             ? `Turn on to translate ${termCount} word${termCount === 1 ? "" : "s"} in this passage`
-            : "Turn on the English → Uzbek dictionary"}
+            : t.simulator.dictionaryOff}
       </TooltipContent>
     </Tooltip>
   );

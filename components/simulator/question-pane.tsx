@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { SimulatorQuestion } from "@/lib/simulator";
+import { useT } from "@/components/i18n/lang-provider";
 
 interface QuestionPaneProps {
   question: SimulatorQuestion;
@@ -48,6 +49,7 @@ export function QuestionPane({
   crossedOut,
   onToggleCrossOut,
 }: QuestionPaneProps) {
+  const { t } = useT();
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -97,14 +99,14 @@ export function QuestionPane({
                 />
               </span>
               <span className="hidden sm:inline">
-                {isFlagged ? "Flagged" : "Mark for review"}
+                {isFlagged ? t.simulator.flagged : t.simulator.markForReview}
               </span>
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
             {isFlagged
-              ? "Remove the review flag"
-              : "Flag this question to come back to it"}
+              ? t.simulator.removeFlag
+              : t.simulator.addFlag}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -196,7 +198,7 @@ export function QuestionPane({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="left">
-                    {isCrossed ? "Undo cross-out" : "Cross out this option"}
+                    {isCrossed ? t.simulator.undoCrossOut : t.simulator.crossOut}
                   </TooltipContent>
                 </Tooltip>
               </div>

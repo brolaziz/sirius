@@ -119,7 +119,7 @@ export default async function ResultsPage({
           {result.test.title}
         </h1>
         <p className="mt-3 text-base text-muted-foreground">
-          {testTypeLabel(result.test.type)}
+          {testTypeLabel(result.test.type, t)}
           {result.durationSeconds
             ? ` · finished in ${formatDuration(result.durationSeconds)}`
             : ""}
