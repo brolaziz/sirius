@@ -111,11 +111,19 @@ export function AuthPanel({
         {t.auth.terms}
       </p>
 
+      {/*
+        The halo on this one grows 13.5px above and below a 17px inline link.
+        That is safe because everything it reaches into is text: the terms
+        paragraph sits 32px above and is not interactive, and this is the last
+        element in the panel. An inline link with an interactive neighbour on
+        the line below would need `tap-row` instead — a halo there would let one
+        link answer for another.
+      */}
       <p data-auth-step className="mt-8 text-center text-sm text-muted-foreground">
         {isSignUp ? t.auth.haveAccount : t.auth.noAccount}{" "}
         <Link
           href={isSignUp ? "/sign-in" : "/sign-up"}
-          className="font-semibold text-primary underline-offset-4 hover:underline"
+          className="tap-target font-semibold text-primary underline-offset-4 hover:underline"
         >
           {isSignUp ? t.auth.signInLink : t.auth.createOne}
         </Link>

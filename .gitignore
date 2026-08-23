@@ -50,3 +50,6 @@ next-env.d.ts
 
 # Cached College Scorecard bulk download (see lib/api/scorecard-bulk.ts)
 .cache/
+
+# Tokens for the tap-target audit. Short-lived, dev branch only.
+.audit-session.json

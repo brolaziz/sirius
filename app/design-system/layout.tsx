@@ -2,9 +2,10 @@
  * Design-system route shell.
  *
  * Sits outside the `(app)` and `(marketing)` groups, so it inherits only the
- * root layout: no sidebar, no marketing header, no auth. `proxy.ts` does not
- * list `/design-system` as protected, so it is reachable while signed out —
- * this is a review surface, not product.
+ * root layout: no sidebar, no marketing header, no auth. This is a review
+ * surface, not product.
+ *
+ * DEVELOPMENT ONLY — see the guard below.
  *
  * The six faces below are the display/body/data pairings for the three
  * directions. They are requested here rather than in the root layout so the
@@ -12,6 +13,7 @@
  */
 
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import {
   Bricolage_Grotesque,
   IBM_Plex_Mono,
@@ -74,6 +76,27 @@ export const metadata: Metadata = {
 };
 
 export default function DesignSystemLayout({ children }: LayoutProps<"/design-system">) {
+  /*
+   * NOT REACHABLE IN PRODUCTION.
+   *
+   * This route was publicly reachable on the live site: it is not in
+   * `PROTECTED_PREFIXES`, and `noindex` asks search engines not to list it
+   * rather than stopping anyone who has the URL. It is three abandoned
+   * direction explorations and a spec panel — scaffolding, not unfinished
+   * product — and a tap-target audit found 54 failures in it, which is fine for
+   * a review surface and not fine for something a student can open.
+   *
+   * The guard is here rather than in `proxy.ts` on purpose. `proxy.ts` only
+   * checks that a session cookie exists — its own comment says it "is not a
+   * security boundary" — so listing this route there would still let every
+   * signed-in student read it. The question is not who may see it; it is that
+   * it should not exist outside development for anyone.
+   *
+   * This removes the surface, not the bundle: the direction components are
+   * still compiled. Excluding them from the build is a separate change.
+   */
+  if (process.env.NODE_ENV === "production") notFound();
+
   return (
     <div
       className={`${interTight.variable} ${plexMono.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${instrumentSans.variable}`}

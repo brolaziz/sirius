@@ -19,10 +19,10 @@ Source of truth is `TASK-2.md`. **A2 is the next piece of work.**
       A0  audit ......................... done
       A1  landing responsive ............ done; device regression (bug 1) fixed
       A2  post-login responsive ......... NOT STARTED  <- next
-      A3  tap targets ................... measured properly; "70 to 17" is
-                                          RETRACTED. 14 surfaces, 6 real
-                                          failures, all in the signed-out auth
-                                          shell. Unfixed — see Touch targets
+      A3  tap targets ................... done, and measured properly. "70 to
+                                          17" is RETRACTED; the real figure is
+                                          0 failures across 14 surfaces, by
+                                          `npm run audit:tap`
       A4  university card fully clickable  NOT STARTED (only the cover opens it)
       A5  target score editing .......... NOT STARTED (blocked: no profile or
                                           settings route exists at all)
@@ -169,18 +169,18 @@ after is `af9cd3f`.
                        ----   ----
     total               103     60
 
-**The landing page work is real** — 13 to 0. **`/sign-in` and `/sign-up` were
-never touched**: identical before and after, and all six are genuine failures,
-not `smallLabels`. They are the mobile-only row in the auth shell, which is the
-one place a phone user sees:
+**The landing page work was real** — 13 to 0. **`/sign-in` and `/sign-up` had
+never been touched**: identical before and after. All six were genuine failures,
+not `smallLabels`, in the mobile-only row of the auth shell — the one version a
+phone user ever sees, and the reason nobody signing in on a desktop noticed:
 
-    app/(auth)/layout.tsx:69        logo link, 74.66×28   — no tap-target
-    app/(auth)/layout.tsx:72        "Home" back link, 60.2×20 — no tap-target
-    components/auth/auth-panel.tsx:118  sign-in/up switch, 83.73×17 — no tap-target
+    app/(auth)/layout.tsx           logo link, 74.66×28
+    app/(auth)/layout.tsx           "Home" back link, 60.2×20
+    components/auth/auth-panel.tsx  sign-in/up switch, 83.73×17
 
-The app shell's equivalent mobile logo (`app/(app)/layout.tsx:181`) *did* get
-`tap-target`. The auth shell's did not. Unfixed — this is A3 work and was not in
-scope for the harness pass.
+**All six are now fixed** and re-measured at 0. The app shell's equivalent mobile
+logo (`app/(app)/layout.tsx:181`) already had `tap-target`; the auth shell's
+simply got missed.
 
 ### The authenticated surfaces
 
@@ -230,17 +230,37 @@ Not failures, worth knowing:
   no `::after` halo can ever be added inside them — it would be clipped away
   silently. Fix those with real spacing, not a halo.
 
-`/design-system` is publicly reachable in production (it is not in
-`PROTECTED_PREFIXES`) and carries 54 failures. **It is not product and its
-failures do not count toward any product number.** Whether it should ship at all
-is the prior question — see the proposal in the open items.
+`/design-system` is no longer reachable in production — guarded in
+`app/design-system/layout.tsx`, verified 404 against a real production build. It
+carries 54 failures, and **it is not product: they count toward no product
+number.** Excluding its components from the bundle is a separate change.
 
-**The runner is not committed.** The probe is. The harness that drove this run
-was scratch: Chrome headless over CDP, `Emulation.setDeviceMetricsOverride({
-mobile: true })` plus `Emulation.setTouchEmulationEnabled`, and
-`Runtime.evaluate` with `awaitPromise: true` because the probe is now async.
-Those two Emulation calls are the whole difference between a real number and the
-retracted one.
+### Running it
+
+    npm run audit:session     # writes to the DB — dev branch only, refuses otherwise
+    npm run audit:tap         # reads a browser — safe any time
+
+`scripts/audit-surfaces.json` is the surface list, so "which sixteen screens" is
+a file rather than folklore, and the four unmeasurable ones carry their reason.
+`scripts/audit-tap-targets.run.ts` holds the two calls that matter —
+`setDeviceMetricsOverride({ mobile: true })` and `setTouchEmulationEnabled` —
+because `mobile: true` is what makes the primary pointer coarse, and without it
+the probe correctly refuses and the next person deletes the check instead of
+fixing the harness. `scripts/mint-audit-session.ts` mints the two fixture
+sessions and the runner revokes them on exit, so a normal run leaves nothing
+live behind.
+
+Two properties of the run to know before reading a table:
+
+- **It is not perfectly deterministic.** `checked` moves by a control or two
+  between runs (practice 27↔28, universities 18↔20) as carousels and lazily
+  revealed rows settle differently. One run reported a failure on `/simulator`
+  that was a sonner toast — "Time is up — submitting your answers" — fired by a
+  stale test attempt from an earlier run. It did not recur. Re-run before
+  believing a single new finding on those two surfaces.
+- **Loading `/simulator/{testId}` starts a test attempt**, which is a database
+  write the audit does not clean up. Harmless on the dev branch; worth knowing
+  before pointing this anywhere else.
 
 ## Two sweeps, both closed
 

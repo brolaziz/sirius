@@ -17,7 +17,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "import:sat": "tsx scripts/import-sat-bank.ts",
     "db:studio": "prisma studio",
-    "setup": "prisma db push && tsx prisma/seed.ts"
+    "setup": "prisma db push && tsx prisma/seed.ts",
+    "audit:session": "tsx scripts/mint-audit-session.ts",
+    "audit:tap": "tsx scripts/audit-tap-targets.run.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",

@@ -65,13 +65,26 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
 
       {/* Right: the form */}
       <main className="flex flex-col px-4 py-8 sm:px-6">
+        {/*
+          Both halos are safe here, which is not automatic — see the warning in
+          the `tap-target` note in globals.css. They are the only two controls
+          in the row, `justify-between` puts them at opposite ends of a 390px
+          screen, and both are already wider than 44px, so the halos grow
+          vertically only: the logo by 8px a side and the Home link by 12px.
+          Above is the top of `main`; below is `py-10`. Nothing to collide with
+          in either direction.
+
+          This row is `lg:hidden`, so it is the phone-only version of the auth
+          shell — which is why nobody signing in on a desktop ever saw that
+          these were 28px and 20px tall.
+        */}
         <div className="flex items-center justify-between lg:hidden">
-          <Link href="/" className="inline-flex">
+          <Link href="/" className="tap-target inline-flex">
             <Logo />
           </Link>
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="tap-target inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="size-4" />
             Home

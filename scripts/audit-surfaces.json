@@ -1,0 +1,73 @@
+{
+  "$comment": [
+    "The surfaces the tap-target audit covers, and the ones it knowingly does not.",
+    "Committed so that 'which sixteen screens' is a file rather than folklore.",
+    "",
+    "session:  none      — signed out. /sign-in and /sign-up only exist this way.",
+    "          onboarded — a fixture account that has finished onboarding.",
+    "          new       — a fixture account that has not; /onboarding redirects",
+    "                      to /dashboard for anyone else.",
+    "",
+    "{universityId} and {testId} are filled in by scripts/mint-audit-session.ts",
+    "from whatever is actually on the dev branch. Hard-coding ids here would rot",
+    "the first time the branch is reset from its parent.",
+    "",
+    "Anything in `deferred` is UNMEASURED, not passing. Each carries the reason,",
+    "so a gap reads as a gap instead of an omission."
+  ],
+
+  "viewport": { "width": 390, "height": 844, "deviceScaleFactor": 3 },
+
+  "surfaces": [
+    { "path": "/", "session": "none", "name": "landing" },
+    { "path": "/sign-in", "session": "none", "name": "sign in" },
+    { "path": "/sign-up", "session": "none", "name": "sign up" },
+
+    { "path": "/onboarding", "session": "new", "name": "onboarding" },
+
+    { "path": "/dashboard", "session": "onboarded", "name": "dashboard" },
+    { "path": "/practice", "session": "onboarded", "name": "practice" },
+    { "path": "/universities", "session": "onboarded", "name": "universities" },
+    {
+      "path": "/universities/{universityId}",
+      "session": "onboarded",
+      "name": "university detail"
+    },
+    { "path": "/applications", "session": "onboarded", "name": "applications" },
+    { "path": "/essays", "session": "onboarded", "name": "essays" },
+    { "path": "/activities", "session": "onboarded", "name": "activities" },
+    { "path": "/plan", "session": "onboarded", "name": "study plan" },
+    { "path": "/words", "session": "onboarded", "name": "word bank" },
+    {
+      "path": "/simulator/{testId}",
+      "session": "onboarded",
+      "name": "simulator"
+    }
+  ],
+
+  "deferred": [
+    {
+      "path": "/essays/[essayId]",
+      "reason": "the essays table is empty on the dev branch; needs essay content"
+    },
+    {
+      "path": "/practice/results/[resultId]",
+      "reason": "the fixture account has no completed test results"
+    },
+    {
+      "path": "/practice/session/[sessionId]",
+      "reason": "the fixture account has no in-progress practice session"
+    },
+    {
+      "path": "/simulator/[testId] — break screen",
+      "reason": "only reachable part-way through a full modular test run"
+    }
+  ],
+
+  "nonProduct": [
+    {
+      "path": "/design-system",
+      "reason": "a review surface, not product. Guarded to development only in app/design-system/layout.tsx, and its findings never count toward a product number."
+    }
+  ]
+}

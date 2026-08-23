@@ -961,23 +961,42 @@ export function probeSource(minSize: number = MIN_TAP_SIZE): string {
   ].join("\n");
 }
 
-console.log(
-  [
-    "Tap-target probe — paste the expression below into a DevTools console on",
-    "the page you want to audit, or inject it with a browser automation tool.",
-    `Anything whose hit area is under ${MIN_TAP_SIZE}×${MIN_TAP_SIZE} is reported.`,
-    "",
-    "The expression RESOLVES TO A PROMISE — it spends half a second measuring",
-    "whether animation frames are being painted before it will measure anything",
-    "else. `await` it in a console; pass `awaitPromise: true` to CDP's",
-    "Runtime.evaluate.",
-    "",
-    "It THROWS rather than reporting if the tab is not visible, if rAF is under",
-    "30/sec, or if `(pointer: coarse)` does not match — the last of which is the",
-    "difference between measuring the halos this product ships and measuring the",
-    "naked controls underneath them. Drive it with device metrics overridden to",
-    "mobile and touch emulation on. The refusal message says exactly this.",
-    "",
-    probeSource(),
-  ].join("\n"),
-);
+/**
+ * True when this file was run directly rather than imported.
+ *
+ * `audit-tap-targets.run.ts` imports `probeSource` from here, and a bare
+ * top-level `console.log` would print the whole probe into the middle of that
+ * runner's output. Compared against `process.argv[1]` rather than
+ * `import.meta.url` because this package has no `"type": "module"`, so the file
+ * may be evaluated as CommonJS where `import.meta` does not exist.
+ */
+const invokedDirectly = (process.argv[1] ?? "")
+  .replace(/\\/g, "/")
+  .endsWith("scripts/audit-tap-targets.ts");
+
+if (invokedDirectly) {
+  console.log(
+    [
+      "Tap-target probe — paste the expression below into a DevTools console on",
+      "the page you want to audit, or inject it with a browser automation tool.",
+      `Anything whose hit area is under ${MIN_TAP_SIZE}×${MIN_TAP_SIZE} is reported.`,
+      "",
+      "You probably want `npm run audit:tap` instead. It drives this same probe",
+      "against every surface with the emulation already set up, which is the",
+      "part that is easy to get wrong and silently get a refusal for.",
+      "",
+      "The expression RESOLVES TO A PROMISE — it spends half a second measuring",
+      "whether animation frames are being painted before it will measure anything",
+      "else. `await` it in a console; pass `awaitPromise: true` to CDP's",
+      "Runtime.evaluate.",
+      "",
+      "It THROWS rather than reporting if the tab is not visible, if rAF is under",
+      "30/sec, or if `(pointer: coarse)` does not match — the last of which is the",
+      "difference between measuring the halos this product ships and measuring the",
+      "naked controls underneath them. Drive it with device metrics overridden to",
+      "mobile and touch emulation on. The refusal message says exactly this.",
+      "",
+      probeSource(),
+    ].join("\n"),
+  );
+}
