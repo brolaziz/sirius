@@ -462,14 +462,28 @@ export function SimulatorEngine({
       <header className="z-30 flex shrink-0 items-center justify-between gap-3 border-b border-border bg-background px-3 py-2.5 sm:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Logo compact className="hidden sm:inline-flex" />
+          {/*
+            AT 320px THE LABEL WRAPS INSTEAD OF TRUNCATING.
+            *
+            Four things share this row and this group is the only `min-w-0`, so
+            it absorbs all the compression: at 320px it gets 86px, and
+            "Section 1, Module 1" lost 29% of itself — "Section 1, Mod…". At
+            360px and above nothing truncates at all, so this is a 320px-only
+            problem and gets a 320px-only answer.
+
+            Below `sm` the module label wraps to two lines and the test-type
+            line is hidden, which keeps the header exactly as tall as it was
+            (two lines either way) while showing the label in full. From `sm`
+            up, the original behaviour is untouched.
+          */}
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">
+            <p className="text-sm leading-tight font-medium sm:truncate sm:leading-normal">
               {module?.label ??
                 (currentQuestion.module === "MODULE_2"
                   ? "Module 2"
                   : "Module 1")}
             </p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p className="hidden truncate text-xs text-muted-foreground sm:block">
               {testTypeLabel(test.type)}
             </p>
           </div>

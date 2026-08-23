@@ -157,11 +157,16 @@ export async function auditLayout(): Promise<LayoutReport> {
       });
     }
 
-    /* ---- truncation ------------------------------------------------------ */
+    /* ---- truncation ------------------------------------------------------ *
+     * `sr-only` is a 1px box on purpose — screen-reader text, never painted.
+     * Reporting it as "99% hidden" put five phantom findings at the top of the
+     * first run, sorted above the real ones because the ratio was near 1.
+     */
+    const srOnly = rect.width <= 1 && rect.height <= 1;
     const clipsText =
       style.textOverflow === "ellipsis" ||
       (style.overflow === "hidden" && style.whiteSpace === "nowrap");
-    if (clipsText && el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0) {
+    if (!srOnly && clipsText && el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0) {
       const hidden = 1 - el.clientWidth / el.scrollWidth;
       const full = (el.textContent ?? "").trim();
       if (full.length > 0) {
@@ -188,16 +193,41 @@ export async function auditLayout(): Promise<LayoutReport> {
       });
     }
 
-    /* ---- unreachable content -------------------------------------------- */
+    /* ---- unreachable content -------------------------------------------- *
+     * A clipping box is only a defect if it clips something a reader needs.
+     *
+     * The first version compared scrollHeight to clientHeight and reported the
+     * *container's* text, which made a decorative blur blob look like hidden
+     * prose: the landing page's CTA panel reported "96px unreachable" quoting
+     * its own heading, when the 96px was an aria-hidden `-bottom-24` glow doing
+     * exactly what it was told and no text was clipped at all. I reported that
+     * as the one straightforward bug in the sweep. It was not a bug.
+     *
+     * So this now asks the question that matters — is any text-bearing,
+     * non-decorative descendant actually outside the box — and names that
+     * element rather than its container.
+     */
     const clipsBlock = style.overflowY === "hidden" || style.overflow === "hidden";
     if (clipsBlock && el.scrollHeight > el.clientHeight + 4 && rect.height > 40) {
-      findings.push({
-        kind: "unreachable",
-        path: describe(el),
-        detail: `content is ${el.scrollHeight}px inside a ${el.clientHeight}px box that cannot scroll (${el.scrollHeight - el.clientHeight}px unreachable)`,
-        severity: el.scrollHeight - el.clientHeight,
-        text: (el.textContent ?? "").trim().slice(0, 60),
+      let worst: { el: Element; past: number; text: string } | null = null;
+      el.querySelectorAll("*").forEach((child) => {
+        if (child.closest('[aria-hidden="true"]')) return;
+        const text = ownText(child);
+        if (text.length === 0) return;
+        const cr = child.getBoundingClientRect();
+        const past = Math.max(cr.bottom - rect.bottom, rect.top - cr.top);
+        if (past > 1 && (!worst || past > worst.past)) worst = { el: child, past, text };
       });
+      if (worst) {
+        const hit = worst as { el: Element; past: number; text: string };
+        findings.push({
+          kind: "unreachable",
+          path: describe(hit.el),
+          detail: `text sits ${hit.past.toFixed(0)}px outside a clipping ancestor (${describe(el)}) that cannot scroll`,
+          severity: hit.past,
+          text: hit.text.slice(0, 60),
+        });
+      }
     }
   });
 

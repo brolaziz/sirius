@@ -143,8 +143,14 @@ export function UniversityCard({
           </span>
         )}
 
+        {/*
+          12px, not 10px. This is a disclosure that the photograph is not the
+          real university — the layout audit found it was the smallest text
+          anywhere in the product, which is precisely backwards for a label
+          whose job is to stop someone believing something untrue.
+        */}
         {isStockPhoto && (
-          <span className="absolute top-3 right-14 rounded-full glass-dark px-2 py-1 text-[10px] font-medium text-white/80">
+          <span className="absolute top-3 right-14 rounded-full glass-dark px-2 py-1 text-xs font-medium text-white/80">
             {t.uni.stockPhoto}
           </span>
         )}

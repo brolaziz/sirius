@@ -19,6 +19,8 @@ import Link from "next/link";
 import { SimulatorEngine } from "@/components/simulator/simulator-engine";
 import { Button } from "@/components/ui/button";
 import { startAttempt } from "@/lib/actions/attempts";
+import { getDictionary, getLang } from "@/lib/i18n";
+import { fill } from "@/lib/i18n/config";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/user";
 import { parseQuestionOptions, type SimulatorQuestion } from "@/lib/simulator";
@@ -192,12 +194,21 @@ export default async function SimulatorPage({
 
   const moduleStartedAt = attempt?.moduleStartedAt ?? attempt?.startedAt ?? null;
 
+  const t = getDictionary(await getLang());
+
   const moduleProps =
     spec && moduleStartedAt
       ? {
-          label: `Section ${spec.section === "READING" ? 1 : 2}, Module ${
-            spec.module === "MODULE_1" ? 1 : 2
-          }`,
+          /*
+           * Was a hardcoded English template. An Uzbek student sat in a timed
+           * test read "Section 1, Module 1" — in the one screen they cannot
+           * leave, for two hours. The Uzbek string is also shorter, which is
+           * what stops it truncating at 320px.
+           */
+          label: fill(t.simulator.sectionModule, {
+            section: spec.section === "READING" ? 1 : 2,
+            module: spec.module === "MODULE_1" ? 1 : 2,
+          }),
           deadlineMs: moduleDeadline(moduleStartedAt, spec).getTime(),
           hasNext: (attempt?.moduleIndex ?? 0) + 1 < plan.length,
           breakMinutes: spec.breakMinutes,

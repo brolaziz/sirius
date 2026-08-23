@@ -361,6 +361,17 @@ export const uz = {
     backToPlan: "Rejaga qaytish",
   },
 
+  /*
+   * The timed test screen. Only the module label is here so far — the rest of
+   * the simulator is still English-only, which is a Phase B gap. This one moved
+   * first because it is the string an Uzbek student reads for two hours under
+   * time pressure, and it is shorter in Uzbek than in English, which also buys
+   * back room in the header at 320px.
+   */
+  simulator: {
+    sectionModule: "{section}-bo'lim, {module}-modul",
+  },
+
   plan: {
     eyebrow: "Profil",
     title: "Haftalik reja",
@@ -981,6 +992,11 @@ export const en: Dictionary = {
     summaryWeak: "{skill} is worth another session.",
     backToPractice: "Back to practice",
     backToPlan: "Back to the plan",
+  },
+
+  /** See the note on the Uzbek side. */
+  simulator: {
+    sectionModule: "Section {section}, Module {module}",
   },
 
   plan: {
