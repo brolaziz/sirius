@@ -7,7 +7,7 @@
  * single authored moment rather than five components that each happen to fade
  * in. The order is the order the eye should travel:
  *
- *   0.0s  four coloured shapes scale up behind the headline
+ *   0.0s  the four wash shapes scale up behind the headline
  *   0.2s  the badge
  *   0.3s  the headline, word by word, out of a clipping mask
  *   0.9s  the sub-headline, word by word via SplitText
@@ -23,6 +23,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 
+import { BackgroundWash } from "@/components/brand/background-wash";
 import { Button } from "@/components/ui/button";
 import { WordReveal } from "@/components/motion/word-reveal";
 import { HeroVisual } from "@/components/marketing/hero-visual";
@@ -37,20 +38,6 @@ import {
   prefersReducedMotion,
   useGSAP,
 } from "@/lib/gsap";
-
-/**
- * The four shapes behind the headline, one per spectrum hue.
- *
- * Blurred, low-opacity and huge: at this size they read as coloured light
- * rather than as circles, which is what keeps a white page from looking empty
- * without putting a picture on it.
- */
-const SHAPES = [
-  { className: "bg-magenta", style: { top: "-6%", left: "4%", width: 340, height: 340 }, depth: 90 },
-  { className: "bg-cyan", style: { top: "12%", right: "2%", width: 300, height: 300 }, depth: -120 },
-  { className: "bg-lime", style: { top: "48%", left: "-4%", width: 260, height: 260 }, depth: 140 },
-  { className: "bg-brand-400", style: { top: "36%", right: "12%", width: 220, height: 220 }, depth: -70 },
-];
 
 export function Hero() {
   const { t } = useT();
@@ -74,7 +61,7 @@ export function Hero() {
       const timeline = gsap.timeline();
 
       timeline
-        .from("[data-hero-shape]", {
+        .from("[data-wash-shape]", {
           scale: 0,
           opacity: 0,
           duration: 1.4,
@@ -112,7 +99,7 @@ export function Hero() {
        * which is the whole trick: identical speeds read as one flat layer.
        */
       gsap.utils
-        .toArray<HTMLElement>(root.querySelectorAll("[data-hero-shape]"))
+        .toArray<HTMLElement>(root.querySelectorAll("[data-wash-shape]"))
         .forEach((shape) => {
           gsap.to(shape, {
             y: Number(shape.dataset.depth ?? 0),
@@ -136,22 +123,12 @@ export function Hero() {
 
   return (
     <section ref={ref} className="relative overflow-hidden">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
-        {SHAPES.map((shape, index) => (
-          <span
-            key={index}
-            data-hero-shape
-            data-depth={shape.depth}
-            style={shape.style}
-            className={`absolute rounded-full opacity-25 blur-[90px] ${shape.className}`}
-          />
-        ))}
-
-        <div className="absolute inset-0 bg-dots [mask-image:linear-gradient(to_bottom,black,transparent_62%)]" />
-      </div>
+      {/*
+       * The same wash every other shell paints, `absolute` so it scrolls away
+       * with the hero rather than following the page. The parallax above reads
+       * the shapes it renders — see `components/brand/background-wash.tsx`.
+       */}
+      <BackgroundWash position="absolute" />
 
       <div className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24 lg:px-8 lg:pb-28">
         <div className="mx-auto max-w-3xl text-center">

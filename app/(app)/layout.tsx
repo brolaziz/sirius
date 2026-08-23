@@ -7,11 +7,11 @@
  *
  * WHY THE GLASS WORKS HERE AND NOT ON A PLAIN PAGE
  * `backdrop-filter` only reads as glass when there is something worth blurring
- * behind it. So the shell paints its own light first: three large, heavily
- * blurred spectrum blobs fixed to the viewport, with the dot texture over them.
- * The sidebar and the top bar blur *that*, which is what gives the panels depth
- * instead of a grey wash. The blobs are `fixed` rather than `absolute` so they
- * stay put while content scrolls past — light does not scroll.
+ * behind it. So the shell paints its own light first: `BackgroundWash`, the
+ * same blurred spectrum shapes and dot texture the landing hero sits on, fixed
+ * to the viewport. The sidebar and the top bar blur *that*, which is what gives
+ * the panels depth instead of a grey wash. It is `fixed` rather than `absolute`
+ * so it stays put while content scrolls past — light does not scroll.
  *
  * The setup banner appears when `DATABASE_URL` is missing, which is the one
  * failure a new contributor is most likely to hit: sign-in works, and then
@@ -36,6 +36,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { UserMenu } from "@/components/dashboard/user-menu";
 
+import { BackgroundWash } from "@/components/brand/background-wash";
 import { Logo } from "@/components/brand/logo";
 import { AppNav } from "@/components/dashboard/app-nav";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
@@ -123,12 +124,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       {/* The light the glass panels blur. Decorative, fixed, behind everything. */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
-        <span className="absolute -top-32 -left-24 size-[34rem] rounded-full bg-brand-400/25 blur-[130px]" />
-        <span className="absolute top-1/3 -right-32 size-[30rem] rounded-full bg-magenta/12 blur-[130px]" />
-        <span className="absolute -bottom-40 left-1/3 size-[28rem] rounded-full bg-cyan/15 blur-[130px]" />
-        <span className="absolute inset-0 bg-dots-fine [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      </div>
+      <BackgroundWash />
 
       {/* Desktop sidebar */}
       <aside

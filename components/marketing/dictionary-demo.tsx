@@ -3,6 +3,14 @@
 /**
  * Interactive dictionary demo on the landing page.
  *
+ * A capability of the SAT toolkit, shown at the size of one. It was a headline
+ * feature: its own nav link, a sticker badge, and a heading set at the same
+ * scale as the hero's — three signals that the dictionary is what Sirius is,
+ * which is the impression the rest of the page exists to correct. The demo
+ * itself is worth keeping at full fidelity; only its billing changed. The
+ * heading is `h2` still, because it is a section of the page — it is the type
+ * scale that was demoted, not the document outline.
+ *
  * This section renders the **real** `BilingualPassage` and `DictionaryToggle`
  * components the simulator uses — not a mock-up. A visitor can flip the switch
  * and tap a word before signing up, and what they try is exactly what they get.
@@ -41,7 +49,7 @@ export function DictionaryDemo() {
   return (
     <section
       id="dictionary"
-      className="relative scroll-mt-20 overflow-hidden border-y border-border bg-surface py-24 lg:py-section"
+      className="relative scroll-mt-20 overflow-hidden border-y border-border bg-surface py-20"
     >
       {/* The star field, faded from the top edge. */}
       <div
@@ -51,18 +59,18 @@ export function DictionaryDemo() {
 
       <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <span className="sticker bg-magenta text-white">
-            {t.dictionary.badge}
-          </span>
-          <h2 className="mt-6 text-4xl leading-[1.05] font-extrabold tracking-tightest text-balance sm:text-5xl">
+          <p className="text-sm font-semibold text-muted-foreground">
+            {t.dictionary.eyebrow}
+          </p>
+          <h2 className="mt-3 text-3xl leading-[1.1] font-extrabold tracking-tightest text-balance sm:text-4xl">
             {t.dictionary.heading}
           </h2>
-          <p className="mt-5 text-lg leading-relaxed text-muted-foreground text-pretty">
+          <p className="mt-4 text-base leading-relaxed text-muted-foreground text-pretty">
             {t.dictionary.body}
           </p>
         </Reveal>
 
-        <Reveal delay={0.1} className="mt-14">
+        <Reveal delay={0.1} className="mt-10">
           <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl bg-card shadow-float">
             {/* Demo control bar, mirroring the simulator header */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3 sm:px-5">

@@ -38,6 +38,7 @@
     { "path": "/activities", "session": "onboarded", "name": "activities" },
     { "path": "/plan", "session": "onboarded", "name": "study plan" },
     { "path": "/words", "session": "onboarded", "name": "word bank" },
+    { "path": "/profile", "session": "onboarded", "name": "profile" },
     {
       "path": "/simulator/{testId}",
       "session": "onboarded",

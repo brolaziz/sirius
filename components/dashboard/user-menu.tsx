@@ -15,7 +15,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, LogOut, Star, User as UserIcon } from "lucide-react";
+import { ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -89,17 +89,17 @@ export function UserMenu({
 
         <DropdownMenuSeparator />
 
+        {/*
+         * One destination, not three. "My shortlist" pointed at
+         * `/universities`, which is a whole section of the sidebar — a second
+         * door to a place the student can already see, sitting in the menu they
+         * open when they want the *account*. What is left is the account: the
+         * profile, and the way out.
+         */}
         <DropdownMenuItem asChild>
-          <Link href="/dashboard" className="cursor-pointer gap-2.5">
+          <Link href="/profile" className="cursor-pointer gap-2.5">
             <UserIcon className="size-4" />
             {t.auth.myProfile}
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link href="/universities" className="cursor-pointer gap-2.5">
-            <Star className="size-4" />
-            {t.auth.myShortlist}
           </Link>
         </DropdownMenuItem>
 

@@ -40,6 +40,7 @@ const PROTECTED_PREFIXES = [
   "/onboarding",
   "/plan",
   "/practice",
+  "/profile",
   "/simulator",
   "/universities",
   "/words",

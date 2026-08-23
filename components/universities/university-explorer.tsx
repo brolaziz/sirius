@@ -9,10 +9,11 @@
  * list ever grows into the thousands, move this to server-side filtering with
  * `searchParams`.
  *
- * The "my SAT score" filter is the one that matters most: it answers "where can
- * I actually apply?" rather than making a student compare their score against
- * each card by hand. The score flows into every card and into the detail
- * dialog, where it colours the SAT requirement.
+ * Each card is a link to `/universities/[universityId]` and nothing here opens
+ * a dialog. There used to be a quick-view modal holding the same facts as the
+ * page, which meant two places to keep true and two shapes for one piece of
+ * content; the page won because it also carries the admissions outcomes, can be
+ * linked to, and survives a reload.
  *
  * Layout is a card grid rather than a table. A table is denser, but the facts
  * that decide a shortlist are read one university at a time — and a card can
@@ -44,7 +45,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Pressable } from "@/components/motion/pressable";
 import { UniversityCard } from "@/components/universities/university-card";
-import { UniversityDetail } from "@/components/universities/university-detail";
 import { useT } from "@/components/i18n/lang-provider";
 import { fill } from "@/lib/i18n/config";
 import { toggleShortlist } from "@/lib/actions/universities";
@@ -111,9 +111,8 @@ export function UniversityExplorer({
   const [query, setQuery] = React.useState("");
   const [sortKey, setSortKey] = React.useState<SortKey>("ranking");
   const [onlyFullNeed, setOnlyFullNeed] = React.useState(false);
-  const [selected, setSelected] = React.useState<UniversityView | null>(null);
 
-  const [isPending, startTransition] = React.useTransition();
+  const [, startTransition] = React.useTransition();
   const [optimisticShortlist, applyOptimistic] = React.useOptimistic(
     new Set(shortlistedIds),
     (current: Set<string>, id: string) => {
@@ -395,7 +394,6 @@ export function UniversityExplorer({
                 key={university.id}
                 university={university}
                 isShortlisted={optimisticShortlist.has(university.id)}
-                onOpen={() => setSelected(university)}
                 onToggleShortlist={() => handleToggleShortlist(university)}
               />
             ))}
@@ -433,14 +431,6 @@ export function UniversityExplorer({
           )}
         </>
       )}
-
-      <UniversityDetail
-        university={selected}
-        isShortlisted={selected ? optimisticShortlist.has(selected.id) : false}
-        isPending={isPending}
-        onClose={() => setSelected(null)}
-        onToggleShortlist={() => selected && handleToggleShortlist(selected)}
-      />
     </div>
   );
 }

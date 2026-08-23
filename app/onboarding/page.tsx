@@ -15,6 +15,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { BackgroundWash } from "@/components/brand/background-wash";
 import { Logo } from "@/components/brand/logo";
 import { LangSwitch } from "@/components/i18n/lang-switch";
 import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
@@ -38,11 +39,7 @@ export default async function OnboardingPage() {
   return (
     <div className="relative flex min-h-dvh flex-col bg-surface">
       {/* The same light the app shell paints, so the two do not feel like different products. */}
-      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10">
-        <span className="absolute -top-32 -left-24 size-[34rem] rounded-full bg-brand-400/25 blur-[130px]" />
-        <span className="absolute top-1/3 -right-32 size-[30rem] rounded-full bg-magenta/12 blur-[130px]" />
-        <span className="absolute inset-0 bg-dots-fine [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" />
-      </div>
+      <BackgroundWash />
 
       <header className="flex items-center justify-between px-4 py-6 sm:px-8">
         <Link

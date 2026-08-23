@@ -23,7 +23,6 @@ export function SiteFooter() {
       links: [
         { label: t.app.universities, href: "#features" },
         { label: t.nav.journey, href: "#journey" },
-        { label: t.nav.dictionary, href: "#dictionary" },
       ],
     },
     {

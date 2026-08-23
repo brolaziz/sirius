@@ -1,13 +1,11 @@
 /**
  * Dashboard — the app's home.
  *
- * A true bento field: a 12-column grid where tiles take different widths *and*
- * heights, so the eye is pulled through a composition rather than scanning a
- * uniform table of cards. The reading order is the argument Sirius makes about
- * admissions:
+ * A true bento field: a 12-column grid where tiles take different widths, so
+ * the eye is pulled through a composition rather than scanning a uniform table
+ * of cards. The reading order is the argument Sirius makes about admissions:
  *
- *   application readiness   ← the anchor: 5 columns, two rows tall
- *   dream universities      ← 4 columns
+ *   dream universities      ← the anchor: 5 columns
  *   next deadline           ← 3 columns, the only dark tile on the page
  *   the SAT metrics         ← a row of four
  *   next steps · mock test  ← 7 + 5
@@ -16,11 +14,14 @@
  * repositioning expressed as a layout decision: the application is the product,
  * the test is one input to it.
  *
- * Every number is real. "Application readiness" is computed from rows the
- * student has actually created — a target score, a completed test, three saved
- * universities, twenty saved words, half the plan — not from a pretend profile.
- * Each tile still degrades on its own: no database, no tests imported or no
- * results yet each produce an honest empty state rather than a zero.
+ * Every number is real, and every one of them counts something the student did:
+ * a score they scored, a university they saved, a word they looked up. There is
+ * deliberately no composite "readiness" percentage — the stages of an
+ * application are not commensurable, so any single figure over them would be an
+ * invented rubric presented as a measurement.
+ *
+ * Each tile degrades on its own: no database, no tests imported or no results
+ * yet each produce an honest empty state rather than a zero.
  */
 
 import type { Metadata } from "next";
@@ -30,10 +31,6 @@ import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { StartTestCard } from "@/components/dashboard/start-test-card";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { RoadmapCard } from "@/components/dashboard/roadmap-card";
-import {
-  ReadinessCard,
-  type ReadinessStep,
-} from "@/components/dashboard/readiness-card";
 import { UniversitiesCard } from "@/components/dashboard/universities-card";
 import { DeadlineCard } from "@/components/dashboard/deadline-card";
 import { BentoGrid, BentoItem } from "@/components/dashboard/bento-grid";
@@ -57,28 +54,6 @@ export default async function DashboardPage() {
   // Progress toward the target, capped at 100 so overshooting does not overflow.
   const targetProgress =
     target && best ? Math.min(100, (best / target) * 100) : undefined;
-
-  const roadmapDone = data.roadmapTasks.filter((task) => task.isDone).length;
-
-  /*
-   * The five stages of a real application, each answered by rows that either
-   * exist or do not. Deliberately unweighted: a student who has done four of
-   * these is four fifths of the way through the setup, and pretending the essay
-   * is worth 40% would be inventing a rubric we do not have.
-   */
-  const readinessSteps: ReadinessStep[] = [
-    { id: "target", done: target !== null, href: "/dashboard" },
-    { id: "test", done: data.testsTaken > 0, href: "/practice" },
-    { id: "shortlist", done: data.shortlistCount >= 3, href: "/universities" },
-    { id: "words", done: data.savedWordCount >= 20, href: "/words" },
-    {
-      id: "roadmap",
-      done:
-        data.roadmapTasks.length > 0 &&
-        roadmapDone >= data.roadmapTasks.length / 2,
-      href: "/dashboard",
-    },
-  ];
 
   const scoreBadge: { label: string; tone: Tone } | undefined =
     target && best
@@ -120,11 +95,7 @@ export default async function DashboardPage() {
       />
 
       <BentoGrid>
-        <BentoItem className="sm:col-span-12 lg:col-span-5 lg:row-span-2">
-          <ReadinessCard steps={readinessSteps} />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-7 lg:col-span-4">
+        <BentoItem className="sm:col-span-7 lg:col-span-5">
           <UniversitiesCard
             universities={data.shortlisted}
             total={data.shortlistCount}
@@ -149,7 +120,7 @@ export default async function DashboardPage() {
           />
         </BentoItem>
 
-        <BentoItem className="sm:col-span-6 lg:col-span-3">
+        <BentoItem className="sm:col-span-6 lg:col-span-4">
           <MetricCard
             icon={<Percent />}
             label={t.dash.accuracy}
@@ -176,7 +147,7 @@ export default async function DashboardPage() {
           />
         </BentoItem>
 
-        <BentoItem className="sm:col-span-6 lg:col-span-3">
+        <BentoItem className="sm:col-span-6 lg:col-span-4">
           <MetricCard
             icon={<GraduationCap />}
             label={t.dash.shortlistCount}

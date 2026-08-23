@@ -4,11 +4,15 @@
  * A two-column split: brand and reassurance on the left, the Google button on
  * the right. The left panel collapses on small screens so the form is never pushed
  * below the fold on a phone.
+ *
+ * The form column carries the same `BackgroundWash` as the app shell, so
+ * signing in does not look like a different product from the one behind it.
  */
 
 import Link from "next/link";
 import { ArrowLeft, BookOpenCheck, GraduationCap, Languages } from "lucide-react";
 
+import { BackgroundWash } from "@/components/brand/background-wash";
 import { Logo, SiriusStar } from "@/components/brand/logo";
 
 const REASSURANCE = [
@@ -63,8 +67,17 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         </p>
       </aside>
 
-      {/* Right: the form */}
-      <main className="flex flex-col px-4 py-8 sm:px-6">
+      {/*
+       * Right: the form.
+       *
+       * `relative`, and the wash inside it rather than on the grid, so the
+       * light lands only on this column — the brand panel to the left is a
+       * solid `bg-brand-500` with its own star field, and a second wash over it
+       * would be light on top of light.
+       */}
+      <main className="relative flex flex-col px-4 py-8 sm:px-6">
+        <BackgroundWash position="absolute" />
+
         {/*
           Both halos are safe here, which is not automatic — see the warning in
           the `tap-target` note in globals.css. They are the only two controls

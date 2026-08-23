@@ -50,9 +50,15 @@ export function StickyHeader({ isSignedIn }: { isSignedIn: boolean }) {
     return () => query.removeEventListener("change", handleChange);
   }, []);
 
+  /*
+   * Two links, not three. "Lug'at / Dictionary" used to sit here beside the
+   * platform and the journey, which put a feature of the SAT toolkit at the
+   * same level as the platform itself — the exact impression the rest of the
+   * copy spends its time correcting. The demo is still on the page, one section
+   * down, presented as what it is.
+   */
   const navLinks = [
     { href: "#features", label: t.nav.features },
-    { href: "#dictionary", label: t.nav.dictionary },
     { href: "#journey", label: t.nav.journey },
   ];
 
@@ -65,8 +71,8 @@ export function StickyHeader({ isSignedIn }: { isSignedIn: boolean }) {
        * let the page show through: `glass` is 72% background, and transparent
        * is all of it. On a phone the hero heading passed straight under the nav
        * labels and neither was readable. The Uzbek labels are longer
-       * ("Imkoniyatlar / Lug'at / Yo'l xaritasi") so they collided across more
-       * of the width.
+       * ("Imkoniyatlar / Yo'l xaritasi") so they collided across more of the
+       * width.
        *
        * Same colour token and same height — `glass` resolves to `--background`
        * at 72%, so this is that colour at 100%. The `glass` utility itself is

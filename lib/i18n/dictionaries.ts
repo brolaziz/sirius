@@ -28,7 +28,6 @@
 export const uz = {
   nav: {
     features: "Imkoniyatlar",
-    dictionary: "Lug'at",
     journey: "Yo'l xaritasi",
     signIn: "Kirish",
     getStarted: "Boshlash",
@@ -110,10 +109,15 @@ export const uz = {
     ],
   },
 
+  /*
+   * The dictionary demo. Presented as one capability of the SAT toolkit, not as
+   * a headline feature — its own last sentence has always said as much, and the
+   * eyebrow now says it before the heading does.
+   */
   dictionary: {
-    badge: "Qani, ko'k so'zga bosing",
-    heading: "Inglizcha o'qish endi to'siq emas",
-    body: "Universitet sahifalari, insho namunalari va SAT parchalarida belgilangan so'zga bosing — o'zbekchasi shu yerda chiqadi. Hech narsa yuklanmaydi, chunki lug'at ilova ichida keladi.",
+    eyebrow: "SAT tayyorgarligining bir qismi",
+    heading: "Matn ichidagi o'zbekcha lug'at",
+    body: "Simulyatordagi parchalarda, universitet sahifalarida va insho namunalarida belgilangan so'zga bosing — o'zbekchasi shu yerda chiqadi. Hech narsa yuklanmaydi, chunki lug'at ilova ichida keladi.",
     hintOn: "Istalgan belgilangan so'zga bosing",
     hintOff: "{count} ta so'zni ochish uchun UZ ni yoqing",
     footer: "Lug'atda hozir {count} ta so'z bor va u har hafta o'sib boradi.",
@@ -198,16 +202,6 @@ export const uz = {
     saving: "Saqlanmoqda…",
     cancel: "Hozir emas",
 
-    readiness: "Ariza tayyorligi",
-    readinessHint: "{done} / {total} bosqich yopilgan",
-    readinessSteps: {
-      target: "Maqsad ball belgilandi",
-      test: "Birinchi mock test topshirildi",
-      shortlist: "Ro'yxatda kamida 3 ta universitet",
-      words: "So'z bazasida 20+ so'z",
-      roadmap: "Rejaning yarmi bajarildi",
-    },
-
     universities: "Dream universitetlar",
     universitiesEmpty: "Hali birorta universitet saqlanmagan.",
     universitiesCta: "Ro'yxatni ochish",
@@ -248,6 +242,30 @@ export const uz = {
     lastResult: "Oxirgi topshirilgan test",
     raw: "Xom ball",
     estimated: "Taxminiy",
+  },
+
+  /*
+   * The profile page. Only the target score is editable here; the current score
+   * and the exam date are still onboarding's, and the copy says so rather than
+   * rendering a field that cannot be saved.
+   */
+  profile: {
+    eyebrow: "Hisob",
+    title: "Profil",
+    body: "Hisobingiz va SAT maqsadingiz. Maqsad ballni shu yerdan o'zgartirasiz.",
+    accountHeading: "Hisob",
+    name: "Ism",
+    email: "Email",
+    accountNote: "Ism va email Google hisobingizdan olinadi.",
+    satHeading: "SAT maqsadingiz",
+    notSet: "Belgilanmagan",
+    lockedNote:
+      "Hozirgi ball va imtihon sanasi hozircha faqat boshlang'ich sozlashda o'zgaradi.",
+    planNote:
+      "Maqsadni o'zgartirsangiz, haftalik reja shu zahoti qayta hisoblanadi. Eski reja o'chmaydi — yangisi ustiga yoziladi.",
+    planFailed:
+      "Ball saqlandi, lekin reja qayta hisoblanmadi. Reja sahifasidan qayta urinib ko'ring.",
+    belowCurrent: "Maqsad hozirgi balingizdan past bo'lolmaydi.",
   },
 
   pages: {
@@ -557,30 +575,15 @@ export const uz = {
     tuition: "Yillik o'qish narxi",
     sat: "SAT",
     ielts: "IELTS",
-    toefl: "TOEFL",
-    gpa: "O'rtacha GPA",
-    ranking: "Reyting",
     deadline: "Muddat",
     officialSite: "Rasmiy sayt",
-    requirements: "Qabul ko'rsatkichlari",
-    requirementsNote:
-      "Raqamlar taxminiy — raqobatbardosh nomzod qaratadigan daraja. Rasmiy talablarni universitet saytidan tekshiring.",
     majors: "Ommabop yo'nalishlar",
     profile: "Ular nimaga qaraydi",
-    activities: "Qadrlanadigan faoliyatlar",
-    fullNeedTitle: "Moliyaviy ehtiyoj to'liq qoplanadi",
-    fullNeedBody:
-      "Qabul qilinsangiz, o'qish narxi bilan oilangiz to'lay oladigan summa orasidagi farq yordam bilan yopiladi.",
     noData: "Ma'lumot yo'q",
-    satMath: "SAT matematika",
-    satReading: "SAT o'qish",
     students: "Talabalar",
-    sourceScorecard:
-      "Qabul foizi, SAT va narx — AQSh Ta'lim vazirligining College Scorecard ma'lumotlaridan.",
     showing: "{total} tadan {shown} tasi ko'rsatilyapti",
     loadMore: "Yana yuklash",
 
-    fullProfile: "To'liq sahifa",
     rankingBadge: "Jahon reytingi: {rank}",
     satBenchmark: "SAT o'rtachasi",
     noSatRequirement: "SAT ko'rsatkichi e'lon qilinmagan",
@@ -748,7 +751,6 @@ export const uz = {
     signInLink: "Kiring",
     account: "Hisob",
     myProfile: "Mening profilim",
-    myShortlist: "Universitet ro'yxatim",
     signOut: "Chiqish",
     errorTitle: "Kirib bo'lmadi",
     errorBody: "Google bilan bog'lanishda muammo chiqdi. Yana bir marta urinib ko'ring.",
@@ -783,7 +785,6 @@ export type Dictionary = typeof uz;
 export const en: Dictionary = {
   nav: {
     features: "Platform",
-    dictionary: "Dictionary",
     journey: "The journey",
     signIn: "Sign in",
     getStarted: "Get started",
@@ -862,9 +863,9 @@ export const en: Dictionary = {
   },
 
   dictionary: {
-    badge: "Go on, tap a blue word",
-    heading: "Reading in English stops being the obstacle",
-    body: "University pages, sample essays, SAT passages — tap a highlighted word and the Uzbek is right there. Nothing loads, because the dictionary ships inside the app.",
+    eyebrow: "Part of the SAT toolkit",
+    heading: "An Uzbek dictionary inside the passage",
+    body: "In simulator passages, on university pages and in sample essays — tap a highlighted word and the Uzbek is right there. Nothing loads, because the dictionary ships inside the app.",
     hintOn: "Tap any highlighted word",
     hintOff: "Turn on UZ to reveal {count} words",
     footer: "The dictionary holds {count} entries today and grows every week.",
@@ -949,16 +950,6 @@ export const en: Dictionary = {
     saving: "Saving…",
     cancel: "Not now",
 
-    readiness: "Application readiness",
-    readinessHint: "{done} of {total} stages closed",
-    readinessSteps: {
-      target: "Target score set",
-      test: "First mock test done",
-      shortlist: "At least 3 universities saved",
-      words: "20+ words in your bank",
-      roadmap: "Half the plan finished",
-    },
-
     universities: "Dream universities",
     universitiesEmpty: "No universities saved yet.",
     universitiesCta: "Open the list",
@@ -999,6 +990,25 @@ export const en: Dictionary = {
     lastResult: "Last test you sat",
     raw: "Raw score",
     estimated: "Estimated",
+  },
+
+  profile: {
+    eyebrow: "Account",
+    title: "Profile",
+    body: "Your account and your SAT target. The target score is edited here.",
+    accountHeading: "Account",
+    name: "Name",
+    email: "Email",
+    accountNote: "Your name and email come from your Google account.",
+    satHeading: "Your SAT target",
+    notSet: "Not set",
+    lockedNote:
+      "The current score and the exam date are still set during onboarding.",
+    planNote:
+      "Change the target and the weekly plan is recomputed straight away. The old plan is kept — the new one is written on top of it.",
+    planFailed:
+      "Saved, but the plan could not be rebuilt. Try again from the plan page.",
+    belowCurrent: "Your target cannot be lower than the score you already have.",
   },
 
   pages: {
@@ -1289,30 +1299,15 @@ export const en: Dictionary = {
     tuition: "Tuition, per year",
     sat: "SAT",
     ielts: "IELTS",
-    toefl: "TOEFL",
-    gpa: "Average GPA",
-    ranking: "Ranking",
     deadline: "Deadline",
     officialSite: "Official site",
-    requirements: "Admissions figures",
-    requirementsNote:
-      "Figures are indicative — what a competitive applicant aims at. Check the university's own page for official requirements.",
     majors: "Popular majors",
     profile: "What they look for",
-    activities: "Activities that count here",
-    fullNeedTitle: "Meets full demonstrated need",
-    fullNeedBody:
-      "If you are admitted, aid is designed to cover the gap between the cost and what your family can pay.",
     noData: "Not listed",
-    satMath: "SAT Math",
-    satReading: "SAT Reading",
     students: "Students",
-    sourceScorecard:
-      "Admission rate, SAT and cost come from the US Department of Education's College Scorecard.",
     showing: "Showing {shown} of {total}",
     loadMore: "Load more",
 
-    fullProfile: "Full profile",
     rankingBadge: "World rank {rank}",
     satBenchmark: "Average SAT",
     noSatRequirement: "No SAT figure published",
@@ -1478,7 +1473,6 @@ export const en: Dictionary = {
     signInLink: "Sign in",
     account: "Account",
     myProfile: "My profile",
-    myShortlist: "My shortlist",
     signOut: "Sign out",
     errorTitle: "Could not sign you in",
     errorBody: "Something went wrong talking to Google. Please try again.",
