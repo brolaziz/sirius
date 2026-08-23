@@ -6,7 +6,8 @@
  * Each row is a strip of that university's own gradient (derived from its name,
  * see `coverGradient`) with a frosted plate over it carrying the name. It is the
  * same glass-over-image treatment as the cards in the explorer, compressed to a
- * 64px row so three of them fit in a bento tile without becoming a table.
+ * row of about 64px so three of them fit in a bento tile without becoming a
+ * table. Rows grow when a long name needs a second line — see the note below.
  *
  * Sorted by deadline, so the row at the top is the one that matters this week.
  */
@@ -21,17 +22,6 @@ import { fill } from "@/lib/i18n/config";
 import { coverGradient, toneForAcceptance, TONES } from "@/lib/viz";
 import { cn } from "@/lib/utils";
 import type { ShortlistedUniversity } from "@/lib/queries/dashboard";
-
-/** Up to two initials, skipping the small words in a name. */
-function monogram(name: string): string {
-  const skip = new Set(["of", "the", "and", "at", "for", "de", "du"]);
-  return name
-    .split(/\s+/)
-    .filter((word) => word.length > 0 && !skip.has(word.toLowerCase()))
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 export function UniversitiesCard({
   universities,
@@ -89,7 +79,7 @@ export function UniversitiesCard({
                 <PressableCard>
                   <Link
                     href="/universities"
-                    className="relative flex h-16 items-center gap-3 overflow-hidden rounded-xl px-3"
+                    className="relative flex min-h-16 items-center gap-3 overflow-hidden rounded-xl px-3 py-2"
                     style={{
                       backgroundImage: `linear-gradient(115deg, ${cover.from}, ${cover.to})`,
                     }}
@@ -99,16 +89,33 @@ export function UniversitiesCard({
                       className="absolute inset-0 bg-dots-light opacity-60"
                     />
 
-                    <span className="relative inline-flex size-10 shrink-0 items-center justify-center rounded-lg glass-dark text-sm font-extrabold text-white">
-                      {monogram(university.name)}
-                    </span>
+                    {/*
+                      The frosted plate that makes the name readable on any hue.
 
-                    {/* The frosted plate that makes the name readable on any hue. */}
+                      NO MONOGRAM, AND THE NAME GETS TWO LINES.
+
+                      There used to be a 40px initials chip here. It was derived
+                      from the name — `monogram()` took its first two initials —
+                      so it carried nothing the name did not, while spending 52px
+                      of a 286px row at 320px. What that cost was measurable: the
+                      name was left with 92px, about 13 characters, and the audit
+                      found "Massachusetts Institute of Technology" rendering as
+                      "Massachusetts Ins…". The name is the only thing on this row
+                      that says which university it is, so it should not be the
+                      element that gives way first.
+
+                      Identity is still per-university: the row's gradient is
+                      derived from the name by `coverGradient`.
+
+                      `line-clamp-2` rather than `truncate`, and `min-h-16` rather
+                      than `h-16`, so a row grows only when a name needs the
+                      second line and short names look exactly as they did.
+                    */}
                     <span className="relative min-w-0 flex-1 rounded-lg glass-dark px-3 py-1.5">
-                      <span className="block truncate text-sm font-bold text-white">
+                      <span className="line-clamp-2 text-sm leading-tight font-bold text-white">
                         {university.name}
                       </span>
-                      <span className="block truncate text-[11px] text-white/80">
+                      <span className="mt-0.5 block truncate text-[11px] text-white/80">
                         {location}
                       </span>
                     </span>

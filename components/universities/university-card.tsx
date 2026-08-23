@@ -16,9 +16,9 @@
  * has something to fade from while it loads. Those fallbacks are stock, and the
  * card says so — nobody should read a photo of some other campus as this one.
  *
- * The SAT pill is coloured against the student's own score when they have
- * entered one, which turns the grid into an answer to "where can I actually
- * apply?" rather than a table to compare by hand.
+ * The SAT figure is presented neutrally. It is the average score of admitted
+ * students, not a bar to clear, and nothing on this card is coloured or hidden
+ * according to whether a student's score reaches it.
  *
  * The card carries `data-uni-card` so the explorer can cascade a whole grid of
  * them with one GSAP tween. Hover and press stay in CSS: a lift does not need a
@@ -37,7 +37,6 @@ import {
   coverGradient,
   coverPhoto,
   toneForAcceptance,
-  toneForRequirement,
   type Tone,
 } from "@/lib/viz";
 import type { UniversityView } from "@/components/universities/university-explorer";
@@ -86,8 +85,6 @@ interface UniversityCardProps {
   isShortlisted: boolean;
   onOpen: () => void;
   onToggleShortlist: () => void;
-  /** The student's own SAT score, when they have entered one. */
-  myScore: number | null;
 }
 
 export function UniversityCard({
@@ -95,7 +92,6 @@ export function UniversityCard({
   isShortlisted,
   onOpen,
   onToggleShortlist,
-  myScore,
 }: UniversityCardProps) {
   const { t } = useT();
 
@@ -104,7 +100,6 @@ export function UniversityCard({
   const isStockPhoto = university.imageUrl === null;
 
   const acceptanceTone = toneForAcceptance(university.acceptanceRate);
-  const satTone = toneForRequirement(university.minSat, myScore);
   const location =
     [university.city, university.country].filter(Boolean).join(", ") || "—";
 
@@ -244,10 +239,19 @@ export function UniversityCard({
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
+          {/*
+            Neutral, like every other figure on this card.
+
+            This pill used to be coloured against the student's own score —
+            green at or above, amber within 60 points, red below. A red badge
+            does not hide a university; it tells the student not to bother, and
+            it says so without a sentence anyone can argue with. Admissions is
+            not a threshold, so the number is presented as what it is.
+          */}
           <StatPill
             label={t.uni.sat}
             value={university.minSat ?? "—"}
-            tone={satTone}
+            tone="violet"
           />
           <StatPill
             label={t.uni.ielts}

@@ -161,8 +161,16 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
       <div className="relative flex min-w-0 flex-1 flex-col" suppressHydrationWarning>
         {/* Top bar */}
+        {/*
+          Solid, not frosted — see the note in `marketing/sticky-header.tsx`.
+          This one was `glass` unconditionally, so content scrolled under it at
+          every position rather than only past the top of the page.
+
+          The sidebar below keeps `glass`: nothing scrolls behind it, and the
+          blurred spectrum blobs are the whole reason it reads as a panel.
+        */}
         <header
-          className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-white/60 glass px-4 sm:px-6"
+          className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-border bg-background px-4 sm:px-6"
           suppressHydrationWarning
         >
           {/*

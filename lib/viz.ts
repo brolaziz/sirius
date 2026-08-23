@@ -91,22 +91,6 @@ export function toneForAcceptance(rate: number | null): Tone {
   return "emerald";
 }
 
-/**
- * A score requirement, judged against the student's own score.
- *
- * With no score entered there is nothing to compare, so the requirement is
- * neutral data rather than good or bad news.
- */
-export function toneForRequirement(
-  required: number | null,
-  mine: number | null,
-): Tone {
-  if (required === null || mine === null) return "violet";
-  if (mine >= required) return "emerald";
-  // Within 60 points is a gap a few weeks of practice closes.
-  if (mine >= required - 60) return "amber";
-  return "rose";
-}
 
 /**
  * Deterministic cover art for a university.

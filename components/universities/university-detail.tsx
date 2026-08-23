@@ -38,7 +38,7 @@ import { Pressable } from "@/components/motion/pressable";
 import { useT } from "@/components/i18n/lang-provider";
 import { DUR, EASE, gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
-import { TONES, coverGradient, coverPhoto, toneForRequirement } from "@/lib/viz";
+import { TONES, coverGradient, coverPhoto } from "@/lib/viz";
 import {
   formatRate,
   formatTuition,
@@ -68,7 +68,6 @@ export function UniversityDetail({
   university,
   isShortlisted,
   isPending,
-  myScore,
   onClose,
   onToggleShortlist,
 }: {
@@ -76,7 +75,6 @@ export function UniversityDetail({
   university: UniversityView | null;
   isShortlisted: boolean;
   isPending: boolean;
-  myScore: number | null;
   onClose: () => void;
   onToggleShortlist: () => void;
 }) {
@@ -212,7 +210,7 @@ export function UniversityDetail({
                 <Requirement
                   label={t.uni.sat}
                   value={university.minSat ?? t.uni.noData}
-                  tone={toneForRequirement(university.minSat, myScore)}
+                  tone="violet"
                 />
                 <Requirement
                   label={t.uni.ielts}

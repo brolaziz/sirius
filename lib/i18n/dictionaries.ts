@@ -79,8 +79,8 @@ export const uz = {
     items: [
       {
         title: "Dream universitetlar",
-        body: "Ballingiz va profilingizga qarab har bir universitet reach, match yoki safety ekanini aytadi. Taxmin qilish tugadi.",
-        bullets: ["Qabul foizi", "Ball talablari", "Moliyaviy yordam"],
+        body: "Har bir universitet uchun qabul foizi, qabul qilinganlarning o'rtacha bali va moliyaviy yordam shartlari. Taxmin qilish tugadi.",
+        bullets: ["Qabul foizi", "Qabul qilinganlar o'rtachasi", "Moliyaviy yordam"],
       },
       {
         title: "Insho va personal statement",
@@ -113,7 +113,7 @@ export const uz = {
   dictionary: {
     badge: "Qani, ko'k so'zga bosing",
     heading: "Inglizcha o'qish endi to'siq emas",
-    body: "Universitet sahifalari, insho namunalari va SAT parchalarida istalgan so'zga bosing — o'zbekchasi shu yerda chiqadi. Hech narsa yuklanmaydi, chunki lug'at ilova ichida keladi.",
+    body: "Universitet sahifalari, insho namunalari va SAT parchalarida belgilangan so'zga bosing — o'zbekchasi shu yerda chiqadi. Hech narsa yuklanmaydi, chunki lug'at ilova ichida keladi.",
     hintOn: "Istalgan belgilangan so'zga bosing",
     hintOff: "{count} ta so'zni ochish uchun UZ ni yoqing",
     footer: "Lug'atda hozir {count} ta so'z bor va u har hafta o'sib boradi.",
@@ -410,16 +410,13 @@ export const uz = {
   uni: {
     search: "Qidiruv",
     searchPlaceholder: "Nomi, shahri, shtati yoki yo'nalish…",
-    myScore: "Mening SAT balim",
-    myScorePlaceholder: "masalan 1400",
     sortBy: "Saralash",
     sortRanking: "Jahon reytingi",
     sortAcceptance: "Eng tanlab oladigan",
-    sortSat: "SAT talabi",
+    sortSat: "Qabul qilinganlar o'rtachasi",
     sortName: "Nomi (A–Z)",
     fullNeed: "To'liq yordam beradi",
     counted: "{total} tadan {shown} tasi",
-    reachableWith: "{score} ball bilan yetib boriladi",
     noMatch: "Mos universitet topilmadi",
     noMatchBody: "Ballni oshiring yoki filtrlarni tozalang.",
     clearFilters: "Filtrlarni tozalash",
@@ -444,7 +441,7 @@ export const uz = {
     ranking: "Reyting",
     deadline: "Muddat",
     officialSite: "Rasmiy sayt",
-    requirements: "Qabul talablari",
+    requirements: "Qabul ko'rsatkichlari",
     requirementsNote:
       "Raqamlar taxminiy — raqobatbardosh nomzod qaratadigan daraja. Rasmiy talablarni universitet saytidan tekshiring.",
     majors: "Ommabop yo'nalishlar",
@@ -465,7 +462,7 @@ export const uz = {
     fullProfile: "To'liq sahifa",
     rankingBadge: "Jahon reytingi: {rank}",
     satBenchmark: "SAT o'rtachasi",
-    noSatRequirement: "SAT talab qilinmaydi",
+    noSatRequirement: "SAT ko'rsatkichi e'lon qilinmagan",
 
     verdictNoScore:
       "Balingiz hali ma'lum emas. Diagnostika topshiring yoki onboardingda joriy balni kiriting — shundan keyin bu yerda taqqoslash chiqadi.",
@@ -713,7 +710,7 @@ export const en: Dictionary = {
       {
         title: "Dream universities",
         body: "Every university tells you whether it is a reach, a match or a safety for your score and your profile. No more guessing.",
-        bullets: ["Acceptance rates", "Score requirements", "Financial aid"],
+        bullets: ["Acceptance rates", "Average admitted scores", "Financial aid"],
       },
       {
         title: "Essays and personal statement",
@@ -746,7 +743,7 @@ export const en: Dictionary = {
   dictionary: {
     badge: "Go on, tap a blue word",
     heading: "Reading in English stops being the obstacle",
-    body: "University pages, sample essays, SAT passages — tap any word and the Uzbek is right there. Nothing loads, because the dictionary ships inside the app.",
+    body: "University pages, sample essays, SAT passages — tap a highlighted word and the Uzbek is right there. Nothing loads, because the dictionary ships inside the app.",
     hintOn: "Tap any highlighted word",
     hintOff: "Turn on UZ to reveal {count} words",
     footer: "The dictionary holds {count} entries today and grows every week.",
@@ -1037,16 +1034,13 @@ export const en: Dictionary = {
   uni: {
     search: "Search",
     searchPlaceholder: "Name, city, state or major…",
-    myScore: "My SAT score",
-    myScorePlaceholder: "e.g. 1400",
     sortBy: "Sort by",
     sortRanking: "World ranking",
     sortAcceptance: "Most selective",
-    sortSat: "SAT requirement",
+    sortSat: "Average admitted score",
     sortName: "Name (A–Z)",
     fullNeed: "Meets full need",
     counted: "{shown} of {total}",
-    reachableWith: "Reachable with {score}",
     noMatch: "No universities match",
     noMatchBody: "Try a higher score, or clear the filters.",
     clearFilters: "Clear filters",
@@ -1071,7 +1065,7 @@ export const en: Dictionary = {
     ranking: "Ranking",
     deadline: "Deadline",
     officialSite: "Official site",
-    requirements: "Admission requirements",
+    requirements: "Admissions figures",
     requirementsNote:
       "Figures are indicative — what a competitive applicant aims at. Check the university's own page for official requirements.",
     majors: "Popular majors",
@@ -1092,7 +1086,7 @@ export const en: Dictionary = {
     fullProfile: "Full profile",
     rankingBadge: "World rank {rank}",
     satBenchmark: "Average SAT",
-    noSatRequirement: "No SAT requirement",
+    noSatRequirement: "No SAT figure published",
 
     verdictNoScore:
       "We do not know your score yet. Sit a diagnostic, or add your current score in onboarding, and the comparison appears here.",

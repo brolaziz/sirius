@@ -100,20 +100,9 @@ const PAGE_SIZE = 24;
 export function UniversityExplorer({
   universities,
   shortlistedIds,
-  initialScore = null,
 }: {
   universities: UniversityView[];
   shortlistedIds: string[];
-  /**
-   * The student's own score, from their latest sitting or from onboarding.
-   *
-   * Prefilling it rather than making them type it is the difference between a
-   * list of universities and a list of *their* universities: every card
-   * already knows whether the score clears the bar before they touch anything.
-   * It stays editable — trying a shortlist against the score you are aiming
-   * for is exactly what this field is for.
-   */
-  initialScore?: number | null;
 }) {
   const { t } = useT();
   const gridRef = React.useRef<HTMLDivElement>(null);
@@ -121,9 +110,6 @@ export function UniversityExplorer({
 
   const [query, setQuery] = React.useState("");
   const [sortKey, setSortKey] = React.useState<SortKey>("ranking");
-  const [satScore, setSatScore] = React.useState(
-    initialScore === null ? "" : String(initialScore),
-  );
   const [onlyFullNeed, setOnlyFullNeed] = React.useState(false);
   const [selected, setSelected] = React.useState<UniversityView | null>(null);
 
@@ -145,26 +131,11 @@ export function UniversityExplorer({
     name: t.uni.sortName,
   };
 
-  const myScore = React.useMemo(() => {
-    const parsed = Number(satScore);
-    return satScore.trim() !== "" && Number.isFinite(parsed) ? parsed : null;
-  }, [satScore]);
-
   const visible = React.useMemo(() => {
     const needle = query.trim().toLowerCase();
 
     const filtered = universities.filter((university) => {
       if (onlyFullNeed && !university.meetsFullNeed) return false;
-
-      // Keep universities with no listed requirement: an unknown floor is not a
-      // reason to hide an option from a student.
-      if (
-        myScore !== null &&
-        university.minSat !== null &&
-        university.minSat > myScore
-      ) {
-        return false;
-      }
 
       if (!needle) return true;
 
@@ -208,7 +179,7 @@ export function UniversityExplorer({
           return a.name.localeCompare(b.name);
       }
     });
-  }, [universities, query, sortKey, myScore, onlyFullNeed]);
+  }, [universities, query, sortKey, onlyFullNeed]);
 
   /*
    * Re-run the cascade whenever the visible set changes, keyed on the ids
@@ -351,24 +322,6 @@ export function UniversityExplorer({
             </div>
           </div>
 
-          <div className="w-full lg:w-44">
-            <Label htmlFor="uni-sat" className="text-xs font-semibold">
-              {t.uni.myScore}
-            </Label>
-            <Input
-              id="uni-sat"
-              type="number"
-              inputMode="numeric"
-              min={400}
-              max={1600}
-              step={10}
-              value={satScore}
-              onChange={(event) => setSatScore(event.target.value)}
-              placeholder={t.uni.myScorePlaceholder}
-              className="mt-2 h-11 rounded-xl tnum"
-            />
-          </div>
-
           <div className="w-full lg:w-52">
             <Label htmlFor="uni-sort" className="text-xs font-semibold">
               {t.uni.sortBy}
@@ -411,11 +364,6 @@ export function UniversityExplorer({
               total: universities.length,
             })}
           </span>
-          {myScore !== null && (
-            <span className="ml-auto rounded-full bg-viz-emerald-soft px-2.5 py-1 font-semibold text-viz-emerald tnum">
-              {fill(t.uni.reachableWith, { score: myScore })}
-            </span>
-          )}
         </div>
       </div>
 
@@ -432,7 +380,6 @@ export function UniversityExplorer({
               className="h-11 rounded-xl"
               onClick={() => {
                 setQuery("");
-                setSatScore("");
                 setOnlyFullNeed(false);
               }}
             >
@@ -447,7 +394,6 @@ export function UniversityExplorer({
               <UniversityCard
                 key={university.id}
                 university={university}
-                myScore={myScore}
                 isShortlisted={optimisticShortlist.has(university.id)}
                 onOpen={() => setSelected(university)}
                 onToggleShortlist={() => handleToggleShortlist(university)}
@@ -492,7 +438,6 @@ export function UniversityExplorer({
         university={selected}
         isShortlisted={selected ? optimisticShortlist.has(selected.id) : false}
         isPending={isPending}
-        myScore={myScore}
         onClose={() => setSelected(null)}
         onToggleShortlist={() => selected && handleToggleShortlist(selected)}
       />

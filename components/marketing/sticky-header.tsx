@@ -58,9 +58,24 @@ export function StickyHeader({ isSignedIn }: { isSignedIn: boolean }) {
 
   return (
     <header
+      /*
+       * SOLID, NOT FROSTED.
+       *
+       * This was `glass` once scrolled and `bg-transparent` before that. Both
+       * let the page show through: `glass` is 72% background, and transparent
+       * is all of it. On a phone the hero heading passed straight under the nav
+       * labels and neither was readable. The Uzbek labels are longer
+       * ("Imkoniyatlar / Lug'at / Yo'l xaritasi") so they collided across more
+       * of the width.
+       *
+       * Same colour token and same height — `glass` resolves to `--background`
+       * at 72%, so this is that colour at 100%. The `glass` utility itself is
+       * untouched: the app shell's sidebar is built on blurring the spectrum
+       * blobs behind it, and flattening the utility would take that with it.
+       */
       className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300",
-        isScrolled ? "glass" : "bg-transparent",
+        "sticky top-0 z-50 w-full bg-background transition-all duration-300",
+        isScrolled && "border-b border-border",
       )}
     >
       <div className="mx-auto flex h-18 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
@@ -152,7 +167,9 @@ export function StickyHeader({ isSignedIn }: { isSignedIn: boolean }) {
       <div
         id="mobile-nav"
         className={cn(
-          "grid overflow-hidden glass transition-[grid-template-rows,opacity] duration-300 ease-out md:hidden",
+          // Solid for the same reason as the header above it: an open menu with
+          // the page visible through it is two sets of words in one space.
+          "grid overflow-hidden bg-background transition-[grid-template-rows,opacity] duration-300 ease-out md:hidden",
           isMenuOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
         )}
       >

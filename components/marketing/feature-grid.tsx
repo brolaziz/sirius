@@ -51,6 +51,19 @@ const ICONS: LucideIcon[] = [
   Languages,
 ];
 
+/**
+ * The resting tilt of every feature card, in degrees.
+ *
+ * All six get the same angle rather than alternating — the cards read as one
+ * stack of paper set down slightly askew, not as a zigzag.
+ *
+ * This is design, and it lives in the markup as an inline `rotate` so it
+ * survives with JavaScript disabled: the entrance animation ends here rather
+ * than establishing it. The constant is the single source — the style below and
+ * the tween's end value both read it, so they cannot drift apart.
+ */
+const CARD_TILT = -2;
+
 const TONES = [
   {
     chip: "bg-magenta text-white",
@@ -94,17 +107,24 @@ export function FeatureGrid() {
 
       /*
        * `fromTo` with `immediateRender: false` rather than `from` — the cards
-       * must be on screen and upright when the tween never runs. See the long
-       * note in `journey-section.tsx` for why `from` made the start state the
-       * resting state, and why `fromTo` alone does not fix it.
+       * must be on screen when the tween never runs. See the long note in
+       * `journey-section.tsx` for why `from` made the start state the resting
+       * state, and why `fromTo` alone does not fix it.
+       *
+       * The tween ends at `CARD_TILT`, not at zero. An earlier version ended at
+       * a literal 0 and flattened the cards, because it assumed the settled
+       * state had no rotation. The end value and the markup now read the same
+       * constant, which is the `progress-ring.tsx` pattern: the animation
+       * finishes where the CSS already is, rather than at a number someone
+       * guessed.
        */
       gsap.fromTo(
         ref.current?.querySelectorAll("[data-feature-card]") ?? [],
-        { opacity: 0, y: 60, rotate: -2 },
+        { opacity: 0, y: 60, rotate: CARD_TILT - 2 },
         {
           opacity: 1,
           y: 0,
-          rotate: 0,
+          rotate: CARD_TILT,
           duration: DUR.slow,
           ease: EASE,
           stagger: STAGGER,
@@ -139,6 +159,7 @@ export function FeatureGrid() {
             <article
               key={feature.title}
               data-feature-card
+              style={{ rotate: `${CARD_TILT}deg` }}
               className={cn(
                 "group h-full rounded-2xl bg-card p-7 shadow-soft transition-[box-shadow,transform] duration-300 hover:-translate-y-1.5",
                 tone.glow,
