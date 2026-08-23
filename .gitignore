@@ -53,3 +53,4 @@ next-env.d.ts
 
 # Tokens for the tap-target audit. Short-lived, dev branch only.
 .audit-session.json
+audit-layout-report.json

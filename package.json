@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "audit:layout": "tsx scripts/audit-layout.run.ts",
     "audit:seed": "tsx scripts/seed-audit-fixture.ts",
     "audit:session": "tsx scripts/mint-audit-session.ts",
     "audit:tap": "tsx scripts/audit-tap-targets.run.ts",
