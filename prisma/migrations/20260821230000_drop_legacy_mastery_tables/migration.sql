@@ -16,63 +16,76 @@
 -- The two enums are dropped last because the only columns typed with them
 -- (`attempts.source`, `countdown_snapshots.trend`) belong to tables this file
 -- removes first.
+--
+-- WHY EVERY STATEMENT IS `IF EXISTS`
+--
+-- These tables predate the migration history: nothing in `00000000000000_init`
+-- or anywhere after it creates them, because they were already in the database
+-- when the history was started. That made this file unreplayable — on a fresh
+-- database it failed at the first DROP with `relation "attempts" does not
+-- exist`, which meant `prisma migrate dev` could not build a shadow database
+-- and, more seriously, no new database could be built from this history at all.
+-- Per-PR preview branches and any rebuild of production were blocked by it.
+--
+-- `IF EXISTS` makes the file mean what it always meant — "these should not be
+-- here" — on a database that has them and on one that never did.
 
 -- DropForeignKey
-ALTER TABLE "attempts" DROP CONSTRAINT "attempts_question_id_fkey";
+ALTER TABLE IF EXISTS "attempts" DROP CONSTRAINT IF EXISTS "attempts_question_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "attempts" DROP CONSTRAINT "attempts_skill_id_fkey";
+ALTER TABLE IF EXISTS "attempts" DROP CONSTRAINT IF EXISTS "attempts_skill_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "attempts" DROP CONSTRAINT "attempts_test_attempt_id_fkey";
+ALTER TABLE IF EXISTS "attempts" DROP CONSTRAINT IF EXISTS "attempts_test_attempt_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "attempts" DROP CONSTRAINT "attempts_user_id_fkey";
+ALTER TABLE IF EXISTS "attempts" DROP CONSTRAINT IF EXISTS "attempts_user_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "countdown_snapshots" DROP CONSTRAINT "countdown_snapshots_user_id_fkey";
+ALTER TABLE IF EXISTS "countdown_snapshots" DROP CONSTRAINT IF EXISTS "countdown_snapshots_user_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "mastery_snapshots" DROP CONSTRAINT "mastery_snapshots_skill_id_fkey";
+ALTER TABLE IF EXISTS "mastery_snapshots" DROP CONSTRAINT IF EXISTS "mastery_snapshots_skill_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "mastery_snapshots" DROP CONSTRAINT "mastery_snapshots_user_id_fkey";
+ALTER TABLE IF EXISTS "mastery_snapshots" DROP CONSTRAINT IF EXISTS "mastery_snapshots_user_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "score_estimates" DROP CONSTRAINT "score_estimates_user_id_fkey";
+ALTER TABLE IF EXISTS "score_estimates" DROP CONSTRAINT IF EXISTS "score_estimates_user_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "skill_masteries" DROP CONSTRAINT "skill_masteries_skill_id_fkey";
+ALTER TABLE IF EXISTS "skill_masteries" DROP CONSTRAINT IF EXISTS "skill_masteries_skill_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "skill_masteries" DROP CONSTRAINT "skill_masteries_user_id_fkey";
+ALTER TABLE IF EXISTS "skill_masteries" DROP CONSTRAINT IF EXISTS "skill_masteries_user_id_fkey";
 
 -- DropForeignKey
-ALTER TABLE "study_days" DROP CONSTRAINT "study_days_user_id_fkey";
+ALTER TABLE IF EXISTS "study_days" DROP CONSTRAINT IF EXISTS "study_days_user_id_fkey";
 
 -- DropTable
-DROP TABLE "attempts";
+DROP TABLE IF EXISTS "attempts";
 
 -- DropTable
-DROP TABLE "countdown_snapshots";
+DROP TABLE IF EXISTS "countdown_snapshots";
 
 -- DropTable
-DROP TABLE "extracurriculars";
+DROP TABLE IF EXISTS "extracurriculars";
 
 -- DropTable
-DROP TABLE "mastery_snapshots";
+DROP TABLE IF EXISTS "mastery_snapshots";
 
 -- DropTable
-DROP TABLE "score_estimates";
+DROP TABLE IF EXISTS "score_estimates";
 
 -- DropTable
-DROP TABLE "skill_masteries";
+DROP TABLE IF EXISTS "skill_masteries";
 
 -- DropTable
-DROP TABLE "study_days";
+DROP TABLE IF EXISTS "study_days";
 
 -- DropEnum
-DROP TYPE "AttemptSource";
+DROP TYPE IF EXISTS "AttemptSource";
 
 -- DropEnum
-DROP TYPE "CountdownTrend";
+DROP TYPE IF EXISTS "CountdownTrend";

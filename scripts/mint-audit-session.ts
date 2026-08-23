@@ -95,6 +95,18 @@ export async function mintAuditSessions(): Promise<AuditSession> {
   const client = new Client({ connectionString: url });
   await client.connect();
 
+  /*
+   * Say which schema explicitly rather than trusting the session default.
+   *
+   * Neon's pooler multiplexes sessions, so a `SET search_path` run by any other
+   * client can be inherited by a reused backend — a `prisma migrate deploy`
+   * pointed at `?schema=…` left this branch handing out `search_path=some_other`
+   * to unrelated connections afterwards. Prisma is immune because it sets its
+   * own; a raw `pg` client using unqualified table names is not, and would read
+   * or write the wrong schema without any error to show for it.
+   */
+  await client.query("SET search_path TO public");
+
   try {
     const fixtures = await client.query<{
       id: string;
