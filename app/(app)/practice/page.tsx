@@ -27,6 +27,7 @@ import { ArrowRight, History } from "lucide-react";
 import { StartPracticeButton } from "@/components/practice/start-practice-button";
 import { PracticeControls } from "@/components/practice/practice-controls";
 import { MockPanel } from "@/components/practice/mock-panel";
+import { PracticePreferencesProvider } from "@/components/practice/practice-preferences";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
@@ -115,118 +116,126 @@ export default async function PracticePage() {
         t={t}
       />
 
-      {/* Practice: mixed first, then one topic at a time. */}
-      <section>
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          {t.practice.practiceTitle}
-        </h2>
-        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-          {t.practice.practiceBody}
-        </p>
-
-        <PracticeControls className="mt-5" />
-      </section>
-
-      {/* Weak topics — only when there is enough evidence to name one. */}
-      {weak.length > 0 && (
+      {/*
+        One picker, three ways in. The provider wraps the mixed card, the weak
+        topics and the taxonomy so a length chosen once applies to whichever the
+        student starts — see `practice-preferences.tsx`.
+      */}
+      <PracticePreferencesProvider>
+        {/* Practice: mixed first, then one topic at a time. */}
         <section>
           <h2 className="text-sm font-semibold text-muted-foreground">
-            {t.practice.weakTitle}
+            {t.practice.practiceTitle}
           </h2>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            {t.practice.weakBody}
+            {t.practice.practiceBody}
           </p>
 
-          <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {weak.map((skill) => (
-              <li
-                key={skill.code}
-                className="flex h-full flex-col justify-between rounded-2xl bg-card p-5 shadow-card"
-              >
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    {skill.domainName}
-                  </p>
-                  <p className="mt-1 text-base font-bold tracking-tight text-balance">
-                    {skillLabel(skill, lang)}
-                  </p>
-                  <p className="mt-2 text-sm text-viz-rose tabular-nums">
-                    {fill(t.practice.accuracy, {
-                      count: Math.round(skill.accuracy * 100),
-                    })}{" "}
-                    · {skill.correct}/{skill.answered}
-                  </p>
-                </div>
-
-                <StartPracticeButton
-                  skillCode={skill.code}
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 w-full"
-                />
-              </li>
-            ))}
-          </ul>
+          <PracticeControls className="mt-5" />
         </section>
-      )}
 
-      {/* Topics */}
-      <section>
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          {t.practice.topicsTitle}
-        </h2>
-        <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-          {t.practice.topicsBody}
-        </p>
-
-        {skills.length === 0 ? (
-          <div className="mt-5 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t.practice.topicsEmpty}
+        {/* Weak topics — only when there is enough evidence to name one. */}
+        {weak.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-muted-foreground">
+              {t.practice.weakTitle}
+            </h2>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              {t.practice.weakBody}
             </p>
-          </div>
-        ) : (
-          <div className="mt-5 space-y-8">
-            {[...byDomain.entries()].map(([domain, group]) => (
-              <div key={domain}>
-                <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                  {domain}
-                </h3>
 
-                <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-card">
-                  {group.map((skill) => (
-                    <li
-                      key={skill.code}
-                      className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-5"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {skillLabel(skill, lang)}
-                        </p>
-                        <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-                          {fill(t.practice.available, { count: skill.available })}
-                          {skill.answered > 0 &&
-                            ` · ${fill(t.practice.accuracy, {
-                              count: Math.round(
-                                (skill.correct / skill.answered) * 100,
-                              ),
-                            })}`}
-                        </p>
-                      </div>
+            <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {weak.map((skill) => (
+                <li
+                  key={skill.code}
+                  className="flex h-full flex-col justify-between rounded-2xl bg-card p-5 shadow-card"
+                >
+                  <div>
+                    <p className="text-xs text-muted-foreground">
+                      {skill.domainName}
+                    </p>
+                    <p className="mt-1 text-base font-bold tracking-tight text-balance">
+                      {skillLabel(skill, lang)}
+                    </p>
+                    <p className="mt-2 text-sm text-viz-rose tabular-nums">
+                      {fill(t.practice.accuracy, {
+                        count: Math.round(skill.accuracy * 100),
+                      })}{" "}
+                      · {skill.correct}/{skill.answered}
+                    </p>
+                  </div>
 
-                      <StartPracticeButton
-                        skillCode={skill.code}
-                        variant="outline"
-                        size="sm"
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+                  <StartPracticeButton
+                    skillCode={skill.code}
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 w-full"
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
-      </section>
+
+        {/* Topics */}
+        <section>
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            {t.practice.topicsTitle}
+          </h2>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            {t.practice.topicsBody}
+          </p>
+
+          {skills.length === 0 ? (
+            <div className="mt-5 rounded-2xl border border-dashed border-border bg-card p-8 text-center">
+              <p className="text-sm text-muted-foreground">
+                {t.practice.topicsEmpty}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 space-y-8">
+              {[...byDomain.entries()].map(([domain, group]) => (
+                <div key={domain}>
+                  <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    {domain}
+                  </h3>
+
+                  <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-card">
+                    {group.map((skill) => (
+                      <li
+                        key={skill.code}
+                        className="flex flex-wrap items-center justify-between gap-3 p-4 sm:px-5"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">
+                            {skillLabel(skill, lang)}
+                          </p>
+                          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                            {fill(t.practice.available, { count: skill.available })}
+                            {skill.answered > 0 &&
+                              ` · ${fill(t.practice.accuracy, {
+                                count: Math.round(
+                                  (skill.correct / skill.answered) * 100,
+                                ),
+                              })}`}
+                          </p>
+                        </div>
+
+                        <StartPracticeButton
+                          skillCode={skill.code}
+                          variant="outline"
+                          size="sm"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+      </PracticePreferencesProvider>
 
       {/* History */}
       <section>

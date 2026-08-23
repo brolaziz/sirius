@@ -329,7 +329,8 @@ export const uz = {
     mockTitle: "To'liq sinov imtihoni",
     mockBody:
       "Haqiqiy Digital SAT bilan bir xil: ikkita bo'lim, har birida ikki modul, o'rtada 10 daqiqa tanaffus. Vaqt haqiqiy imtihondagidek yuradi va to'xtatib bo'lmaydi — shuning uchun bu yerdagi ball nimani bildirishini bilasiz.",
-    mockShape: "{questions} savol · {minutes} daqiqa · {breakMinutes} daqiqa tanaffus",
+    mockShape:
+      "{questions} savol · boshidan oxirigacha {minutes} daqiqa ({breakMinutes} daqiqalik tanaffus bilan)",
     mockStart: "Sinov imtihonini boshlash",
 
     /* ---- and what to say when the bank cannot fill it ------------------- */
@@ -1079,7 +1080,8 @@ export const en: Dictionary = {
     mockTitle: "Full mock exam",
     mockBody:
       "The same shape as the real Digital SAT: two sections, two modules each, with a 10-minute break between them. The clock runs the way it runs on test day and cannot be paused — which is what makes the score here mean something.",
-    mockShape: "{questions} questions · {minutes} minutes · {breakMinutes}-minute break",
+    mockShape:
+      "{questions} questions · {minutes} minutes end to end, including a {breakMinutes}-minute break",
     mockStart: "Start the mock exam",
 
     /* ---- and what to say when the bank cannot fill it ------------------- */

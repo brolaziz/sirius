@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n/lang-provider";
 import { startPracticeSession } from "@/lib/actions/practice";
+import { usePracticePreferences } from "@/components/practice/practice-preferences";
 import { cn } from "@/lib/utils";
 
 export function StartPracticeButton({
@@ -35,18 +36,37 @@ export function StartPracticeButton({
 }) {
   const { t } = useT();
   const router = useRouter();
+  /*
+   * The length and timer the student chose once, at the top of the practice
+   * page. Outside that page — the dashboard, the study plan — there is no
+   * picker on screen and this returns no preference, so the server keeps
+   * choosing the length as it always has.
+   *
+   * A plan task ignores the count deliberately: its length is what the plan
+   * still owes for that skill, and letting a picker shorten it would quietly
+   * put the plan behind.
+   */
+  const { count, minutes } = usePracticePreferences();
   const [isPending, startTransition] = React.useTransition();
 
   function handleClick() {
     startTransition(async () => {
-      const result = await startPracticeSession({ skillCode, planTaskId });
+      const result = await startPracticeSession({
+        skillCode,
+        planTaskId,
+        count: planTaskId ? undefined : count,
+      });
 
       if (!result.ok || !result.sessionId) {
         toast.error(result.error ?? t.practice.startFailed);
         return;
       }
 
-      router.push(`/practice/session/${result.sessionId}`);
+      router.push(
+        minutes > 0
+          ? `/practice/session/${result.sessionId}?minutes=${minutes}`
+          : `/practice/session/${result.sessionId}`,
+      );
     });
   }
 

@@ -1,7 +1,9 @@
 "use client";
 
 /**
- * How long a practice session is, and whether it is timed.
+ * The mixed-practice card, and the picker that governs every practice session
+ * on the page — mixed and topic alike. See `practice-preferences.tsx` for why
+ * the choice is made once rather than repeated on each of thirty-one rows.
  *
  * Both choices belong to the student, which is the difference between practice
  * and the mock: the mock's shape is the exam's and is not negotiable, while a
@@ -23,19 +25,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/components/i18n/lang-provider";
 import { startPracticeSession } from "@/lib/actions/practice";
+import {
+  PRACTICE_COUNTS,
+  PRACTICE_MINUTES,
+  usePracticePreferencesControl,
+} from "@/components/practice/practice-preferences";
 import { cn } from "@/lib/utils";
-
-/** Session lengths offered. Bounded by the action's own 5–50 clamp. */
-const COUNTS = [5, 10, 20] as const;
-
-/** Timer options in minutes. `0` means no timer. */
-const MINUTES = [0, 5, 10, 20] as const;
 
 export function PracticeControls({ className }: { className?: string }) {
   const { t } = useT();
   const router = useRouter();
-  const [count, setCount] = React.useState<number>(10);
-  const [minutes, setMinutes] = React.useState<number>(0);
+  const { count, minutes, setCount, setMinutes } =
+    usePracticePreferencesControl();
   const [isPending, startTransition] = React.useTransition();
 
   function start() {
@@ -77,7 +78,7 @@ export function PracticeControls({ className }: { className?: string }) {
             {t.practice.countLabel}
           </Label>
           <div className="mt-2 flex gap-2">
-            {COUNTS.map((option) => (
+            {PRACTICE_COUNTS.map((option) => (
               <Button
                 key={option}
                 type="button"
@@ -97,7 +98,7 @@ export function PracticeControls({ className }: { className?: string }) {
             {t.practice.timerLabel}
           </Label>
           <div className="mt-2 flex gap-2">
-            {MINUTES.map((option) => (
+            {PRACTICE_MINUTES.map((option) => (
               <Button
                 key={option}
                 type="button"

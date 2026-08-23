@@ -14,8 +14,8 @@
  * panel says exactly how short, module by module, and does not offer to start.
  *
  * The blueprint above it is correct regardless — 98 questions, 134 minutes of
- * testing, a 10-minute break — so filling the bank turns this on without any
- * of it being rewritten.
+ * testing, a 10-minute break, 144 minutes at the desk — so filling the bank
+ * turns this on without any of it being rewritten.
  */
 
 import Link from "next/link";
@@ -26,7 +26,7 @@ import { fill } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/config";
 import {
   BREAK_MINUTES,
-  MOCK_TESTING_MINUTES,
+  MOCK_TOTAL_MINUTES,
   MOCK_TOTAL_QUESTIONS,
   type MockAvailability,
 } from "@/lib/mock";
@@ -63,12 +63,20 @@ export function MockPanel({
             {t.practice.mockBody}
           </p>
 
-          {/* The blueprint, stated whether or not it can be filled today. */}
+          {/*
+            The blueprint, stated whether or not it can be filled today.
+
+            The number here is MOCK_TOTAL_MINUTES — 144, the whole sitting
+            including the break — not MOCK_TESTING_MINUTES, which is 134. A
+            student reading this is deciding whether they have the afternoon,
+            and 134 is not how long they will be at the desk. The break is named
+            inside the same sentence so the testing time is still recoverable.
+          */}
           <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/90 tnum">
             <Clock className="size-3.5" />
             {fill(t.practice.mockShape, {
               questions: MOCK_TOTAL_QUESTIONS,
-              minutes: MOCK_TESTING_MINUTES,
+              minutes: MOCK_TOTAL_MINUTES,
               breakMinutes: BREAK_MINUTES,
             })}
           </p>
