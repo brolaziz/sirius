@@ -7,6 +7,11 @@
  */
 
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
+import {
+  completedByTask,
+  planWindow,
+  type TaskWindow,
+} from "@/lib/study-plan";
 import { examDateToIso } from "@/lib/validation/onboarding";
 import type { GradeLevel, StudyPriority } from "@/lib/generated/prisma/enums";
 
@@ -104,6 +109,11 @@ export interface PlanTaskView {
   skillNameUz: string | null;
   domainName: string;
   targetQuestions: number;
+  /**
+   * Answers the student has given on this skill inside this task's week.
+   * Derived on every read rather than stored — see `completedByTask`. Not
+   * clamped to `targetQuestions`; a caller showing a bar clamps its own width.
+   */
   completedQuestions: number;
 }
 
@@ -143,7 +153,9 @@ export interface StudyPlanView {
  * The student's current plan — the newest one.
  *
  * Regenerating writes a new row instead of editing the old one, so "current"
- * is a matter of `createdAt` and the history stays readable.
+ * is a matter of `createdAt` and the history stays readable. Progress does not
+ * live on those rows and so does not reset with them: it is counted from the
+ * student's answers each time this runs.
  */
 export async function getCurrentStudyPlan(
   userId: string,
@@ -172,6 +184,53 @@ export async function getCurrentStudyPlan(
 
   if (!plan) return null;
 
+  /*
+   * Progress is derived from the student's answers, not read off the task row —
+   * see `completedByTask` in `lib/study-plan.ts` for why. One extra read,
+   * bounded to the plan's own dates and its own skills rather than the
+   * student's whole history.
+   */
+  const windows: TaskWindow[] = plan.tasks.map((task) => ({
+    id: task.id,
+    skillId: task.skillId,
+    startDate: task.startDate,
+    dueDate: task.dueDate,
+  }));
+
+  const span = planWindow(windows);
+
+  const responses = span
+    ? await prisma.practiceResponse.findMany({
+        where: {
+          session: { userId },
+          answeredAt: { gte: span.from, lt: span.until },
+          question: {
+            skillId: { in: [...new Set(windows.map((task) => task.skillId))] },
+          },
+        },
+        select: {
+          answeredAt: true,
+          question: { select: { skillId: true } },
+        },
+      })
+    : [];
+
+  const completed = completedByTask(
+    windows,
+    // `Question.skillId` is nullable; the `in` filter above already excludes
+    // nulls, and this is what tells the type system so.
+    responses.flatMap((response) =>
+      response.question.skillId === null
+        ? []
+        : [
+            {
+              skillId: response.question.skillId,
+              answeredAt: response.answeredAt,
+            },
+          ],
+    ),
+  );
+
   const now = Date.now();
   const weeks = new Map<number, PlanWeekView>();
 
@@ -192,7 +251,7 @@ export async function getCurrentStudyPlan(
       skillNameUz: task.skill.nameUz,
       domainName: task.skill.domain.name,
       targetQuestions: task.targetQuestions,
-      completedQuestions: task.completedQuestions,
+      completedQuestions: completed.get(task.id) ?? 0,
     });
 
     weeks.set(task.week, week);

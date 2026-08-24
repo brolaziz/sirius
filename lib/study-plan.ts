@@ -71,6 +71,7 @@ export const MAX_PLAN_WEEKS = 26;
 export const SKILLS_PER_WEEK = 3;
 
 const MS_PER_DAY = 86_400_000;
+const MS_PER_WEEK = 7 * MS_PER_DAY;
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                       */
@@ -198,6 +199,20 @@ function addDays(date: Date, days: number): Date {
 }
 
 /**
+ * Monday 00:00 UTC of the week containing `date`. ISO weeks start on Monday.
+ *
+ * This is what makes a week a week rather than "seven days from whenever the
+ * plan was last written" — see `taskWindow`.
+ */
+function startOfUtcWeek(date: Date): Date {
+  const day = startOfUtcDay(date);
+  // `getUTCDay` is 0 for Sunday; shift so Monday is 0.
+  const offset = (day.getUTCDay() + 6) % 7;
+
+  return new Date(day.getTime() - offset * MS_PER_DAY);
+}
+
+/**
  * Whole weeks of preparation left, clamped to something a plan can honestly
  * describe. An exam in the past — which validation should have caught — yields
  * one week rather than a negative plan.
@@ -210,6 +225,164 @@ export function planWeeks(today: Date, examDate: Date): number {
   if (days <= 0) return 1;
 
   return Math.min(MAX_PLAN_WEEKS, Math.max(1, Math.ceil(days / 7)));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Completion                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** One scheduled task, reduced to what deciding its progress needs. */
+export interface TaskWindow {
+  /** Whatever the caller identifies the task by. Comes back as the map key. */
+  id: string;
+  skillId: string;
+  startDate: Date;
+  dueDate: Date;
+}
+
+/** One question the student answered, reduced the same way. */
+export interface AnsweredQuestion {
+  skillId: string;
+  answeredAt: Date;
+}
+
+/**
+ * The half-open interval a task's work is counted in: the **calendar week**
+ * containing its `startDate`, Monday 00:00 UTC to the next Monday.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * WHY THE CALENDAR AND NOT THE TASK'S OWN DATES
+ *
+ * The obvious window is `[startDate, dueDate]`, and it is wrong. A plan's weeks
+ * are anchored to the day the plan was written — `buildStudyPlan` starts week 1
+ * at `today` — so two plans written three days apart cut the same fortnight
+ * into different weeks. Deriving progress from those dates puts an answer in
+ * "this week" under one plan and "last week" under the next, and rebuilding
+ * silently moves work out from under the student. Measured: a plan written on a
+ * Friday counted a Saturday's practice; rebuilding it on the Monday did not,
+ * and two answered questions became zero.
+ *
+ * Anchoring to the calendar removes the plan from the question entirely.
+ * Monday is Monday no matter when anyone pressed save, so **rebuilding inside a
+ * week cannot change a single number** — which is the whole property this is
+ * for. Progress still resets when a new week starts, because that is what a new
+ * week is.
+ *
+ * The cost, stated: a plan written mid-week displays its own dates ("26 Aug —
+ * 1 Sep") while counting the calendar week that contains them (24 Aug — 30
+ * Aug), so work from earlier that week counts toward its first task. Making the
+ * two agree means anchoring `buildStudyPlan`'s week 1 to the calendar too —
+ * worth doing, and a change to the planner rather than to this rule. See
+ * `HANDOFF.md`.
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Consecutive tasks are seven days apart, so their windows are consecutive
+ * calendar weeks: no gaps, no overlaps, nothing counted twice.
+ */
+export function taskWindow(task: { startDate: Date }): {
+  from: Date;
+  until: Date;
+} {
+  const from = startOfUtcWeek(task.startDate);
+
+  return { from, until: new Date(from.getTime() + MS_PER_WEEK) };
+}
+
+/**
+ * The whole interval a plan's tasks can draw answers from, so a caller can
+ * bound its read instead of fetching a student's entire history. Null when
+ * there are no tasks.
+ */
+export function planWindow(
+  tasks: readonly TaskWindow[],
+): { from: Date; until: Date } | null {
+  if (tasks.length === 0) return null;
+
+  let from = Infinity;
+  let until = -Infinity;
+
+  for (const task of tasks) {
+    const span = taskWindow(task);
+    from = Math.min(from, span.from.getTime());
+    until = Math.max(until, span.until.getTime());
+  }
+
+  return { from: new Date(from), until: new Date(until) };
+}
+
+/**
+ * How much of each task the student has actually done.
+ *
+ * ───────────────────────────────────────────────────────────────────────────
+ * WHY THIS IS DERIVED AND NOT STORED
+ *
+ * Progress used to be a counter on the task row, incremented by any practice
+ * session opened from that task. That made it a fact about the *plan* — and
+ * plans here are append-only: changing a target writes a new one, the new one's
+ * counters start at zero, and a student who had done 18 of 40 was told they had
+ * done none. Copying the old counts across would only have made the counter a
+ * copy of a copy, and copies drift from what they describe.
+ *
+ * "This student answered 18 questions of Words in Context in the week of the
+ * 7th" is a fact about the student and the calendar. It survives a rewritten
+ * plan, it cannot disagree with the answers it is counting, and it does not
+ * care which session the answers came from: practice opened from the plan, from
+ * the topic list, or mixed is all the same student doing the same work. It also
+ * ends the case where a session opened before a target change credited a task
+ * on a plan the app no longer shows — there is nothing left to credit.
+ *
+ * The rule is the plainest one available: an answer counts toward a task when
+ * it is that task's skill and it lands inside that task's calendar week — see
+ * `taskWindow`, which is where the word "week" is pinned down and why it is
+ * pinned to the calendar rather than to the plan.
+ * `@@unique([planId, week, skillId])` gives one task per skill per week and
+ * weeks do not overlap, so no answer is counted twice.
+ *
+ * What it deliberately does *not* do is reach outside the week. Work done in
+ * earlier weeks does not fill in a plan's first task, and catching up in week 3
+ * does not retroactively complete week 1 — a past week's number stays the true
+ * statement of what happened in it.
+ * ───────────────────────────────────────────────────────────────────────────
+ *
+ * Counts are not capped at `targetQuestions`: 50 answered against a target of
+ * 40 is a true thing to say about the week, and a progress bar can clamp its
+ * own width.
+ */
+export function completedByTask(
+  tasks: readonly TaskWindow[],
+  answers: readonly AnsweredQuestion[],
+): Map<string, number> {
+  const counts = new Map<string, number>(tasks.map((task) => [task.id, 0]));
+
+  /*
+   * Grouped by skill before the sweep. A 26-week plan against a term of
+   * answers is otherwise tasks × answers comparisons for a number that is
+   * rendered on a page load.
+   */
+  const bySkill = new Map<string, TaskWindow[]>();
+  for (const task of tasks) {
+    const group = bySkill.get(task.skillId);
+    if (group) group.push(task);
+    else bySkill.set(task.skillId, [task]);
+  }
+
+  for (const answer of answers) {
+    const group = bySkill.get(answer.skillId);
+    if (!group) continue;
+
+    const at = answer.answeredAt.getTime();
+
+    for (const task of group) {
+      const { from, until } = taskWindow(task);
+      if (at < from.getTime() || at >= until.getTime()) continue;
+
+      counts.set(task.id, (counts.get(task.id) ?? 0) + 1);
+      // Windows do not overlap, so the first match is the only one.
+      break;
+    }
+  }
+
+  return counts;
 }
 
 /* -------------------------------------------------------------------------- */

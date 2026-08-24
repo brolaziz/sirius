@@ -15,12 +15,17 @@ import {
   MINUTES_PER_QUESTION,
   SKILLS_PER_WEEK,
   buildStudyPlan,
+  completedByTask,
   minutesToReach,
   planWeeks,
+  planWindow,
   projectScore,
   scoreGain,
   splitProportionally,
+  taskWindow,
+  type AnsweredQuestion,
   type PlanSkill,
+  type TaskWindow,
 } from "@/lib/study-plan";
 
 const day = 86_400_000;
@@ -311,5 +316,238 @@ describe("buildStudyPlan", () => {
     expect(result.projection.scheduledMinutes).toBe(
       Math.round(result.projection.totalQuestions * MINUTES_PER_QUESTION),
     );
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Derived completion                                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * These are the tests that hold the shape decision in place: progress belongs
+ * to the student and the calendar, not to whichever plan row was current. Every
+ * case below is about what a rewritten plan must *not* be able to change.
+ */
+describe("completedByTask", () => {
+  const monday = new Date("2026-09-07T00:00:00.000Z");
+
+  /** A task for `skill`, in the week starting `weeksIn` weeks after `monday`. */
+  function task(id: string, skillId: string, weeksIn = 0): TaskWindow {
+    const startDate = new Date(monday.getTime() + weeksIn * 7 * day);
+
+    return {
+      id,
+      skillId,
+      startDate,
+      dueDate: new Date(startDate.getTime() + 6 * day),
+    };
+  }
+
+  function answered(skillId: string, at: string): AnsweredQuestion {
+    return { skillId, answeredAt: new Date(at) };
+  }
+
+  it("counts a skill's answers inside the task's week", () => {
+    const counts = completedByTask(
+      [task("t1", "words")],
+      [
+        answered("words", "2026-09-07T09:00:00.000Z"),
+        answered("words", "2026-09-09T21:30:00.000Z"),
+      ],
+    );
+
+    expect(counts.get("t1")).toBe(2);
+  });
+
+  it("counts to the end of the calendar week, not to the plan's due date", () => {
+    const counts = completedByTask(
+      [task("t1", "words")],
+      [
+        // `dueDate` is midnight at the start of the 13th; both of these are
+        // that day, and a window closing at `dueDate` would drop both.
+        answered("words", "2026-09-13T00:00:00.000Z"),
+        answered("words", "2026-09-13T23:59:59.000Z"),
+        // The next week's first minute is not this week's.
+        answered("words", "2026-09-14T00:00:00.000Z"),
+      ],
+    );
+
+    expect(counts.get("t1")).toBe(2);
+  });
+
+  it("does not count another skill's work", () => {
+    const counts = completedByTask(
+      [task("t1", "words")],
+      [answered("algebra", "2026-09-08T09:00:00.000Z")],
+    );
+
+    expect(counts.get("t1")).toBe(0);
+  });
+
+  it("keeps a past week's number true when the student catches up later", () => {
+    const counts = completedByTask(
+      [task("week1", "words", 0), task("week3", "words", 2)],
+      [
+        answered("words", "2026-09-08T09:00:00.000Z"),
+        // Two weeks of catching up, all of it done in week 3.
+        answered("words", "2026-09-22T09:00:00.000Z"),
+        answered("words", "2026-09-23T09:00:00.000Z"),
+        answered("words", "2026-09-24T09:00:00.000Z"),
+      ],
+    );
+
+    // Week 1 stays at what actually happened in week 1.
+    expect(counts.get("week1")).toBe(1);
+    expect(counts.get("week3")).toBe(3);
+  });
+
+  it("never counts one answer twice", () => {
+    const answers = [answered("words", "2026-09-08T09:00:00.000Z")];
+    const counts = completedByTask(
+      [task("week1", "words", 0), task("week2", "words", 1)],
+      answers,
+    );
+
+    const total = [...counts.values()].reduce((sum, count) => sum + count, 0);
+    expect(total).toBe(answers.length);
+  });
+
+  it("does not reach back for work done before the plan existed", () => {
+    const counts = completedByTask(
+      [task("t1", "words")],
+      [answered("words", "2026-08-30T09:00:00.000Z")],
+    );
+
+    expect(counts.get("t1")).toBe(0);
+  });
+
+  it("reports more than the target rather than clamping", () => {
+    const counts = completedByTask(
+      [task("t1", "words")],
+      Array.from({ length: 50 }, () =>
+        answered("words", "2026-09-08T09:00:00.000Z"),
+      ),
+    );
+
+    expect(counts.get("t1")).toBe(50);
+  });
+
+  it("gives every task a number, including the untouched ones", () => {
+    const counts = completedByTask(
+      [task("t1", "words"), task("t2", "algebra")],
+      [answered("words", "2026-09-08T09:00:00.000Z")],
+    );
+
+    expect(counts.get("t2")).toBe(0);
+    expect([...counts.keys()].sort()).toEqual(["t1", "t2"]);
+  });
+
+  /**
+   * THE INVARIANT. A plan rebuilt partway through a week must not move a single
+   * number, and this is the case that caught the first version of the rule: a
+   * plan written on the Friday counted the Saturday's practice, and rebuilding
+   * it on the Monday did not.
+   */
+  it("does not move a number when the plan is rebuilt mid-week", () => {
+    // Practised on the Tuesday...
+    const tuesday = answered("words", "2026-09-08T20:06:00.000Z");
+
+    // ...then the plan is rebuilt later in that same week. Every one of these
+    // has to give the same answer, including the two written *after* the work
+    // was done — which is exactly what a date-anchored window got wrong.
+    const rebuiltOn = ["2026-09-07", "2026-09-09", "2026-09-11", "2026-09-13"];
+
+    for (const day of rebuiltOn) {
+      const counts = completedByTask(
+        [{ ...task("t", "words"), startDate: new Date(`${day}T00:00:00.000Z`) }],
+        [tuesday],
+      );
+
+      expect(counts.get("t"), `rebuilt on ${day}`).toBe(1);
+    }
+  });
+
+  it("puts every day of one calendar week in the same window", () => {
+    // Monday through Sunday: one window, whichever day the plan was written on.
+    const days = [7, 8, 9, 10, 11, 12, 13].map(
+      (date) => new Date(`2026-09-${String(date).padStart(2, "0")}T00:00:00.000Z`),
+    );
+
+    const windows = days.map((startDate) => taskWindow({ startDate }));
+
+    for (const window of windows) {
+      expect(window.from.toISOString()).toBe(windows[0].from.toISOString());
+      expect(window.until.toISOString()).toBe(windows[0].until.toISOString());
+    }
+
+    // And the week after is the next window, not the same one.
+    expect(taskWindow({ startDate: new Date("2026-09-14T00:00:00.000Z") }).from.toISOString())
+      .toBe(windows[0].until.toISOString());
+  });
+
+  it("survives a plan being rewritten over the same weeks", () => {
+    const answers = [
+      answered("words", "2026-09-08T09:00:00.000Z"),
+      answered("words", "2026-09-09T09:00:00.000Z"),
+    ];
+
+    const before = completedByTask([task("old", "words")], answers);
+    const after = completedByTask([task("new", "words")], answers);
+
+    expect(after.get("new")).toBe(before.get("old"));
+  });
+});
+
+describe("planWindow", () => {
+  it("spans from the first task's start to the end of the last one's due day", () => {
+    const first = new Date("2026-09-07T00:00:00.000Z");
+    const tasks: TaskWindow[] = [
+      {
+        id: "a",
+        skillId: "words",
+        startDate: first,
+        dueDate: new Date(first.getTime() + 6 * day),
+      },
+      {
+        id: "b",
+        skillId: "algebra",
+        startDate: new Date(first.getTime() + 7 * day),
+        dueDate: new Date(first.getTime() + 13 * day),
+      },
+    ];
+
+    const span = planWindow(tasks);
+
+    expect(span?.from.toISOString()).toBe(first.toISOString());
+    expect(span?.until.toISOString()).toBe(taskWindow(tasks[1]).until.toISOString());
+  });
+
+  it("has nothing to say about a plan with no tasks", () => {
+    expect(planWindow([])).toBeNull();
+  });
+});
+
+/**
+ * The window is read straight off what `buildStudyPlan` writes, so the two have
+ * to agree about what a week is. This is the test that fails if either moves.
+ */
+describe("the planner and the window agree", () => {
+  it("covers every day of a plan with no gaps and no overlaps", () => {
+    const result = buildStudyPlan({
+      currentScore: 1100,
+      targetScore: 1400,
+      examDate: inDays(84),
+      today,
+      weeklyStudyMinutes: 300,
+      skills,
+    });
+
+    const windows = result.weeks.map((week) => taskWindow(week));
+
+    for (let index = 1; index < windows.length; index += 1) {
+      expect(windows[index].from.getTime()).toBe(
+        windows[index - 1].until.getTime(),
+      );
+    }
   });
 });

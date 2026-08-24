@@ -1,8 +1,10 @@
-# The dictionary — a proposal, not a change
+# The dictionary — the direction, decided and unbuilt
 
-**Status: proposal. Nothing in this document is implemented.** It answers the
-three questions asked about the direction of the bilingual dictionary. Each
-section ends with a recommendation and the decision it needs from you.
+**Status: direction agreed, nothing implemented.** It answers the three
+questions asked about the direction of the bilingual dictionary. Each section
+ends with a recommendation and the decision it asked for; all three came back on
+24 August 2026 and are recorded in place, below the recommendation they answer.
+The work itself is still unbuilt — see *What this would touch* for its size.
 
 ---
 
@@ -69,9 +71,11 @@ sample per batch, and provenance recorded per row (`authored` / `generated` /
 D asks for on questions. Budget the reviewer's time, not the API.
 
 **(c) Live lookup on a miss.** A tap on a word we do not hold calls out, gets an
-entry, writes it to `Vocabulary`, and serves it. ~$0.004 the first time anyone
-anywhere taps that word, and **zero every time after that, for every user** —
-the cache is global because a word's translation is not personal.
+entry, writes it to `Vocabulary`, and serves it. ~$0.007 the first time anyone
+anywhere taps that word — a single uncached call, not the batch rate in the
+table above; the arithmetic is in §2 — and **zero every time after that, for
+every user**, because the cache is global: a word's translation is not
+personal.
 
 That last property is the one that decides the design. SAT-register English is
 a finite vocabulary: the passages a student meets will hit somewhere in the low
@@ -89,10 +93,22 @@ cached into `Vocabulary`.** Move the read path off the static JSON to
 `Vocabulary` with the JSON kept as the build-time bundle for the demo passage
 only (see §2).
 
-**Decision needed:** whether share-alike sources (Wiktionary, CC BY-SA) are
-acceptable given what the licence asks of us, or whether the base import is
-restricted to CC0/permissive sets. That is a business call, not an engineering
-one.
+**Decided, 24 August 2026 — no share-alike.** The base import is restricted to
+public domain and permissive sources: PanLex (CC0), and whatever part of
+FreeDict is genuinely permissive. Wiktionary and Wikidata (CC BY-SA) and
+Apertium (GPL) are out. The dictionary is a core commercial asset, and a
+share-alike licence would oblige us to release derivatives under the same terms
+— permanently entangling the one thing that is genuinely ours.
+
+**What that costs, stated plainly.** The permissive pool is the smaller one, and
+Wiktionary is the largest English→Uzbek source of the five, so (b) grows to
+cover the difference — which is the intent: if the licence shrinks the import
+pool, we generate the shortfall rather than accept the obligation. Two
+consequences for the work: the licence review stops being a formality and
+becomes a gate — "mostly GPL/CC" is not a licence, so FreeDict is read set by
+set or it is not imported at all — and the source's licence goes in the
+provenance column beside the source name, so this decision stays re-checkable
+instead of remembered.
 
 **And regardless of which way that goes:** the copy in the two files above is
 false today and should be fixed this week, whatever we decide about the rest.
@@ -117,9 +133,11 @@ that way, and the rule should be written down rather than left as an accident:
    a visitor's tap costs a `Map.get` and nothing else — which is also why it is
    instant, the property the demo exists to show.
 2. **Live lookup is authenticated, and rate-limited per user** — a per-account
-   cap on *misses* per day (hits are free, they are database reads). A student
-   reading hard passages all evening might genuinely miss 40 new words; 200 is
-   not a student.
+   cap on *misses* per day (hits are free, they are database reads). Decided
+   below at 30, which is conservative on purpose: a student reading hard
+   passages all evening might genuinely miss 40 new words, so 30 can bite a real
+   reader, and the instrumentation that would prove it is part of the
+   decision.
 3. **The cache is checked before the wallet.** `Vocabulary` first, provider only
    on a miss, write-through on the way back. Two students meeting `ubiquitous`
    in different passages cost one lookup between them, ever.
@@ -134,9 +152,52 @@ that way, and the rule should be written down rather than left as an accident:
 Points 1 and 3 are what make this cheap. Points 2 and 4 are what make it
 bounded even when someone is trying.
 
-**Decision needed:** the two numbers — the per-account daily miss cap and the
-global ceiling. I suggest 100 and a spend ceiling you name in dollars rather
-than in calls, because that is the thing you actually care about.
+**Decided, 24 August 2026.** Both caps start conservative and move **up** on
+evidence, never down.
+
+- **Per user: 30 new lookups a day.** Misses only — a cache hit is a database
+  read and does not count, so a normal reading session never touches the cap and
+  it only bites on someone hammering it. Deliberately below the 100 suggested
+  above.
+- **Global: $5 a day**, expressed as money rather than as a request count. A
+  count drifts as the model price changes; a budget does not.
+- **When either cap is hit, say so.** "The dictionary is at today's limit —
+  here is what is already saved", with everything already in `Vocabulary` still
+  served. Not a silent failure, and not a spinner.
+
+**Converting $5 into a request count.** Not at the $0.0041 in §1's table: that
+is the Batch API rate with the shared instruction amortised across a batch, and
+neither half of that applies to a single call made while a student waits. One
+uncached live lookup on Claude Opus 5 ($5 / $25 per MTok) is ~600 input tokens
+against ~160 output:
+
+| | tokens | rate | cost |
+|---|---|---|---|
+| input | ~600 | $5/MTok | $0.0030 |
+| output | ~160 | $25/MTok | $0.0040 |
+| **total** | | | **~$0.0070** |
+
+**$5 a day is ~700 new lookups a day**, globally, across every user. Prompt
+caching does not lower that on its own: the minimum cacheable prefix is ~1024
+tokens and the instruction is ~600, so it would silently fail to cache. Padding
+the prefix past the minimum to buy the ~90% discount on the input half is worth
+measuring — it would take the per-lookup figure to roughly $0.0043 and the daily
+count to ~1,150 — but that is an optimisation to verify against
+`usage.cache_read_input_tokens`, not an assumption to budget on.
+
+So: hold the two prices and the two token counts as named constants in one
+place, derive the request count from them, and re-derive it from real `usage`
+figures once anything is actually running. The budget is the decision; the count
+is arithmetic that follows the price.
+
+**Where the two caps meet.** 700 ÷ 30 ≈ 23. The global ceiling starts binding
+once about two dozen students hit their personal cap on the same day, so which
+cap is wrong will be legible from which one trips: per-user cap-hits mean 30 is
+too tight, the global ceiling arriving before anyone reaches 30 means the budget
+is the constraint. **Log both from the first day.** A cap raised "with evidence"
+needs the evidence recorded before anyone wanted it — and because `Vocabulary`
+is a global write-through cache, the second week genuinely costs less than the
+first, which is the shape the numbers should show if this is working.
 
 ---
 
@@ -186,9 +247,11 @@ round trip against the clock, and the word bank still fills. That also removes
 the current failure mode where a save fails mid-module and throws a toast over a
 question.
 
-**Decision needed:** whether mode 2 or mode 3 is the default, and whether an
-assisted attempt should be excluded from the dashboard's best-score tile (I
-think yes — a mixed number is worse than two honest ones).
+**Decided, 24 August 2026 — mode 2, the exam-faithful mock, is the default.** A
+mock score has to mean something, and it only does if the conditions match the
+real exam. Mode 3 stays opt-in per attempt, labelled wherever its score appears,
+and out of the best-score tile — as designed above. Mode 1 is unchanged, and no
+timed screen gets a save button.
 
 ---
 

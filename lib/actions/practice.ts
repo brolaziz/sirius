@@ -30,6 +30,7 @@ import {
   type QuestionHistory,
 } from "@/lib/practice";
 import { asQuestionIds } from "@/lib/queries/practice";
+import { taskWindow } from "@/lib/study-plan";
 import type { ActionResult } from "@/lib/actions/roadmap";
 
 /* -------------------------------------------------------------------------- */
@@ -93,15 +94,31 @@ export async function startPracticeSession(
         id: true,
         skillId: true,
         targetQuestions: true,
-        completedQuestions: true,
+        startDate: true,
       },
     });
 
     if (!task) return { ok: false, error: "That plan task is not available." };
 
+    /*
+     * What is left of the task, counted from the student's answers rather than
+     * read off the row — `completedByTask` in `lib/study-plan.ts` explains why
+     * the count is not stored. Practice on this skill inside this week counts
+     * whether or not it was opened from the plan, so a student who has already
+     * done the work is not handed it again.
+     */
+    const week = taskWindow(task);
+    const done = await prisma.practiceResponse.count({
+      where: {
+        session: { userId },
+        answeredAt: { gte: week.from, lt: week.until },
+        question: { skillId: task.skillId },
+      },
+    });
+
     skillId = task.skillId;
     planTaskId = task.id;
-    remainingInTask = task.targetQuestions - task.completedQuestions;
+    remainingInTask = Math.max(0, task.targetQuestions - done);
   } else {
     const skill = await prisma.skill.findUnique({
       where: { code: parsed.data.skillCode },
@@ -227,7 +244,7 @@ export async function answerPracticeQuestion(
 
   const session = await prisma.practiceSession.findFirst({
     where: { id: parsed.data.sessionId, userId },
-    select: { id: true, questionIds: true, completedAt: true, planTaskId: true },
+    select: { id: true, questionIds: true, completedAt: true },
   });
 
   if (!session) return { ok: false, error: "Session not found." };
@@ -282,28 +299,19 @@ export async function answerPracticeQuestion(
     question.acceptedAnswers,
   );
 
-  await prisma.$transaction(async (tx) => {
-    await tx.practiceResponse.create({
-      data: {
-        sessionId: session.id,
-        questionId: question.id,
-        answer: parsed.data.answer,
-        isCorrect: correct,
-        timeSpentSeconds: parsed.data.timeSpentSeconds,
-      },
-    });
-
-    /*
-     * Credit the study-plan task, if this session came from one. `updateMany`
-     * with the ownership condition in the `where` rather than a read followed
-     * by a write — the same rule every other write in the codebase follows.
-     */
-    if (session.planTaskId) {
-      await tx.studyPlanTask.updateMany({
-        where: { id: session.planTaskId, plan: { userId } },
-        data: { completedQuestions: { increment: 1 } },
-      });
-    }
+  /*
+   * One write. Answering used to also increment the plan task's counter, which
+   * is what made this a transaction; the plan now counts these rows instead of
+   * being told about them, so there is nothing to keep in step.
+   */
+  await prisma.practiceResponse.create({
+    data: {
+      sessionId: session.id,
+      questionId: question.id,
+      answer: parsed.data.answer,
+      isCorrect: correct,
+      timeSpentSeconds: parsed.data.timeSpentSeconds,
+    },
   });
 
   return {

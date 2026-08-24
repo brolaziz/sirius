@@ -901,13 +901,20 @@ model StudyPlanTask {
 
   targetQuestions Int @map("target_questions")
 
-  /// Filled in by practice sessions. Progress is a count rather than a
-  /// checkbox: "18 of 40" is the answer a student actually wants.
+  /// DEAD COLUMN. Nothing reads it and nothing writes it any more. Progress is
+  /// derived from the student's answers instead — `completedByTask` in
+  /// `lib/study-plan.ts` says why a counter on the plan was the wrong shape.
+  ///
+  /// It is still declared because dropping a column is a destructive change and
+  /// the Netlify build migrates *before* it deploys, so the drop belongs to a
+  /// later deploy than the code that stopped using it. See *Deploying a schema
+  /// change* in `DATABASE.md`, and open item 5 in `HANDOFF.md`.
   completedQuestions Int @default(0) @map("completed_questions")
 
   createdAt DateTime @default(now()) @map("created_at")
 
-  /// Sessions opened from this task. What increments `completedQuestions`.
+  /// Sessions opened from this task. Provenance only — a session credits
+  /// nothing, because progress is counted from the answers themselves.
   practiceSessions PracticeSession[]
 
   @@unique([planId, week, skillId])
@@ -947,7 +954,9 @@ model PracticeSession {
   source PracticeSource @default(SKILL)
 
   /// The study-plan task this session is working through, when it was opened
-  /// from one. Answering credits that task's `completedQuestions`.
+  /// from one. It records where the session came from and sizes it to what is
+  /// left of the task; it does not credit anything, and it is `SetNull` rather
+  /// than cascade because the answers outlive the plan that suggested them.
   planTaskId String?        @map("plan_task_id")
   planTask   StudyPlanTask? @relation(fields: [planTaskId], references: [id], onDelete: SetNull)
 

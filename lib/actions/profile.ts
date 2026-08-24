@@ -9,6 +9,13 @@
  * steps of 10, not below the score you already have" is one copy too many —
  * whichever of them someone edits later becomes the one that is wrong.
  *
+ * SAVING THE SAME NUMBER DOES NOTHING.
+ * A target that has not moved needs no new plan, and writing one anyway costs a
+ * `StudyPlan` row plus one `StudyPlanTask` per week × skill for a plan
+ * identical to the one already there. The guard checks the stored target *and*
+ * that the newest plan was built for it, so it stays a no-op without becoming a
+ * trap: a save whose rebuild failed earlier still rebuilds on the next attempt.
+ *
  * CHANGING THE TARGET REBUILDS THE PLAN.
  * The study plan is arithmetic over the target: how many questions a week, of
  * which skills, to close the gap by exam day. Leaving yesterday's plan in place
@@ -16,7 +23,9 @@
  * looks authoritative. `buildAndSaveStudyPlan` *appends* a new plan rather than
  * editing the current one (see its header), so nothing a student has already
  * worked through is rewritten or lost — the history keeps every version and the
- * app reads the newest.
+ * app reads the newest. Progress survives the rebuild because it was never on
+ * the plan to begin with: it is counted from the student's answers, per skill
+ * per week (`completedByTask` in `lib/study-plan.ts`).
  *
  * The rebuild is deliberately not fatal. If the plan cannot be built — no exam
  * date yet, an empty question bank, a database blip — the target is still
@@ -67,13 +76,37 @@ export async function setTargetScore(
    */
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { currentScore: true },
+    select: { currentScore: true, targetScore: true },
   });
 
   if (!user) return { ok: false, error: "Account not found." };
 
   const problem = targetScoreProblem(parsed.data, user.currentScore);
   if (problem) return { ok: false, error: problem };
+
+  if (user.targetScore === parsed.data) {
+    /*
+     * The *newest* plan, because that is the one the app shows. Any plan with
+     * a matching target would be the wrong test: a student whose last rebuild
+     * failed can have an old plan for this number and a current one for
+     * another, and answering "already done" there would leave them looking at a
+     * plan built for a target they no longer hold.
+     */
+    const current = await prisma.studyPlan.findFirst({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: { targetScore: true },
+    });
+
+    /*
+     * Nothing to save and nothing to rebuild. Reported as a success with the
+     * plan intact, because from the student's side it is one: the target is the
+     * number they asked for and the plan below it was built for that number.
+     */
+    if (current?.targetScore === parsed.data) {
+      return { ok: true, planRebuilt: true };
+    }
+  }
 
   await prisma.user.update({
     where: { id: userId },

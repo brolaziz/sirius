@@ -23,11 +23,26 @@ Source of truth is `TASK-2.md`. **A2 is the next piece of work.**
                                           17" is RETRACTED; the real figure is
                                           0 failures across 14 surfaces, by
                                           `npm run audit:tap`
-      A4  university card fully clickable  NOT STARTED (only the cover opens it)
-      A5  target score editing .......... NOT STARTED (blocked: no profile or
-                                          settings route exists at all)
-    Phase B — i18n: missing strings, slow switch ....... NOT STARTED
-    Phase C — practice / mock restructure .............. NOT STARTED
+      A4  university card fully clickable  done. The whole card is the <Link>
+                                          to /universities/[id]
+                                          (`university-card.tsx:128`); nested
+                                          actions still work
+      A5  target score editing .......... done. **The blocker is gone** —
+                                          `app/(app)/profile` exists. Editing is
+                                          `components/profile/target-score-form.tsx`
+                                          and the dashboard welcome banner, both
+                                          through `setTargetScore`, which
+                                          re-validates server-side and rebuilds
+                                          the plan without resetting progress —
+                                          see *Plan progress* below
+    Phase B — i18n: missing strings, slow switch ....... IN PROGRESS (f7f853b
+                                          translated the simulator end to end;
+                                          the rest of the phase is unverified)
+    Phase C — practice / mock restructure .............. LARGELY LANDED (3ff0a68,
+                                          c9bb7e6 — C1/C2/C3; a full mock is
+                                          still bank-limited and the page says
+                                          so). Re-read the commits before
+                                          calling the phase closed
     Phase D — question bank growth ..................... NOT STARTED
                                           (plan only, gated on owner approval)
 
@@ -112,9 +127,15 @@ gates are green: `tsc --noEmit`, `npm run check` (35 passed), `npm run lint`, an
 
 ## Database, as it now stands
 
-- **Local** `.env` → Neon **dev branch** `ep-restless-cell-axrhiuf3` (pooled).
-  The production URL is kept in the file, commented out and labelled. Do not
-  point a checkout at it.
+- **Local** `.env` → Neon **dev branch** `ep-morning-hat-axp3zwdr` (pooled), as
+  of 24 August. The previous dev branch `ep-restless-cell-axrhiuf3` is gone —
+  its credentials now fail authentication (`P1000`), so any note quoting that
+  endpoint is stale. The production URL is kept in the file, commented out and
+  labelled. Do not point a checkout at it.
+- **`snapshot-2026-08-24`** is a Neon branch taken from production on 24 August:
+  a copy-on-write snapshot, instant and free, covering the realistic risks — a
+  bad migration, an accidental delete. It does not cover losing the Neon account
+  itself. See open item 6.
 - **Netlify**: Production → `ep-long-resonance-axr9gzeu` (currently a *direct*
   connection — see open item 1). Deploy Previews, Branch deploys and Preview
   Server share one **preview branch**.
@@ -305,6 +326,88 @@ the grid item, which is why it did nothing. Same class, different position,
 opposite outcome — check which element is actually the grid item before deciding
 a card is safe.
 
+## Plan progress, and where it lives now
+
+**A task's progress is derived from the student's answers. It is not stored.**
+
+It used to be `StudyPlanTask.completedQuestions`, a counter incremented by any
+practice session opened from that task. That made progress a fact about the
+*plan*, and plans here are append-only: every target change writes a new one, so
+the new plan's counters started at zero and a student who had done 18 of 40 was
+told they had done none. Copying the counts forward was the other option and was
+rejected — a copy of a fact drifts from the fact.
+
+`completedByTask` (`lib/study-plan.ts`) is the whole rule, and it is pure: **an
+answer counts toward a task when it is that task's skill and it lands inside
+that task's week.** `@@unique([planId, week, skillId])` gives one task per skill
+per week and weeks do not overlap, so nothing is counted twice. `taskWindow`
+closes the week at `dueDate + 1 day`, because `dueDate` is midnight at the
+*start* of the last day and the due day is the day the work gets done.
+
+Three things follow, and they are the reason for the change:
+
+- **A rebuilt plan keeps its progress.** The same answers read through two plans
+  covering the same weeks give the same numbers.
+- **Nothing can strand a credit.** `answerPracticeQuestion` writes one row and
+  no longer needs a transaction; a session opened before a target change has
+  nothing left to credit to a plan the app no longer shows.
+- **Any practice on the skill counts**, not only a session opened from the plan
+  — from the topic list or from mixed practice is the same student doing the
+  same work. That is a deliberate widening of what used to count.
+
+**A week means a calendar week, and that is not a detail.** The first version of
+this rule used the task's own `startDate`/`dueDate`, and a live before/after on
+the dev branch caught it doing the exact thing the change existed to prevent.
+The account had two answers on Saturday 22 August, under a plan written on the
+Friday, whose week 1 ran Fri 21 → Thu 27. Changing the target on Monday 24 wrote
+a plan whose week 1 ran Mon 24 → Sun 30. The Saturday fell outside it, and 2
+became 0.
+
+The cause is that `buildStudyPlan` anchors week 1 to *the day the plan was
+written*, so two plans written three days apart cut the same fortnight into
+different weeks. `taskWindow` now anchors to the calendar instead — Monday 00:00
+UTC to the next Monday — which takes the plan out of the question entirely:
+**rebuilding inside a week cannot change a number.** Progress still resets when
+a new week begins, because that is what a new week is. `tests/study-plan.test.ts`
+holds the invariant, and it was confirmed to fail against the old rule before
+the fix went in ("rebuilt on 2026-09-09: expected +0 to be 1").
+
+What the rule deliberately does *not* do is reach outside the week: earlier
+weeks' work does not fill in a plan's first task, and catching up in week 3 does
+not retroactively complete week 1.
+
+**One consequence left over.** A plan written mid-week displays its own dates
+("26 Aug — 1 Sep") while counting the calendar week containing them (24 Aug —
+30 Aug), so work from earlier that week counts toward its first task. Making the
+two agree means anchoring `buildStudyPlan`'s week 1 to the calendar as well —
+a change to the planner, with its own effect on the week count near an exam
+date, and deliberately not bundled in here. Open item 7.
+
+Mock answers are not counted. Only `PracticeResponse` rows are, which matches
+what the counter did.
+
+**`setTargetScore` no longer writes a plan for a target that has not moved.** It
+compares against the stored target *and* the newest plan's target, so it stays a
+no-op without becoming a trap: a save whose rebuild failed earlier still
+rebuilds on the next attempt.
+
+Touched: `lib/study-plan.ts` (the rule and its tests), `lib/queries/study-plan.ts`
+(one extra read, bounded to the plan's own dates and skills),
+`lib/actions/practice.ts` (remaining-in-task derived; the increment gone),
+`lib/actions/profile.ts` (the no-op guard), `prisma/schema.prisma` (comments
+only). The plan page is unchanged — `PlanTaskView.completedQuestions` kept its
+name and only its source moved.
+
+All four gates green: `tsc --noEmit`, `npm run check` (35 passed), `npm run
+lint`, 183 vitest tests.
+
+**Verified against the dev branch**, `ep-morning-hat-axp3zwdr`, 24 August. Both
+new reads run: the plan query's derived-progress `findMany`, and the
+remaining-in-task `count` in `startPracticeSession`. A target change was driven
+end to end — 1300 → 1350 → 1300 — and week 1's numbers did not move across
+either rebuild. The same run is what caught the calendar-week defect above, so
+the check demonstrably could have failed, and did.
+
 ## Open items
 
 1. **Pooled/unpooled swap in Netlify** — agreed, not started. Runtime should be
@@ -345,3 +448,27 @@ a card is safe.
 
    If that is confirmed, the fix is a refresh that runs when the layout has
    actually settled rather than when fonts happen to resolve.
+
+5. **Drop `study_plan_tasks.completed_questions`.** The contract half of an
+   expand/contract, and the only thing outstanding from the change described in
+   *Plan progress* above. Nothing reads or writes the column any more, but the
+   Netlify build migrates *before* it deploys, so the migration that removes it
+   belongs to a later deploy than the code that stopped using it — see
+   *Deploying a schema change* in `DATABASE.md`. The column is marked dead in
+   `prisma/schema.prisma`; delete the field and generate the migration once this
+   change is live.
+
+6. **A real off-site dump before launch.** The `snapshot-2026-08-24` Neon branch
+   covers a bad migration or an accidental delete; it does not cover losing the
+   Neon account. That is the right trade for six test accounts whose data mostly
+   re-seeds from the repo, and the wrong one the day there are users. Before
+   launch: install PostgreSQL client binaries (there are none on the dev machine
+   — no `pg_dump`, no `psql`, and Docker's daemon is not running), take a
+   `pg_dump --format=custom` of production over the **direct**, non-pooled
+   endpoint, and keep it somewhere that is not Neon and not the OneDrive-synced
+   tree the repo lives in. Install a client at least as new as the server —
+   newer dumps older, never the reverse.
+
+7. **Anchor `buildStudyPlan`'s week 1 to the calendar week.** Then a plan's
+   displayed dates and its counted week are the same seven days. See *Plan
+   progress* above for why they currently differ and what it costs.
