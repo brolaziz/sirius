@@ -1,208 +1,50 @@
-/**
- * Dashboard — the app's home.
- *
- * A true bento field: a 12-column grid where tiles take different widths, so
- * the eye is pulled through a composition rather than scanning a uniform table
- * of cards. The reading order is the argument Sirius makes about admissions:
- *
- *   dream universities      ← the anchor: 5 columns
- *   next deadline           ← 3 columns, the only dark tile on the page
- *   the SAT metrics         ← a row of four
- *   next steps · mock test  ← 7 + 5
- *
- * The SAT sits in the middle of that list rather than at the top, which is the
- * repositioning expressed as a layout decision: the application is the product,
- * the test is one input to it.
- *
- * Every number is real, and every one of them counts something the student did:
- * a score they scored, a university they saved, a word they looked up. There is
- * deliberately no composite "readiness" percentage — the stages of an
- * application are not commensurable, so any single figure over them would be an
- * invented rubric presented as a measurement.
- *
- * Each tile degrades on its own: no database, no tests imported or no results
- * yet each produce an honest empty state rather than a zero.
- */
-
 import type { Metadata } from "next";
-import { BookMarked, GraduationCap, Percent, Trophy } from "lucide-react";
-
-import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
-import { StartTestCard } from "@/components/dashboard/start-test-card";
-import { MetricCard } from "@/components/dashboard/metric-card";
-import { RoadmapCard } from "@/components/dashboard/roadmap-card";
-import { UniversitiesCard } from "@/components/dashboard/universities-card";
-import { DeadlineCard } from "@/components/dashboard/deadline-card";
-import { BentoGrid, BentoItem } from "@/components/dashboard/bento-grid";
+import Link from "next/link";
+import { ArrowUpRight, Compass, CalendarClock, GraduationCap, FilePenLine, ClipboardList, BookMarked, Sparkles, ArrowRight } from "lucide-react";
 import { getDashboardData } from "@/lib/queries/dashboard";
-import { getDictionary, getLang } from "@/lib/i18n";
-import { fill } from "@/lib/i18n/config";
+import { getWorkspaceOverview } from "@/lib/queries/workspace";
+import { getLang } from "@/lib/i18n";
 import { displayName } from "@/lib/user";
-import type { Tone } from "@/lib/viz";
-
-export const metadata: Metadata = {
-  title: "Dashboard",
-};
-
+import { prisma } from "@/lib/prisma";
+import { StartTestCard } from "@/components/dashboard/start-test-card";
+import { UniversitiesCard } from "@/components/dashboard/universities-card";
+export const metadata: Metadata = { title: "My workspace" };
 export default async function DashboardPage() {
-  const data = await getDashboardData();
-  const t = getDictionary(await getLang());
-
-  const target = data.user?.targetScore ?? null;
-  const best = data.bestScaledScore;
-
-  // Progress toward the target, capped at 100 so overshooting does not overflow.
-  const targetProgress =
-    target && best ? Math.min(100, (best / target) * 100) : undefined;
-
-  const scoreBadge: { label: string; tone: Tone } | undefined =
-    target && best
-      ? best >= target
-        ? { label: t.dash.targetMet, tone: "emerald" }
-        : {
-            label: fill(t.dash.pointsToGo, { count: target - best }),
-            tone: "amber",
-          }
-      : undefined;
-
-  const accuracyPercent =
-    data.averageAccuracy === null ? null : data.averageAccuracy * 100;
-
-  const accuracyBadge: { label: string; tone: Tone } | undefined =
-    accuracyPercent === null
-      ? undefined
-      : accuracyPercent >= 75
-        ? { label: t.dash.strong, tone: "emerald" }
-        : accuracyPercent >= 55
-          ? { label: t.dash.building, tone: "amber" }
-          : { label: t.dash.needsWork, tone: "rose" };
-
-  /** The soonest deadline among the shortlist, if any university lists one. */
-  const nextDeadline =
-    data.shortlisted.find(
-      (university) => university.applicationDeadline !== null,
-    ) ?? null;
-
-  return (
-    <div
-      className="mx-auto max-w-7xl space-y-10 sm:space-y-12"
-      suppressHydrationWarning
-    >
-      <WelcomeBanner
-        name={displayName(data.user)}
-        targetScore={target}
-        canEdit={data.databaseReady}
-      />
-
-      <BentoGrid>
-        <BentoItem className="sm:col-span-7 lg:col-span-5">
-          <StartTestCard action={data.todayAction} className="min-h-64" />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-5 lg:col-span-3">
-          <DeadlineCard university={nextDeadline} />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-6 lg:col-span-4">
-          <MetricCard
-            icon={<Trophy />}
-            label={t.dash.bestScore}
-            value={best}
-            emptyText={t.dash.bestScoreEmpty}
-            hint={target ? fill(t.dash.targetSet, { score: target }) : undefined}
-            gauge={targetProgress}
-            tone={best && target && best >= target ? "emerald" : "brand"}
-            badge={scoreBadge}
-            href="/practice"
-          />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-6 lg:col-span-4">
-          <MetricCard
-            icon={<Percent />}
-            label={t.dash.accuracy}
-            value={accuracyPercent}
-            decimals={0}
-            suffix="%"
-            emptyText={t.dash.accuracyEmpty}
-            hint={t.dash.accuracyHint}
-            gauge={accuracyPercent ?? undefined}
-            tone={accuracyBadge?.tone ?? "brand"}
-            badge={accuracyBadge}
-            href="/practice"
-          />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-6 lg:col-span-4">
-          <MetricCard
-            icon={<BookMarked />}
-            label={t.dash.words}
-            value={data.savedWordCount}
-            tone="violet"
-            hint={t.dash.wordsHint}
-            href="/words"
-          />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-6 lg:col-span-4">
-          <MetricCard
-            icon={<GraduationCap />}
-            label={t.dash.shortlistCount}
-            value={data.shortlistCount}
-            tone="sky"
-            hint={t.dash.shortlistHint}
-            href="/universities"
-          />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-12 lg:col-span-7">
-          <RoadmapCard tasks={data.roadmapTasks} />
-        </BentoItem>
-
-        <BentoItem className="sm:col-span-12 lg:col-span-5">
-          <UniversitiesCard
-            universities={data.shortlisted}
-            total={data.shortlistCount}
-          />
-        </BentoItem>
-
-        {data.latestResult && (
-          <BentoItem className="sm:col-span-12">
-            <div className="rounded-2xl bg-card p-6 shadow-card sm:p-8">
-              <div className="flex flex-wrap items-center justify-between gap-6">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {t.dash.lastResult}
-                  </p>
-                  <p className="mt-2 text-xl font-bold tracking-tight">
-                    {data.latestResult.test.title}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="rounded-xl bg-viz-violet-soft px-6 py-4">
-                    <p className="text-xs font-semibold text-viz-violet">
-                      {t.dash.raw}
-                    </p>
-                    <p className="mt-1 text-2xl font-extrabold text-viz-violet tnum">
-                      {data.latestResult.score}/
-                      {data.latestResult.totalQuestions}
-                    </p>
-                  </div>
-                  <div className="rounded-xl bg-brand-50 px-6 py-4">
-                    <p className="text-xs font-semibold text-brand-700">
-                      {t.dash.estimated}
-                    </p>
-                    <p className="mt-1 text-2xl font-extrabold text-brand-700 tnum">
-                      {data.latestResult.scaledScore ?? "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </BentoItem>
-        )}
-      </BentoGrid>
-    </div>
-  );
+ const data = await getDashboardData(); const lang = await getLang(); const uz = lang === "uz";
+ const overview = data.user && data.databaseReady ? await getWorkspaceOverview(prisma, data.user.id) : null;
+ const quick = [
+  { href: "/universities", title: uz ? "Universitet topish" : "Discover colleges", icon: GraduationCap, tone: "bg-viz-sky-soft text-viz-sky" },
+  { href: "/activities", title: uz ? "Profilni kuchaytirish" : "Build your profile", icon: Sparkles, tone: "bg-viz-emerald-soft text-viz-emerald" },
+  { href: "/essays", title: uz ? "Insho yozish" : "Write my story", icon: FilePenLine, tone: "bg-viz-rose-soft text-viz-rose" },
+  { href: "/applications/tracker", title: uz ? "Arizalarni tartiblash" : "Organize applications", icon: ClipboardList, tone: "bg-viz-violet-soft text-viz-violet" },
+ ];
+ const metrics = [
+  { label: uz ? "Saqlangan universitetlar" : "Saved colleges", value: data.shortlistCount, href: "/universities", icon: GraduationCap },
+  { label: uz ? "Mening arizalarim" : "My applications", value: overview?.applicationCount ?? 0, href: "/applications/tracker", icon: ClipboardList },
+  { label: uz ? "Insho qoralamalari" : "Essay drafts", value: overview?.draftCount ?? 0, href: "/essays", icon: FilePenLine },
+  { label: uz ? "Saqlangan so‘zlar" : "Saved words", value: data.savedWordCount, href: "/words", icon: BookMarked },
+ ];
+ return <div className="mx-auto max-w-6xl space-y-7">
+  <header className="workspace-intro relative overflow-hidden">
+   <div className="relative z-10 max-w-2xl"><p className="text-xs font-extrabold uppercase tracking-widest text-primary">{uz ? "Sizning kelajagingiz shu yerdan boshlanadi" : "Your next chapter starts here"}</p>
+    <h1 className="mt-3 font-extrabold">{uz ? "Salom" : "Welcome back"}, {displayName(data.user)} <span aria-hidden="true">✦</span></h1>
+    <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{uz ? "Har kuni bitta kichik qadam. O‘zingizga mos universitetni toping, hikoyangizni yozing va arizangizni bir joyda yig‘ing." : "One small step each day. Find your colleges, tell your story and bring your application together in one place."}</p>
+    <Link href="/explore" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-extrabold text-primary-foreground">{uz ? "Keyingi qadamim" : "Find my next step"}<ArrowUpRight className="size-4" /></Link>
+   </div><Compass aria-hidden="true" className="absolute top-8 right-6 hidden size-36 rotate-12 text-primary/10 xl:block" />
+  </header>
+  <section className="rounded-3xl bg-card p-5 shadow-card sm:p-7"><div className="mb-5 flex items-center justify-between gap-4"><div><h2 className="text-xl font-extrabold">{uz ? "Bugun nima qilamiz?" : "What shall we work on?"}</h2><p className="mt-1 text-sm text-muted-foreground">{uz ? "Maqsadingizga olib boradigan yo‘lni tanlang." : "Pick the path that moves you forward."}</p></div><Link href="/explore" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary">{uz ? "Barchasi" : "All tools"}<ArrowRight className="size-3.5" /></Link></div>
+   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{quick.map(item => <Link key={item.href} href={item.href} className={`flex min-h-24 items-center gap-3 rounded-2xl border-b-4 border-black/5 p-4 font-extrabold transition hover:-translate-y-1 ${item.tone}`}><item.icon className="size-7 shrink-0" /><span className="text-sm">{item.title}</span></Link>)}</div>
+  </section>
+  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(metric => <Link key={metric.href} href={metric.href} className="flex items-center gap-4 rounded-3xl bg-card p-5 shadow-card transition hover:shadow-card-hover"><span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-primary"><metric.icon className="size-5" /></span><div><p className="text-2xl font-extrabold tabular-nums">{data.databaseReady ? metric.value : "—"}</p><p className="mt-1 text-xs font-semibold text-muted-foreground">{metric.label}</p></div></Link>)}</div>
+  <div className="grid gap-5 xl:grid-cols-5">
+   <section className="rounded-3xl bg-viz-amber-soft p-6 xl:col-span-2"><CalendarClock className="size-7 text-viz-amber" /><h2 className="mt-4 text-xl font-extrabold">{uz ? "Keyingi deadline" : "Your next deadline"}</h2>
+    {overview?.deadline ? <><p className="mt-3 text-2xl font-extrabold">{new Intl.DateTimeFormat(uz ? "uz-UZ" : "en-GB", {dateStyle:"medium",timeZone:"UTC"}).format(overview.deadline.deadline!)}</p><p className="mt-1 text-sm">{overview.deadline.universityName}</p><Link href={`/applications/tracker/${overview.deadline.id}`} className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-card px-5 text-sm font-bold">{uz ? "Arizani davom ettirish" : "Continue application"}<ArrowRight className="size-4" /></Link></> : <><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{uz ? "Arizangizga deadline qo‘shing. Eng yaqin sanani shu yerda eslatamiz." : "Add a deadline to an application. Your next date will appear here."}</p><Link href="/applications/tracker" className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-card px-5 text-sm font-bold">{uz ? "Arizalarimni ochish" : "Open my applications"}<ArrowRight className="size-4" /></Link></>}
+   </section>
+   <section className="rounded-3xl bg-card p-6 shadow-card xl:col-span-3"><div className="flex items-center justify-between gap-4"><h2 className="text-xl font-extrabold">{uz ? "Hikoyangiz davom etadi" : "Your story continues"}</h2><Link href="/essays" className="inline-flex min-h-11 items-center text-xs font-bold text-primary">{uz ? "Insholarim" : "My essays"}</Link></div>
+    {overview?.drafts.length ? <ul className="mt-4 space-y-3">{overview.drafts.map(draft => <li key={draft.id}><Link href={`/essays/drafts/${draft.id}`} className="flex min-h-16 items-center justify-between gap-4 rounded-2xl bg-muted/70 p-4 text-sm font-bold"><span className="min-w-0 break-words">{draft.title}</span><ArrowUpRight className="size-4 shrink-0 text-primary" /></Link></li>)}</ul> : <div className="mt-4 rounded-2xl bg-viz-rose-soft p-5"><FilePenLine className="size-7 text-viz-rose" /><p className="mt-3 text-sm text-muted-foreground">{uz ? "Bir fikrdan boshlang. Qoralamalar va ularning versiyalari shu yerda saqlanadi." : "Start with one idea. Keep your drafts and their versions here."}</p><Link className="mt-4 inline-flex min-h-11 items-center gap-2 font-bold text-primary" href="/essays">{uz ? "Birinchi qoralamam" : "My first draft"}<ArrowRight className="size-4" /></Link></div>}
+   </section>
+  </div>
+  <section className="rounded-3xl bg-card p-6 shadow-card"><h2 className="text-xl font-extrabold">{uz ? "Arizagacha bo‘lgan yo‘l" : "Your application journey"}</h2><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{quick.map((item,index)=><Link key={item.href} href={item.href} className="flex items-center gap-3 rounded-2xl bg-muted/60 p-4"><span className="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-card text-xs font-extrabold text-primary">{index+1}</span><span className="text-xs font-bold">{item.title}</span><ArrowUpRight className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden="true" /></Link>)}</div></section>
+  <div className="grid gap-5 lg:grid-cols-2"><UniversitiesCard universities={data.shortlisted} total={data.shortlistCount} /><StartTestCard action={data.todayAction} className="min-h-60" /></div>
+ </div>;
 }

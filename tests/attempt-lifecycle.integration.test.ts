@@ -13,6 +13,7 @@ import { previewContentImport, stageContentImport, reviewContentQuestion, publis
 import { recordLearningEvent } from "@/lib/learning-events";
 import { getProductAnalytics } from "@/lib/queries/product-analytics";
 import { answerOwnedPractice, finishOwnedPractice, recordPracticeExplanation } from "@/lib/practice-lifecycle";
+import { getWorkspaceOverview } from "@/lib/queries/workspace";
 import { productAnalyticsCsv } from "@/lib/analytics-csv";
 
 const url = process.env.TEST_DATABASE_URL;
@@ -349,6 +350,25 @@ describe.skipIf(!url)("attempt lifecycle against Postgres", () => {
     expect(csv).not.toContain(prefix);
     expect(csv).not.toContain("fixture.invalid");
     expect(csv).not.toContain("Original fixture rationale");
+  });
+  it("keeps workspace totals and deadlines private, includes today and excludes archives", async () => {
+    const mine = await db.user.create({ data: { email: `${prefix}-overview@fixture.invalid` } }); extraUsers.push(mine.id);
+    const foreign = await db.user.create({ data: { email: `${prefix}-overview-other@fixture.invalid` } }); extraUsers.push(foreign.id);
+    const now = new Date(); const today = new Date(now); today.setUTCHours(0,0,0,0);
+    const tomorrow = new Date(today.getTime() + 86400_000);
+    const due = await db.personalApplication.create({ data: { userId: mine.id, universityName: "My deadline", intake: "2027", deadline: today } });
+    await db.personalApplication.create({ data: { userId: mine.id, universityName: "Later", intake: "2027", deadline: tomorrow } });
+    await db.personalApplication.create({ data: { userId: mine.id, universityName: "Archived", intake: "2027", deadline: today, archivedAt: now } });
+    await db.personalApplication.create({ data: { userId: foreign.id, universityName: "Other person's deadline", intake: "2027", deadline: today } });
+    await db.essayDraft.create({ data: { userId: mine.id, title: "My draft" } });
+    await db.essayDraft.create({ data: { userId: mine.id, title: "Archived draft", archivedAt: now } });
+    await db.essayDraft.create({ data: { userId: foreign.id, title: "Private foreign draft" } });
+    const report = await getWorkspaceOverview(db, mine.id, now);
+    expect(report.applicationCount).toBe(2); expect(report.draftCount).toBe(1);
+    expect(report.drafts.map(draft => draft.title)).toEqual(["My draft"]);
+    expect(report.deadline?.id).toBe(due.id);
+    expect(JSON.stringify(report)).not.toContain("Other person");
+    expect(JSON.stringify(report)).not.toContain("Private foreign");
   });
   it("retains essay text and version history through archive and restore", async () => {
     const draft = await db.essayDraft.findFirstOrThrow({ where: { userId, content: "Preserve this draft" } });

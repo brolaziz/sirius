@@ -89,10 +89,7 @@ export default async function UniversitiesPage() {
           </span>
           <h2 className="mt-5 text-lg font-bold">{t.pages.uniEmptyTitle}</h2>
           <p className="mx-auto mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-            Seed the starter list with{" "}
-            <code className="font-mono text-xs">npm run db:seed</code>, or add
-            your own rows to the{" "}
-            <code className="font-mono text-xs">universities</code> table.
+            {await getLang() === "uz" ? "Universitet ma’lumotlari hali tayyorlanmoqda. Boshqa vositalar bilan profil va arizangizni boshlashingiz mumkin." : "College data is being prepared. You can start your profile and application with the other tools."}
           </p>
         </div>
       ) : (

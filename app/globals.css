@@ -737,3 +737,31 @@
  * hydrated tree, so the exposure is one frame on a slow connection. That is the
  * better trade for a page whose job is to be read.
  */
+
+/* Cozy workspace tokens are intentionally scoped: the landing remains unchanged. */
+.workspace {
+  --font-sans: var(--font-workspace), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-workspace), ui-sans-serif, system-ui, sans-serif;
+  --radius: .875rem;
+  --surface: #f4f6fa;
+  --foreground: #243348;
+  --card-foreground: #243348;
+  --primary: #3264c9;
+  --muted: #f0f3f8;
+  --muted-foreground: #627084;
+  --border: #e8ecf2;
+  --input: #dce3ee;
+  --color-brand-50: #eaf1ff;
+  --shadow-card: 0 3px 0 #e6eaf1, 0 6px 20px -14px #263e6033;
+  --shadow-card-hover: 0 3px 0 #dce3ed, 0 14px 30px -14px #263e6033;
+  font-family: var(--font-sans);
+  color: var(--foreground);
+}
+.workspace h1, .workspace h2, .workspace h3 { font-family: var(--font-display); letter-spacing: -.025em; }
+.workspace main h1 { font-size: clamp(1.75rem, 3vw, 2.25rem); line-height: 1.2; }
+.workspace main > div { max-width: 76rem; }
+.workspace [data-slot="button"] { min-height: 2.75rem; border-radius: 999px; font-weight: 800; }
+.workspace input:not([type="checkbox"]), .workspace textarea { font-family: var(--font-sans); }
+.workspace-intro { border-radius: 1.75rem; background: linear-gradient(110deg, #eaf2ff, #f2edff); padding: clamp(1.5rem, 4vw, 2.5rem); }
+.dark .workspace { --surface: #111927; --foreground: #eff3fa; --card-foreground: #eff3fa; --muted: #1b283c; --muted-foreground: #b3bfd1; --border: #27344a; --primary: #92b6ff; --shadow-card: 0 3px 0 #08111e; --shadow-card-hover: 0 3px 0 #08111e; }
+.dark .workspace-intro { background: linear-gradient(110deg, #172e50, #30274a); }

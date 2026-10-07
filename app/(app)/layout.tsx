@@ -1,46 +1,10 @@
-/**
- * Authenticated app shell.
- *
- * A frosted sidebar on large screens, a sheet drawer on small ones, and a
- * frosted top bar. Routes under this layout are protected by `proxy.ts`, so
- * anything rendered here can assume a signed-in user.
- *
- * WHY THE GLASS WORKS HERE AND NOT ON A PLAIN PAGE
- * `backdrop-filter` only reads as glass when there is something worth blurring
- * behind it. So the shell paints its own light first: `BackgroundWash`, the
- * same blurred spectrum shapes and dot texture the landing hero sits on, fixed
- * to the viewport. The sidebar and the top bar blur *that*, which is what gives
- * the panels depth instead of a grey wash. It is `fixed` rather than `absolute`
- * so it stays put while content scrolls past — light does not scroll.
- *
- * The setup banner appears when `DATABASE_URL` is missing, which is the one
- * failure a new contributor is most likely to hit: sign-in works, and then
- * every page is empty for no visible reason.
- *
- * ABOUT `suppressHydrationWarning` ON THE WRAPPERS
- * Security extensions rewrite the DOM before React hydrates. Bitdefender stamps
- * `bis_skin_checked="1"` onto block elements, Grammarly and password managers
- * add their own attributes, and React reports each one as a hydration mismatch.
- * The flag is set on the shell's structural elements because those are the ones
- * an extension reaches first.
- *
- * It is **one level deep** — it silences the element it is on, not its
- * children — so this is damage control rather than a cure. See the note in
- * `components/dashboard/bento-grid.tsx` for the same treatment on the grid, and
- * the summary in the README for why chasing every nested div is the wrong
- * response.
- */
-
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowUpRight, UserRound, Sparkles } from "lucide-react";
 import { UserMenu } from "@/components/dashboard/user-menu";
-
-import { BackgroundWash } from "@/components/brand/background-wash";
 import { Logo } from "@/components/brand/logo";
 import { AppNav } from "@/components/dashboard/app-nav";
 import { MobileNav } from "@/components/dashboard/mobile-nav";
-import { PageTransition } from "@/components/motion/page-transition";
 import { LangSwitch } from "@/components/i18n/lang-switch";
 import { DatabaseSetupBanner } from "@/components/dashboard/database-setup-banner";
 import { DatabaseErrorBanner } from "@/components/dashboard/database-error-banner";
@@ -48,173 +12,38 @@ import { isDatabaseConfigured } from "@/lib/prisma";
 import { hasCompletedOnboarding } from "@/lib/queries/study-plan";
 import { getOrCreateCurrentUser, requireUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
-
-/*
- * Never prerender anything in this group.
- *
- * Every page here renders one specific student's data. Without this, a build
- * run before `DATABASE_URL` is set takes the "no database" branch, never calls
- * `auth()`, and Next legitimately concludes the page is static — baking an
- * empty dashboard into the build output. Declaring the segment dynamic makes
- * that impossible regardless of build-time environment.
- */
+import { workspaceFont } from "@/lib/workspace-font";
+import { WorkspaceHeader } from "@/components/workspace/workspace-header";
 export const dynamic = "force-dynamic";
-
 export default async function AppLayout({ children }: LayoutProps<"/">) {
-  /*
-   * The authorisation boundary for every page in this group.
-   *
-   * `proxy.ts` also redirects signed-out visitors, but that check only looks
-   * for a session cookie and is a UX convenience. This one reads the session
-   * from the database inside the route that renders the data, so a forged or
-   * expired cookie stops here.
-   */
-  const userId = await requireUserId();
-
-  const databaseReady = isDatabaseConfigured();
-
-  /*
-   * Everything in the app assumes a target score and an exam date, so an
-   * account that has not answered those is sent to onboarding before it can
-   * reach a page built on them.
-   *
-   * The check is deliberately its own one-column query and deliberately fails
-   * open: a database blip must not trap a student in a form they have already
-   * filled in. `redirect()` works by throwing, so it has to stay outside the
-   * try — catching it here would swallow the redirect.
-   */
-  if (databaseReady) {
-    let onboarded = true;
-    try {
-      onboarded = await hasCompletedOnboarding(userId);
-    } catch (error) {
-      console.error("[app] could not read onboarding state:", error);
-    }
-
-    if (!onboarded) redirect("/onboarding");
-  }
-  const t = getDictionary(await getLang());
-
-  /*
-   * One user read for the whole shell. The menu needs a name, an email and an
-   * avatar; fetching them here rather than inside the client component keeps it
-   * to a single query per request.
-   */
-  let user = null;
-  let databaseFailed = false;
-
-  if (databaseReady) {
-    try {
-      user = await getOrCreateCurrentUser();
-    } catch (error) {
-      /*
-       * The session was readable, so the visitor is signed in — only the
-       * product query failed. The shell still renders, with a banner explaining
-       * why the tiles are empty. Throwing here instead would replace a working
-       * page with an error screen for what is often a transient blip.
-       */
-      databaseFailed = true;
-      console.error("[app] could not load the current user:", error);
-    }
-  }
-
-  return (
-    <div
-      className="relative flex min-h-dvh flex-col bg-surface lg:flex-row"
-      suppressHydrationWarning
-    >
-      {/* The light the glass panels blur. Decorative, fixed, behind everything. */}
-      <BackgroundWash />
-
-      {/* Desktop sidebar */}
-      <aside
-        className="sticky top-0 z-30 hidden h-dvh w-64 shrink-0 flex-col border-r border-white/60 glass lg:flex"
-        suppressHydrationWarning
-      >
-        <div className="px-5 py-6">
-          <Link
-            href="/dashboard"
-            className="inline-flex rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 focus-visible:ring-offset-transparent"
-          >
-            <Logo />
-          </Link>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-3">
-          <AppNav />
-        </div>
-
-        <div className="p-3">
-          <Link
-            href="/"
-            className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-white/60 hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            {t.app.backToSite}
-          </Link>
-        </div>
-      </aside>
-
-      <div className="relative flex min-w-0 flex-1 flex-col" suppressHydrationWarning>
-        {/* Top bar */}
-        {/*
-          Solid, not frosted — see the note in `marketing/sticky-header.tsx`.
-          This one was `glass` unconditionally, so content scrolled under it at
-          every position rather than only past the top of the page.
-
-          The sidebar below keeps `glass`: nothing scrolls behind it, and the
-          blurred spectrum blobs are the whole reason it reads as a panel.
-        */}
-        <header
-          className="sticky top-0 z-40 flex h-16 items-center justify-between gap-3 border-b border-border bg-background px-4 sm:px-6"
-          suppressHydrationWarning
-        >
-          {/*
-           * WHY gap-3 HERE AND gap-2 EVERYWHERE ELSE
-           *
-           * Both children are `lg:hidden`, so this row only exists on a phone
-           * and the extra 4px is spent nowhere else.
-           *
-           * It buys room for two halos. `tap-target` grows the 40px menu
-           * button by 2px a side and the 24px logo by 10px, so the two hit
-           * areas need 12px between them; at gap-2 they would overlap by 4px
-           * and the logo would answer for part of the menu button.
-           */}
-          <div className="flex items-center gap-3">
-            <MobileNav />
-            <Link href="/dashboard" className="tap-target inline-flex lg:hidden">
-              <Logo compact />
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/*
-             * The same switch as the marketing header. It writes a cookie and
-             * refreshes the server components in place, so the whole
-             * authenticated UI swaps language without a page load and without
-             * losing scroll position.
-             */}
-            <LangSwitch />
-
-            <span className="h-6 w-px bg-border" aria-hidden="true" />
-
-            <UserMenu
-              name={user?.name ?? null}
-              email={user?.email ?? null}
-              image={user?.image ?? null}
-            />
-          </div>
-        </header>
-
-        <main
-          className="flex-1 px-4 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12"
-          suppressHydrationWarning
-        >
-          {!databaseReady && <DatabaseSetupBanner className="mb-8" />}
-          {databaseFailed && <DatabaseErrorBanner className="mb-8" />}
-          <PageTransition>{children}</PageTransition>
-        </main>
-      </div>
-    </div>
-  );
+ const userId = await requireUserId(); const databaseReady = isDatabaseConfigured();
+ if (databaseReady) {
+  let onboarded = true;
+  try { onboarded = await hasCompletedOnboarding(userId); } catch (error) { console.error("[app] onboarding state unavailable", error); }
+  if (!onboarded) redirect("/onboarding");
+ }
+ const lang = await getLang(); const t = getDictionary(lang); const uz = lang === "uz";
+ let user = null; let databaseFailed = false;
+ if (databaseReady) { try { user = await getOrCreateCurrentUser(); } catch (error) { databaseFailed = true; console.error("[app] current user unavailable",error); } }
+ return <div className={`workspace ${workspaceFont.variable} flex min-h-dvh bg-surface font-sans`}>
+  <a href="#workspace-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-xl focus:bg-card focus:p-4">{uz ? "Asosiy kontentga o‘tish" : "Skip to content"}</a>
+  <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-border/60 bg-card lg:flex">
+   <Link href="/dashboard" className="px-7 py-8"><Logo /></Link>
+   <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4"><AppNav /></div>
+   <div className="space-y-3 border-t border-border/60 p-4">
+    <Link href="/profile" className="flex min-h-11 items-center gap-3 rounded-2xl px-4 text-sm font-bold text-muted-foreground hover:bg-muted"><UserRound className="size-4" />{uz ? "Mening profilim" : "My profile"}</Link>
+    <div className="rounded-2xl bg-viz-violet-soft p-4"><Sparkles className="size-5 text-viz-violet" /><p className="mt-2 text-sm font-extrabold">{uz ? "O‘z yo‘lingiz, o‘z sur’atingiz." : "Your path. Your pace."}</p><Link href="/explore" className="mt-2 inline-flex min-h-11 items-center gap-2 text-xs font-bold text-viz-violet">{uz ? "Keyingi qadamni topish" : "Find your next step"}<ArrowUpRight className="size-3.5" /></Link></div>
+    <Link href="/" className="flex min-h-11 items-center justify-between px-4 text-xs text-muted-foreground">{t.app.backToSite}<ArrowUpRight className="size-3.5" /></Link>
+   </div>
+  </aside>
+  <div className="min-w-0 flex-1">
+   <header className="sticky top-0 z-40 flex h-20 items-center gap-3 border-b border-border/60 bg-card/95 px-4 sm:gap-6 sm:px-8">
+    <MobileNav /><Link href="/dashboard" className="lg:hidden"><Logo compact /></Link><WorkspaceHeader />
+    <div className="flex shrink-0 items-center gap-2 sm:gap-4"><LangSwitch /><UserMenu name={user?.name ?? null} email={user?.email ?? null} image={user?.image ?? null} /></div>
+   </header>
+   <main id="workspace-content" tabIndex={-1} className="min-w-0 p-4 outline-none sm:p-8 xl:px-10 xl:py-9">
+    {!databaseReady && <DatabaseSetupBanner className="mb-8" />}{databaseFailed && <DatabaseErrorBanner className="mb-8" />}{children}
+   </main>
+  </div>
+ </div>;
 }
