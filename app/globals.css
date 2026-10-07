@@ -338,16 +338,8 @@
   /*
    * MOTION PREFERENCE — read this before touching it.
    *
-   * Windows' "Animation effects: off" (and the macOS equivalent) makes browsers
-   * report `prefers-reduced-motion: reduce`. On a machine with that setting the
-   * old rule below killed every animation in the product, including the ones
-   * this design is built around — which looked like the site was broken rather
-   * than considerate.
-   *
-   * The product answers that with `data-motion="full"`, hard-coded on <html> in
-   * app/layout.tsx: Sirius always animates. The rule below is written so it only
-   * bites when that attribute is something else, which is the one-line escape
-   * hatch — set it to "system" and the operating system decides again.
+   * Honor the system motion preference by default. Explicit full motion can
+   * still be selected through the shared data-motion attribute.
    */
   @media (prefers-reduced-motion: reduce) {
     :root:not([data-motion="full"]) *,

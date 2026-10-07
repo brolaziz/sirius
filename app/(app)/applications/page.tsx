@@ -14,6 +14,8 @@
  */
 
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 import { ApplicationsBrowser } from "@/components/applications/applications-browser";
 import { getCurrentUserId } from "@/lib/user";
@@ -51,6 +53,8 @@ export default async function ApplicationsPage() {
           {t.applications.body}
         </p>
       </div>
+
+      <Button asChild><Link href="/applications/tracker">{t.workspace.tracker}</Link></Button>
 
       <ApplicationsBrowser
         applicants={applicants}

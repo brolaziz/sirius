@@ -89,6 +89,17 @@ function PlanBody({
 
   return (
     <>
+      <p className="text-xs leading-relaxed text-muted-foreground">{t.progress.evidenceHelp}</p>
+      <details className="rounded-2xl bg-card p-5 shadow-card">
+        <summary className="min-h-11 cursor-pointer text-sm font-semibold">{t.progress.planReasons}</summary>
+        {!plan.evidence?.length ? <p className="mt-2 text-sm text-muted-foreground">{t.progress.noSnapshot}</p> : <ul className="mt-3 divide-y divide-border">
+          {plan.evidence.filter((row) => row.answered > 0).map((row) => <li key={row.code} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+            <span>{lang === "uz" ? row.nameUz ?? row.name : row.name}</span><span className="text-xs text-muted-foreground tabular-nums">{row.correct}/{row.answered} · {row.answered < 5 ? t.progress.tooLittle : `${t.progress.priority}: +${Math.round((row.multiplier - 1) * 100)}%`}</span>
+          </li>)}
+          {!plan.evidence.some((row) => row.answered > 0) && <li className="text-sm text-muted-foreground">{t.progress.tooLittle}</li>}
+        </ul>}
+        <p className="mt-3 text-xs text-muted-foreground">{t.progress.snapshotHelp}</p>
+      </details>
       {/* Summary */}
       <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard

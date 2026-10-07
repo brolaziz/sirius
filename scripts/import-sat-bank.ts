@@ -31,6 +31,7 @@
  */
 
 import "dotenv/config";
+import { upsertImmutableQuestion } from "@/lib/question-import";
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -273,7 +274,8 @@ async function importBanks(
 
       const fields = {
         order: question.order,
-        module: "MODULE_1" as const,
+        module: question.module,
+        ...(question.explanation ? { explanation: question.explanation } : {}),
         passageText: question.passageText,
         questionText: question.questionText,
         format: question.format,
@@ -286,21 +288,7 @@ async function importBanks(
         sourceTopic: question.sourceTopic,
       };
 
-      await prisma.question.upsert({
-        where: {
-          testId_externalId: {
-            testId: test.id,
-            externalId: question.externalId,
-          },
-        },
-        create: {
-          testId: test.id,
-          externalId: question.externalId,
-          ...fields,
-        },
-        update: fields,
-        select: { id: true },
-      });
+      await prisma.$transaction((tx) => upsertImmutableQuestion(tx, test.id, question.externalId, fields));
 
       if (existingIds.has(question.externalId)) updated += 1;
       else created += 1;

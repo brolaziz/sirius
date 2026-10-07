@@ -81,6 +81,7 @@ enum StudyPriority {
 /// How a practice session was started. It decides where finishing it sends
 /// the student back to, and whether a study-plan task gets credited.
 enum PracticeSource {
+  REVIEW
   SKILL
   PLAN
   /// Mixed practice: questions drawn across every topic, so the session has no
@@ -122,6 +123,7 @@ model User {
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
+  role UserRole @default(STUDENT)
 
   /// The score the student is aiming for (400–1600), used by the dashboard to
   /// frame progress. Null until the student sets a goal.
@@ -185,6 +187,11 @@ model User {
   practice      PracticeSession[]
   activities    UserActivity[]
   shortlist     UniversityShortlistEntry[]
+  applications PersonalApplication[]
+  essayDrafts EssayDraft[]
+  reviewedQuestions Question[] @relation("QuestionReviewer")
+  contentAuditEvents ContentAuditEvent[]
+  learningEvents LearningEvent[]
 
   @@map("users")
 }
@@ -384,6 +391,8 @@ model Test {
   externalId  String?  @unique @map("external_id")
   title       String
   description String?
+  sourceName String? @map("source_name")
+  rightsNote String? @map("rights_note")
   type        TestType @default(FULL)
 
   /// Only published tests are visible to students.
@@ -453,6 +462,10 @@ model Question {
   acceptedAnswers String[] @default([]) @map("accepted_answers")
 
   explanation String?
+  reviewStatus ContentReviewStatus @default(UNREVIEWED) @map("review_status")
+  reviewedAt DateTime? @map("reviewed_at")
+  reviewedById String? @map("reviewed_by_id")
+  reviewer User? @relation("QuestionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
 
   /*
    * Taxonomy. Three kinds of column, and the distinction between them matters:
@@ -527,6 +540,13 @@ model TestAttempt {
   /// Questions the student flagged for review: `["<questionId>", …]`.
   flagged Json @default("[]")
 
+  /// Immutable question order, including questions from other bank containers.
+  questionIds Json @default("[]") @map("question_ids")
+  /// Freeze the single-test deadline when the attempt starts.
+  durationMinutes Int? @map("duration_minutes")
+  progressRevision Int @default(0) @map("progress_revision")
+  result TestResult?
+
   /*
    * MODULE STATE — a full Digital SAT is four timed modules, not one clock.
    *
@@ -570,6 +590,11 @@ model TestResult {
 
   testId String @map("test_id")
   test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  /// One result per attempt. Nullable only for results imported before this link.
+  attemptId String? @unique @map("attempt_id")
+  attempt TestAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  questionIds Json @default("[]") @map("question_ids")
 
   /// Number of correct answers.
   score Int
@@ -666,9 +691,68 @@ model SavedWord {
   vocabulary   Vocabulary? @relation(fields: [vocabularyId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now()) @map("created_at")
+  nextReviewAt DateTime @default(now()) @map("next_review_at")
+  lastReviewedAt DateTime? @map("last_reviewed_at")
+  repetitions Int @default(0)
+  intervalDays Int @default(0) @map("interval_days")
 
   @@unique([userId, word])
+  @@index([userId, nextReviewAt])
   @@map("saved_words")
+}
+
+/// Private student workspace, independent of public admissions outcomes.
+model PersonalApplication {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  universityName String @map("university_name")
+  intake String
+  deadline DateTime?
+  status String @default("PLANNING")
+  checklist Json @default("[]")
+  activityIds Json @default("[]") @map("activity_ids")
+  notes String @default("")
+  revision Int @default(0)
+  archivedAt DateTime? @map("archived_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  drafts EssayDraft[]
+  @@index([userId, deadline])
+  @@map("personal_applications")
+}
+
+model EssayDraft {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId String? @map("application_id")
+  application PersonalApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  title String
+  prompt String @default("")
+  content String @default("")
+  wordLimit Int? @map("word_limit")
+  revision Int @default(0)
+  archivedAt DateTime? @map("archived_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  revisions EssayDraftRevision[]
+  @@index([userId, updatedAt])
+  @@map("essay_drafts")
+}
+
+model EssayDraftRevision {
+  id String @id @default(cuid())
+  draftId String @map("draft_id")
+  draft EssayDraft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+  version Int
+  title String
+  prompt String
+  content String
+  wordLimit Int? @map("word_limit")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([draftId, version])
+  @@map("essay_draft_revisions")
 }
 
 // -----------------------------------------------------------------------------
@@ -842,6 +926,7 @@ model RoadmapTask {
 /// without touching this table.
 model StudyPlan {
   id String @id @default(cuid())
+  evidenceSummary Json @default("[]") @map("evidence_summary")
 
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1186,4 +1271,39 @@ model UserActivity {
   @@unique([userId, position])
   @@index([userId])
   @@map("user_activities")
+}
+enum UserRole {
+  STUDENT
+  EDITOR
+  ADMIN
+}
+
+enum ContentReviewStatus {
+  UNREVIEWED
+  VERIFIED
+  REJECTED
+}
+
+model ContentAuditEvent {
+  id String @id @default(cuid())
+  actorId String @map("actor_id")
+  actor User @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action String
+  entityId String @map("entity_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([entityId, createdAt])
+  @@map("content_audit_events")
+}
+
+model LearningEvent {
+  id String @id @default(cuid())
+  userId String @map("user_id")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type String
+  entityId String @map("entity_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@unique([userId, type, entityId])
+  @@index([type, createdAt])
+  @@index([userId, createdAt])
+  @@map("learning_events")
 }

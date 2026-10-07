@@ -213,13 +213,26 @@ function startOfUtcWeek(date: Date): Date {
 }
 
 /**
- * Whole weeks of preparation left, clamped to something a plan can honestly
- * describe. An exam in the past — which validation should have caught — yields
- * one week rather than a negative plan.
+ * How many **calendar weeks** a plan spans, clamped to something it can
+ * honestly describe.
+ *
+ * Counted from the Monday of the week the student is in, not from today, so
+ * that a plan's weeks are the same weeks the rest of the product means — see
+ * `taskWindow`. The consequence is that the first week is usually a partial
+ * one: a plan written on a Thursday still calls Monday-to-Sunday its week 1,
+ * and the student has four days of it left. That is what a partial first week
+ * is, and it is worth more than the alternative, which was a plan whose header
+ * said Friday-to-Thursday while the progress under it reset on Monday.
+ *
+ * It also means this can return one more week than counting from today would,
+ * because the span starts up to six days earlier.
+ *
+ * An exam in the past — which validation should have caught — yields one week
+ * rather than a negative plan.
  */
 export function planWeeks(today: Date, examDate: Date): number {
   const days = Math.ceil(
-    (startOfUtcDay(examDate).getTime() - startOfUtcDay(today).getTime()) /
+    (startOfUtcDay(examDate).getTime() - startOfUtcWeek(today).getTime()) /
       MS_PER_DAY,
   );
   if (days <= 0) return 1;
@@ -476,7 +489,13 @@ export function buildStudyPlan(input: StudyPlanInput): StudyPlanResult {
 
   const remaining = allocate(usable, budget);
 
-  const start = startOfUtcDay(input.today);
+  /*
+   * Week 1 starts on the Monday of the week the student is in, not today, so a
+   * plan's weeks and the weeks progress is counted in are the same seven days.
+   * `planWeeks` counts from the same anchor, so the last week still ends on the
+   * exam.
+   */
+  const start = startOfUtcWeek(input.today);
   const examDay = startOfUtcDay(input.examDate);
   const plannedWeeks: PlannedWeek[] = [];
 

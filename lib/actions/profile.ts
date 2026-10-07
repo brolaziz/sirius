@@ -44,6 +44,23 @@ import {
   targetScoreProblem,
 } from "@/lib/validation/onboarding";
 import type { ActionResult } from "@/lib/actions/roadmap";
+import { studyPreferencesSchema, type StudyPreferencesInput } from "@/lib/validation/study-preferences";
+import { examDateToUtc } from "@/lib/validation/onboarding";
+
+export async function setStudyPreferences(input: StudyPreferencesInput): Promise<TargetScoreResult> {
+  const parsed = studyPreferencesSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid preparation settings." };
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: false, error: "Not signed in." };
+  await prisma.user.update({ where: { id: userId }, data: {
+    currentScore: parsed.data.currentScore, targetScore: parsed.data.targetScore,
+    targetExamDate: examDateToUtc(parsed.data.examDate), weeklyStudyMinutes: parsed.data.weeklyStudyMinutes,
+  } });
+  const rebuilt = await buildAndSaveStudyPlan(userId);
+  if (!rebuilt.ok) console.error("[profile] could not rebuild the plan:", rebuilt.error);
+  for (const path of ["/profile", "/dashboard", "/plan"]) revalidatePath(path);
+  return { ok: true, planRebuilt: rebuilt.ok };
+}
 
 /** What `setTargetScore` reports back, beyond whether the score was saved. */
 export interface TargetScoreResult extends ActionResult {

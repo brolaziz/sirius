@@ -17,6 +17,9 @@ import { printDatabaseBanner } from "./lib/db-banner";
 printDatabaseBanner("next.config.ts");
 
 const nextConfig: NextConfig = {
+  // Allow the 8 MB authenticated JSON importer plus its action envelope.
+  // The content service independently checks the UTF-8 byte limit.
+  experimental: { serverActions: { bodySizeLimit: "17mb" } },
   /*
    * Pin the Turbopack workspace root to this project.
    *

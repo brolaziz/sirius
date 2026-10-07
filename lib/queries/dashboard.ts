@@ -9,6 +9,10 @@
 
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getOrCreateCurrentUser } from "@/lib/user";
+import { getBankCounts } from "@/lib/queries/practice";
+import { mockAvailability } from "@/lib/mock";
+import { getCurrentStudyPlan } from "@/lib/queries/study-plan";
+import { chooseTodayAction, type TodayAction } from "@/lib/today";
 import type {
   RoadmapTask,
   Test,
@@ -31,6 +35,7 @@ export type ShortlistedUniversity = Pick<
 >;
 
 export interface DashboardData {
+  todayAction: TodayAction;
   /** False when `DATABASE_URL` is unset — the UI shows setup guidance instead. */
   databaseReady: boolean;
   user: User | null;
@@ -39,7 +44,7 @@ export interface DashboardData {
   /** Best estimated scaled score achieved so far. */
   bestScaledScore: number | null;
   testsTaken: number;
-  /** Mean accuracy across every completed test, 0–1. */
+  /** Accuracy across graded practice and test answers, 0–1. */
   averageAccuracy: number | null;
   roadmapTasks: RoadmapTask[];
   savedWordCount: number;
@@ -51,9 +56,8 @@ export interface DashboardData {
    */
   shortlisted: ShortlistedUniversity[];
   /**
-   * A published test to offer as "start a full mock test". Prefers a FULL test,
-   * falling back to whatever is published, and null when nothing is imported
-   * yet.
+   * A published FULL container, available only when the reviewed global bank
+   * can fill all four modules.
    */
   featuredTest: Pick<Test, "id" | "title" | "type" | "durationMinutes"> | null;
 }
@@ -61,6 +65,7 @@ export interface DashboardData {
 /** The shape returned when there is no database to read from. */
 function emptyDashboard(): DashboardData {
   return {
+    todayAction: { kind: "setup", href: "/profile" },
     databaseReady: false,
     user: null,
     latestResult: null,
@@ -91,7 +96,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     shortlistCount,
     shortlistEntries,
     fullTest,
-    anyTest,
   ] = await prisma.$transaction([
     prisma.testResult.findFirst({
       where: { userId },
@@ -139,17 +143,31 @@ export async function getDashboardData(): Promise<DashboardData> {
       orderBy: { createdAt: "desc" },
       select: { id: true, title: true, type: true, durationMinutes: true },
     }),
-    prisma.test.findFirst({
-      where: { isPublished: true },
-      orderBy: { createdAt: "desc" },
-      select: { id: true, title: true, type: true, durationMinutes: true },
-    }),
   ]);
 
-  const totalAnswered = aggregate._sum.totalQuestions ?? 0;
-  const totalCorrect = aggregate._sum.score ?? 0;
+  let totalAnswered = aggregate._sum.totalQuestions ?? 0;
+  let totalCorrect = aggregate._sum.score ?? 0;
+
+  const [bankCounts, plan, openPractice, openAttempt, practiceAnswered, practiceCorrect, practiceAvailable] = await Promise.all([
+    getBankCounts(), getCurrentStudyPlan(userId),
+    prisma.practiceSession.findFirst({ where: { userId, completedAt: null }, orderBy: { startedAt: "desc" },
+      select: { id: true, startedAt: true, skill: { select: { name: true } } } }),
+    prisma.testAttempt.findFirst({ where: { userId, status: "IN_PROGRESS", test: { isPublished: true } }, orderBy: { startedAt: "desc" },
+      select: { startedAt: true, test: { select: { id: true, title: true } } } }),
+    prisma.practiceResponse.count({ where: { session: { userId } } }),
+    prisma.practiceResponse.count({ where: { session: { userId }, isCorrect: true } }),
+    prisma.question.count({ where: { skillId: { not: null }, reviewStatus: "VERIFIED" } }),
+  ]);
+  totalAnswered += practiceAnswered; totalCorrect += practiceCorrect;
+  const featuredTest = fullTest && mockAvailability(bankCounts).complete ? fullTest : null;
+  const resumes = [
+    ...(openPractice ? [{ href: `/practice/session/${openPractice.id}`, title: openPractice.skill?.name ?? "", startedAt: openPractice.startedAt }] : []),
+    ...(openAttempt ? [{ href: `/simulator/${openAttempt.test.id}`, title: openAttempt.test.title, startedAt: openAttempt.startedAt }] : []),
+  ];
 
   return {
+    todayAction: chooseTodayAction({ resumes, plan, mockHref: featuredTest ? `/simulator/${featuredTest.id}` : null,
+      hasPractice: practiceAvailable > 0 }),
     databaseReady: true,
     user,
     latestResult,
@@ -160,6 +178,6 @@ export async function getDashboardData(): Promise<DashboardData> {
     savedWordCount,
     shortlistCount,
     shortlisted: shortlistEntries.map((entry) => entry.university),
-    featuredTest: fullTest ?? anyTest,
+    featuredTest,
   };
 }

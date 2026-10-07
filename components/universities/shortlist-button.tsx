@@ -19,6 +19,7 @@ import { Pressable } from "@/components/motion/pressable";
 import { useT } from "@/components/i18n/lang-provider";
 import { toggleShortlist } from "@/lib/actions/universities";
 import { cn } from "@/lib/utils";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 
 export function ShortlistButton({
   universityId,
@@ -27,7 +28,7 @@ export function ShortlistButton({
   universityId: string;
   isShortlisted: boolean;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [isPending, startTransition] = React.useTransition();
   const [optimistic, setOptimistic] = React.useOptimistic(isShortlisted);
 
@@ -35,9 +36,9 @@ export function ShortlistButton({
     startTransition(async () => {
       setOptimistic(!optimistic);
 
-      const result = await toggleShortlist(universityId);
+      const result = await toggleShortlist(universityId).catch(() => ({ ok: false, error: t.uni.updateFailed }));
       if (!result.ok) {
-        toast.error(result.error ?? "Could not update your shortlist.");
+        toast.error(actionErrorText(result.error, t.uni.updateFailed, lang));
       }
     });
   }

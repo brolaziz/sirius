@@ -103,11 +103,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
    * <body> before React hydrates. The flag is one element deep: it makes React
    * accept the DOM for that tag alone and does not silence mismatches below it.
    *
-   * `data-motion="full"` — hard-coded, with no way for a visitor to turn it
-   * off: the motion is the product's character here. The attribute drives one
-   * CSS guard (globals.css) and one JS check (`prefersReducedMotion`), so
-   * changing this single value to "system" hands the decision back to the
-   * operating system without touching another file.
+   * `data-motion="system"` respects the visitor's operating-system preference.
    */
   return (
     <html

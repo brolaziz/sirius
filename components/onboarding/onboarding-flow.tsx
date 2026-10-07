@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { fill } from "@/lib/i18n/config";
 import { DUR, EASE, gsap, prefersReducedMotion, useGSAP } from "@/lib/gsap";
 import { TOTAL_SCORE_MAX, TOTAL_SCORE_MIN } from "@/lib/sat";
@@ -54,7 +55,7 @@ interface Answers {
 }
 
 export function OnboardingFlow({ initial }: { initial: OnboardingState }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
 
   const [answers, setAnswers] = React.useState<Answers>({
@@ -108,7 +109,7 @@ export function OnboardingFlow({ initial }: { initial: OnboardingState }) {
     startTransition(async () => {
       const saved = await saveOnboardingStep(payload);
       if (!saved.ok) {
-        setError(saved.error ?? t.onboarding.failed);
+        setError(actionErrorText(saved.error, t.onboarding.failed, lang));
         if (saved.step) setIndex(ONBOARDING_STEPS.indexOf(saved.step));
         return;
       }
@@ -122,7 +123,7 @@ export function OnboardingFlow({ initial }: { initial: OnboardingState }) {
 
       const done = await completeOnboarding();
       if (!done.ok) {
-        setError(done.error ?? t.onboarding.failed);
+        setError(actionErrorText(done.error, t.onboarding.failed, lang));
         if (done.step) setIndex(ONBOARDING_STEPS.indexOf(done.step));
         return;
       }

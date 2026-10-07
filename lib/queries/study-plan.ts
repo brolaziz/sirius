@@ -14,6 +14,7 @@ import {
 } from "@/lib/study-plan";
 import { examDateToIso } from "@/lib/validation/onboarding";
 import type { GradeLevel, StudyPriority } from "@/lib/generated/prisma/enums";
+import { parsePlanEvidence, type PlanEvidence } from "@/lib/study-evidence";
 
 /* -------------------------------------------------------------------------- */
 /* Onboarding                                                                  */
@@ -126,6 +127,7 @@ export interface PlanWeekView {
 }
 
 export interface StudyPlanView {
+  evidence?: PlanEvidence[];
   id: string;
   createdAt: Date;
   currentScore: number | null;
@@ -264,6 +266,7 @@ export async function getCurrentStudyPlan(
 
   return {
     id: plan.id,
+    evidence: parsePlanEvidence(plan.evidenceSummary),
     createdAt: plan.createdAt,
     currentScore: plan.currentScore,
     targetScore: plan.targetScore,

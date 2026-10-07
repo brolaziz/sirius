@@ -19,6 +19,7 @@ import Link from "next/link";
 import { SimulatorEngine } from "@/components/simulator/simulator-engine";
 import { Button } from "@/components/ui/button";
 import { startAttempt } from "@/lib/actions/attempts";
+import { questionIdsFrom } from "@/lib/attempt-questions";
 import { getDictionary, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/i18n/config";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
@@ -146,7 +147,7 @@ export default async function SimulatorPage({
 
   if (!test) notFound();
 
-  if (test.questions.length === 0) {
+  if (test.type !== "FULL" && test.questions.length === 0) {
     return (
       <SimulatorError
         backLabel={t.simulator.backToPractice}
@@ -170,6 +171,9 @@ export default async function SimulatorPage({
   const attempt = await prisma.testAttempt.findUnique({
     where: { id: started.attemptId },
     select: {
+      questionIds: true,
+      progressRevision: true,
+      durationMinutes: true,
       answers: true,
       flagged: true,
       modulePlan: true,
@@ -192,7 +196,7 @@ export default async function SimulatorPage({
 
   const moduleQuestionIds = spec
     ? questionIdsAt(plan, attempt?.moduleIndex ?? 0)
-    : null;
+    : attempt ? questionIdsFrom(attempt.questionIds) : null;
 
   /*
    * A sitting's questions are read by the plan's ids, not by `testId`.
@@ -203,7 +207,7 @@ export default async function SimulatorPage({
    * somewhere else, which is most of them. A single-clock practice test still
    * uses its own questions, because for those the test *is* the list.
    */
-  const visibleQuestions = moduleQuestionIds
+  const visibleQuestions = moduleQuestionIds?.length
     ? await prisma.question
         .findMany({
           where: { id: { in: moduleQuestionIds } },
@@ -233,7 +237,7 @@ export default async function SimulatorPage({
         )
     : test.questions;
 
-  if (spec && visibleQuestions.length === 0) {
+  if (moduleQuestionIds?.length && visibleQuestions.length !== moduleQuestionIds.length) {
     return (
       <SimulatorError
         backLabel={t.simulator.backToPractice}
@@ -248,6 +252,7 @@ export default async function SimulatorPage({
   const moduleProps =
     spec && moduleStartedAt
       ? {
+          index: attempt?.moduleIndex ?? 0,
           /*
            * Was a hardcoded English template. An Uzbek student sat in a timed
            * test read "Section 1, Module 1" — in the one screen they cannot
@@ -278,18 +283,20 @@ export default async function SimulatorPage({
 
   return (
     <SimulatorEngine
+      key={`${started.attemptId}:${attempt?.moduleIndex ?? 0}`}
       attemptId={started.attemptId}
       test={{
         id: test.id,
         title: test.title,
         type: test.type,
-        durationMinutes: test.durationMinutes,
+        durationMinutes: attempt?.durationMinutes ?? test.durationMinutes,
       }}
       questions={questions}
       startedAtMs={started.startedAtMs}
       module={moduleProps}
       initialAnswers={asAnswerMap(attempt?.answers)}
       initialFlagged={asFlaggedList(attempt?.flagged)}
+      initialRevision={attempt?.progressRevision ?? 0}
     />
   );
 }

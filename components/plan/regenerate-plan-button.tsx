@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { regenerateStudyPlan } from "@/lib/actions/study-plan";
 import { cn } from "@/lib/utils";
 
@@ -23,14 +24,14 @@ export function RegeneratePlanButton({
   className?: string;
   variant?: "default" | "outline";
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [isPending, startTransition] = React.useTransition();
 
   function handleClick() {
     startTransition(async () => {
       const result = await regenerateStudyPlan();
       if (!result.ok) {
-        toast.error(result.error ?? t.plan.regenerateFailed);
+        toast.error(actionErrorText(result.error, t.plan.regenerateFailed, lang));
       }
     });
   }

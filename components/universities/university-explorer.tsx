@@ -46,6 +46,7 @@ import { Switch } from "@/components/ui/switch";
 import { Pressable } from "@/components/motion/pressable";
 import { UniversityCard } from "@/components/universities/university-card";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { fill } from "@/lib/i18n/config";
 import { toggleShortlist } from "@/lib/actions/universities";
 import {
@@ -104,7 +105,7 @@ export function UniversityExplorer({
   universities: UniversityView[];
   shortlistedIds: string[];
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const gridRef = React.useRef<HTMLDivElement>(null);
   const sentinelRef = React.useRef<HTMLDivElement>(null);
 
@@ -272,7 +273,7 @@ export function UniversityExplorer({
       const result = await toggleShortlist(university.id);
 
       if (!result.ok) {
-        toast.error(result.error ?? t.uni.updateFailed);
+        toast.error(actionErrorText(result.error, t.uni.updateFailed, lang));
         return;
       }
 

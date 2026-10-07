@@ -140,8 +140,8 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           </Link>
         </div>
 
-        <div className="flex-1 px-3">
-          <AppNav />
+        <div className="min-h-0 flex-1 overflow-y-auto px-3">
+          <AppNav canManageContent={user?.role === "EDITOR" || user?.role === "ADMIN"} canViewAnalytics={user?.role === "ADMIN"} />
         </div>
 
         <div className="p-3">
@@ -181,7 +181,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
            * and the logo would answer for part of the menu button.
            */}
           <div className="flex items-center gap-3">
-            <MobileNav />
+            <MobileNav canManageContent={user?.role === "EDITOR" || user?.role === "ADMIN"} canViewAnalytics={user?.role === "ADMIN"} />
             <Link href="/dashboard" className="tap-target inline-flex lg:hidden">
               <Logo compact />
             </Link>

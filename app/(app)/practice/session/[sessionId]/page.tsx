@@ -49,7 +49,7 @@ export default async function PracticeSessionPage({
    * by a topic it does not have.
    */
   const skillLabel =
-    session.skillName === null
+    session.source === "REVIEW" ? t.progress.mistakes : session.skillName === null
       ? t.practice.randomTitle
       : lang === "uz" && session.skillNameUz
         ? session.skillNameUz

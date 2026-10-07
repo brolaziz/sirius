@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { fill } from "@/lib/i18n/config";
 import {
   ACTIVITY_DESCRIPTION_LIMIT,
@@ -55,7 +56,7 @@ const EMPTY: Draft = {
 };
 
 export function MyActivities({ activities }: { activities: MyActivity[] }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [draft, setDraft] = React.useState<Draft>(EMPTY);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [isOpen, setIsOpen] = React.useState(false);
@@ -115,7 +116,7 @@ export function MyActivities({ activities }: { activities: MyActivity[] }) {
         : await addActivity(payload);
 
       if (!result.ok) {
-        setError(result.error ?? t.activities.saveFailed);
+        setError(actionErrorText(result.error, t.activities.saveFailed, lang));
         return;
       }
 
@@ -126,7 +127,7 @@ export function MyActivities({ activities }: { activities: MyActivity[] }) {
   function remove(activity: MyActivity) {
     startTransition(async () => {
       const result = await removeActivity(activity.id);
-      if (!result.ok) toast.error(result.error ?? t.activities.saveFailed);
+      if (!result.ok) toast.error(actionErrorText(result.error, t.activities.saveFailed, lang));
     });
   }
 

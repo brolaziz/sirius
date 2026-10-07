@@ -50,11 +50,15 @@ interface NavSection {
 
 export function AppNav({
   onNavigate,
+  canManageContent = false,
+  canViewAnalytics = false,
 }: {
   /** Called after a link is clicked — used to close the mobile sheet. */
   onNavigate?: () => void;
+  canManageContent?: boolean;
+  canViewAnalytics?: boolean;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const pathname = usePathname();
   const navRef = React.useRef<HTMLElement>(null);
   const pillRef = React.useRef<HTMLSpanElement>(null);
@@ -73,12 +77,15 @@ export function AppNav({
       eyebrow: t.app.apply,
       items: [
         { href: "/universities", label: t.app.universities, icon: GraduationCap },
+        { href: "/applications/tracker", label: t.app.applicationsTracker, icon: CalendarDays },
         { href: "/applications", label: t.app.applications, icon: Users },
         { href: "/essays", label: t.app.essays, icon: FileText },
         { href: "/activities", label: t.app.activities, icon: Sparkles },
       ],
     },
   ];
+  if (canManageContent) sections.push({ eyebrow: lang === "uz" ? "Boshqaruv" : "Management", items: [{ href: "/content", label: lang === "uz" ? "Kontent" : "Content", icon: FileText }] });
+  if (canViewAnalytics) sections[sections.length - 1].items.push({ href: "/analytics", label: lang === "uz" ? "Statistika" : "Analytics", icon: CalendarDays });
 
   useGSAP(
     () => {
@@ -128,7 +135,7 @@ export function AppNav({
             {section.items.map((item) => {
               // `/practice` should stay active on `/practice/anything`.
               const isActive =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
+                pathname === item.href || (item.href !== "/applications" && pathname.startsWith(`${item.href}/`));
 
               return (
                 <Link

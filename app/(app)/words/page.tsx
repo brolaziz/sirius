@@ -7,6 +7,8 @@
  */
 
 import type { Metadata } from "next";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 import { WordBank, type SavedWordView } from "@/components/words/word-bank";
 import { Badge } from "@/components/ui/badge";
@@ -29,13 +31,14 @@ export default async function WordsPage() {
       ? await prisma.savedWord.findMany({
           where: { userId },
           orderBy: { createdAt: "desc" },
-          select: { word: true },
+          select: { word: true, nextReviewAt: true },
         })
       : [];
 
   const words: SavedWordView[] = savedWords.map((row) => ({
     word: row.word,
     entry: lookupWord(row.word) ?? null,
+    nextReviewAt: row.nextReviewAt.toISOString(),
   }));
 
   return (
@@ -52,6 +55,7 @@ export default async function WordsPage() {
         </p>
       </div>
 
+      <Button asChild><Link href="/words/review">{t.recall.start}</Link></Button>
       <WordBank words={words} />
 
       {/* Full dictionary */}

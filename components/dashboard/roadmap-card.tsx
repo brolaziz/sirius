@@ -20,6 +20,7 @@ import { useT } from "@/components/i18n/lang-provider";
 import { fill } from "@/lib/i18n/config";
 import { toggleRoadmapTask } from "@/lib/actions/roadmap";
 import { cn } from "@/lib/utils";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 
 export interface RoadmapTaskView {
   id: string;
@@ -50,7 +51,7 @@ export function RoadmapCard({
   tasks: RoadmapTaskView[];
   className?: string;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [isPending, startTransition] = React.useTransition();
 
   const [optimisticTasks, applyOptimistic] = React.useOptimistic(
@@ -70,9 +71,9 @@ export function RoadmapCard({
       // Must be inside the transition, or React discards it immediately.
       applyOptimistic({ id: task.id, isDone });
 
-      const result = await toggleRoadmapTask({ taskId: task.id, isDone });
+      const result = await toggleRoadmapTask({ taskId: task.id, isDone }).catch(() => ({ ok: false, error: t.dash.taskUpdateFailed }));
       if (!result.ok) {
-        toast.error(result.error ?? "Could not update that task.");
+        toast.error(actionErrorText(result.error, t.dash.taskUpdateFailed, lang));
       }
     });
   }

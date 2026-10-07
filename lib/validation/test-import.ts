@@ -251,9 +251,11 @@ const questionSchema = z
       .max(6)
       .optional(),
     correctAnswer: z.string().min(1, "correctAnswer is required").max(200),
+    acceptedAnswers: z.array(z.string().min(1).max(200)).max(20).default([]),
     explanation: z.string().max(10_000).optional(),
     domain: z.string().max(200).optional(),
     skill: z.string().max(200).optional(),
+    skillCode: z.string().min(1).max(100).optional(),
     difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).optional(),
   })
   /*
@@ -269,6 +271,10 @@ const questionSchema = z
       error: "a multiple-choice question needs at least 2 options",
       path: ["options"],
     },
+  )
+  .refine(
+    (question) => !question.options || new Set(question.options.map((option) => option.label.trim().toUpperCase())).size === question.options.length,
+    { error: "option labels must be unique", path: ["options"] },
   )
   .refine(
     (question) => {
@@ -295,14 +301,15 @@ const testSchema = z.object({
   externalId: z.string().min(1).max(200).optional(),
   title: z.string().min(1, "title is required").max(300),
   description: z.string().max(2_000).optional(),
+  sourceName: z.string().trim().min(1).max(200).optional(),
+  rightsNote: z.string().trim().min(1).max(2000).optional(),
   type: z.enum(["READING", "MATH", "FULL"]),
   isPublished: z.boolean(),
   durationMinutes: z.number().int().min(1).max(600),
   questions: z
     .array(questionSchema)
-    .min(1, "a test needs at least one question")
     .max(200),
-});
+}).refine((test) => test.type === "FULL" || test.questions.length > 0, { error: "a section test needs at least one question", path: ["questions"] });
 
 /** A validated, ready-to-persist test. */
 export type ImportTest = z.infer<typeof testSchema>;
@@ -371,11 +378,13 @@ function normaliseQuestion(raw: unknown, index: number): UnknownRecord {
     format,
     options,
     correctAnswer,
+    acceptedAnswers: pick(raw, "acceptedAnswers", "accepted_answers") ?? [],
     explanation: asOptionalString(
       pick(raw, "explanation", "rationale", "solution", "why"),
     ),
     domain: asOptionalString(pick(raw, "domain", "category", "topic", "area")),
     skill: asOptionalString(pick(raw, "skill", "subskill", "sub_skill", "tag")),
+    skillCode: asOptionalString(pick(raw, "skillCode", "skill_code")),
     /*
      * No fallback: a payload that does not rate its questions leaves
      * `difficulty` null, which reads as "not rated yet". Defaulting to MEDIUM
@@ -413,7 +422,7 @@ function normaliseTest(raw: unknown): UnknownRecord {
   const durationMinutes =
     asOptionalInt(
       pick(envelope, "durationMinutes", "duration_minutes", "duration", "minutes"),
-    ) ?? (type === "MATH" ? 35 : 32);
+    ) ?? (type === "FULL" ? 144 : type === "MATH" ? 35 : 32);
 
   return {
     externalId: asOptionalString(
@@ -425,6 +434,8 @@ function normaliseTest(raw: unknown): UnknownRecord {
     description: asOptionalString(
       pick(envelope, "description", "summary", "about"),
     ),
+    sourceName: asOptionalString(pick(envelope, "sourceName", "source_name")),
+    rightsNote: asOptionalString(pick(envelope, "rightsNote", "rights_note")),
     type,
     isPublished:
       asOptionalBoolean(

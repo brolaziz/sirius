@@ -64,7 +64,7 @@ export async function getPracticeSkills(
         name: true,
         nameUz: true,
         domain: { select: { code: true, name: true } },
-        _count: { select: { questions: true } },
+        _count: { select: { questions: { where: { reviewStatus: "VERIFIED" } } } },
       },
     }),
     prisma.practiceResponse.findMany({
@@ -319,7 +319,7 @@ export async function getBankCounts(): Promise<BankCounts> {
    * shape it returns does not change.
    */
   const questions = await prisma.question.findMany({
-    where: { skillRef: { isNot: null } },
+    where: { skillRef: { isNot: null }, reviewStatus: "VERIFIED" },
     select: {
       module: true,
       skillRef: { select: { domain: { select: { section: true } } } },

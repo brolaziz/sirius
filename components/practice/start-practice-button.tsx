@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { startPracticeSession } from "@/lib/actions/practice";
 import { usePracticePreferences } from "@/components/practice/practice-preferences";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ import { cn } from "@/lib/utils";
 export function StartPracticeButton({
   skillCode,
   planTaskId,
+  mistakes,
   className,
   variant = "default",
   size = "lg",
@@ -28,13 +30,14 @@ export function StartPracticeButton({
 }: {
   skillCode?: string;
   planTaskId?: string;
+  mistakes?: boolean;
   className?: string;
   variant?: "default" | "outline" | "ghost";
   size?: "sm" | "lg";
   /** Overrides the default "Practise" wording. */
   label?: string;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   /*
    * The length and timer the student chose once, at the top of the practice
@@ -54,11 +57,12 @@ export function StartPracticeButton({
       const result = await startPracticeSession({
         skillCode,
         planTaskId,
+        mistakes,
         count: planTaskId ? undefined : count,
       });
 
       if (!result.ok || !result.sessionId) {
-        toast.error(result.error ?? t.practice.startFailed);
+        toast.error(actionErrorText(result.error, t.practice.startFailed, lang));
         return;
       }
 

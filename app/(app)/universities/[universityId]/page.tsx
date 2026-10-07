@@ -175,6 +175,7 @@ export default async function UniversityPage({
           <ScoreVerdictPanel comparison={comparison} t={t} />
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
+            {userId && <Button asChild variant="outline" className="min-h-11"><Link href={`/applications/tracker/new?universityId=${encodeURIComponent(university.id)}`}>{t.workspace.newApplication}</Link></Button>}
             {userId && (
               <ShortlistButton
                 universityId={university.id}

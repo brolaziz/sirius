@@ -21,18 +21,21 @@
  */
 
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowRight, History } from "lucide-react";
+
+
 
 import { StartPracticeButton } from "@/components/practice/start-practice-button";
 import { PracticeControls } from "@/components/practice/practice-controls";
+import { LearningHistory } from "@/components/practice/learning-history";
+import { getLearningHistory, getContentCoverage } from "@/lib/queries/progress";
+import { getMistakeQuestionIds } from "@/lib/queries/learning-evidence";
 import { MockPanel } from "@/components/practice/mock-panel";
 import { PracticePreferencesProvider } from "@/components/practice/practice-preferences";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
 import { fill } from "@/lib/i18n/config";
-import { formatDuration, testTypeLabel } from "@/lib/sat";
+
 import {
   getBankCounts,
   getPracticeSkills,
@@ -67,34 +70,12 @@ export default async function PracticePage() {
     byDomain.set(skill.domainName, group);
   }
 
-  const [mockTest, results] = databaseReady
-    ? await prisma.$transaction([
-        /*
-         * The row a sitting is recorded against. Its own questions are not the
-         * mock — `startAttempt` assembles that from the whole bank — so this is
-         * a container, not a curated list.
-         */
-        prisma.test.findFirst({
-          where: { type: "FULL", isPublished: true },
-          orderBy: { createdAt: "desc" },
-          select: { id: true },
-        }),
-        prisma.testResult.findMany({
-          where: { userId: userId ?? "__none__" },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-          select: {
-            id: true,
-            score: true,
-            totalQuestions: true,
-            scaledScore: true,
-            durationSeconds: true,
-            createdAt: true,
-            test: { select: { title: true, type: true } },
-          },
-        }),
-      ])
-    : [null, []];
+  const mockTest = databaseReady ? await prisma.test.findFirst({
+    where: { type: "FULL", isPublished: true }, orderBy: { createdAt: "desc" }, select: { id: true },
+  }) : null;
+  const [history, coverage, mistakes] = await Promise.all([
+    userId ? getLearningHistory(userId) : [], getContentCoverage(), userId ? getMistakeQuestionIds(userId) : [],
+  ]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-14">
@@ -237,62 +218,26 @@ export default async function PracticePage() {
 
       </PracticePreferencesProvider>
 
-      {/* History */}
-      <section>
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          {t.pages.practiceHistory}
-        </h2>
-
-        {results.length === 0 ? (
-          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-border bg-card p-5">
-            <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <History className="size-4" />
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {t.pages.practiceHistoryEmpty}
-            </p>
-          </div>
-        ) : (
-          <ul className="mt-5 divide-y divide-border overflow-hidden rounded-2xl bg-card shadow-card">
-            {results.map((result) => (
-              <li key={result.id}>
-                <Link
-                  href={`/practice/results/${result.id}`}
-                  className="flex flex-wrap items-center justify-between gap-4 p-5 transition-colors hover:bg-muted/60"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {result.test.title}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {testTypeLabel(result.test.type, t)}
-                      {result.durationSeconds
-                        ? ` · ${formatDuration(result.durationSeconds)}`
-                        : ""}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{t.dash.raw}</p>
-                      <p className="text-sm font-semibold tnum">
-                        {result.score}/{result.totalQuestions}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">{t.dash.estimated}</p>
-                      <p className="text-sm font-semibold tnum">
-                        {result.scaledScore ?? "—"}
-                      </p>
-                    </div>
-                    <ArrowRight className="size-4 text-muted-foreground" />
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
+      <section className="rounded-2xl bg-card p-6 shadow-card">
+        <h2 className="text-xl font-bold">{t.progress.mistakes}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{mistakes.length ? fill(t.progress.mistakesCount, { count: mistakes.length }) : t.progress.mistakesEmpty}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{t.progress.mistakesHelp}</p>
+        {mistakes.length > 0 && <StartPracticeButton mistakes className="mt-4" label={t.progress.review} />}
       </section>
+      <LearningHistory entries={history} lang={lang} t={t} />
+      <details className="rounded-2xl bg-card p-5 shadow-card">
+        <summary className="min-h-11 cursor-pointer text-sm font-semibold">{t.progress.coverage}</summary>
+        <p className="mt-2 text-xs text-muted-foreground">{t.progress.coverageHelp}</p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-sm"><caption className="sr-only">{t.progress.coverage}</caption>
+            <thead><tr><th className="p-2">{t.practice.topicsTitle}</th><th className="p-2">{t.progress.questions}</th><th className="p-2">{t.progress.verified}</th><th className="p-2">{t.progress.explained}</th><th className="p-2">{t.progress.module2}</th></tr></thead>
+            <tbody>{coverage.map((row) => <tr key={row.code} className="border-t border-border">
+              <td className="p-2">{lang === "uz" ? row.nameUz ?? row.name : row.name}</td><td className="p-2 tabular-nums">{row.total}</td>
+              <td className="p-2 tabular-nums">{row.verified}/{row.total}</td><td className="p-2 tabular-nums">{row.explained}/{row.total}</td><td className="p-2 tabular-nums">{row.module2}</td>
+            </tr>)}</tbody>
+          </table>
+        </div>
+      </details>
     </div>
   );
 }

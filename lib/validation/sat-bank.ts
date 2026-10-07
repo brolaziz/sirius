@@ -18,7 +18,7 @@
 
 import { z } from "zod";
 
-import type { QuestionFormat } from "@/lib/generated/prisma/enums";
+import type { QuestionFormat, TestModule } from "@/lib/generated/prisma/enums";
 import { isNumericAnswer } from "@/lib/sat";
 import {
   resolveSkill,
@@ -58,6 +58,8 @@ const bankQuestionSchema = z.object({
   question: z.string().min(1).max(5_000),
   options: z.record(z.string(), z.string().min(1).max(2_000)).optional(),
   answer: z.string().min(1).max(200),
+  module: z.enum(["MODULE_1", "MODULE_2"]).default("MODULE_1"),
+  explanation: z.string().min(1).max(10_000).optional(),
 });
 
 export type BankQuestion = z.infer<typeof bankQuestionSchema>;
@@ -80,6 +82,8 @@ export type PreparedOption = {
 
 /** One question, validated and ready to persist. */
 export interface PreparedQuestion {
+  module: TestModule;
+  explanation?: string;
   /** The source file's own id ("eng-4"), unique per test. */
   externalId: string;
   order: number;
@@ -233,6 +237,8 @@ function prepareQuestion(raw: unknown, index: number): QuestionResult {
   }
 
   const shared = {
+    module: question.module,
+    ...(question.explanation ? { explanation: question.explanation } : {}),
     externalId: question.id,
     order: orderFromExternalId(question.id, index),
     passageText: question.passage?.trim() || null,

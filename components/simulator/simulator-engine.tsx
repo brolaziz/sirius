@@ -50,6 +50,7 @@ import { QuestionNavigator } from "@/components/simulator/question-navigator";
 import { QuestionPane } from "@/components/simulator/question-pane";
 import { Logo } from "@/components/brand/logo";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import {
   advanceModule,
   saveAttemptProgress,
@@ -83,6 +84,7 @@ interface SimulatorEngineProps {
    * one clock and no modules to advance through.
    */
   module?: {
+    index: number;
     /** "Section 1, Module 2". */
     label: string;
     /** Epoch ms. Comes from the server's `moduleStartedAt + minutes`. */
@@ -94,6 +96,7 @@ interface SimulatorEngineProps {
   /** Answers already saved for this attempt, when resuming. */
   initialAnswers: Record<string, string>;
   initialFlagged: string[];
+  initialRevision: number;
 }
 
 export function SimulatorEngine({
@@ -104,8 +107,9 @@ export function SimulatorEngine({
   module,
   initialAnswers,
   initialFlagged,
+  initialRevision,
 }: SimulatorEngineProps) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   const reduce = useReducedMotion();
 
@@ -124,7 +128,14 @@ export function SimulatorEngine({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   /** The module is over and the student is between modules. */
   const [isModuleOver, setIsModuleOver] = React.useState(false);
+  const revisionRef = React.useRef(initialRevision);
+  const [saveState, setSaveState] = React.useState<"saved" | "saving" | "error" | "conflict">("saved");
+  const conflictRef = React.useRef(false);
+  const [savedSignature, setSavedSignature] = React.useState(() => JSON.stringify([initialAnswers, initialFlagged]));
+  const currentSignature = JSON.stringify([answers, [...flagged]]);
+  const unsaved = currentSignature !== savedSignature;
 
+  const activeModuleIndex = module?.index ?? 0;
   const deadlineMs =
     module?.deadlineMs ?? startedAtMs + test.durationMinutes * 60_000;
   const currentQuestion = questions[currentIndex];
@@ -175,7 +186,7 @@ export function SimulatorEngine({
 
   const handleSubmit = React.useCallback(
     async (reason: "manual" | "expired") => {
-      if (isSubmittingRef.current) return;
+      if (isSubmittingRef.current || conflictRef.current) return;
       isSubmittingRef.current = true;
       setIsSubmitting(true);
 
@@ -185,8 +196,11 @@ export function SimulatorEngine({
 
       const result = await submitAttempt({
         attemptId,
+        moduleIndex: activeModuleIndex,
+        revision: ++revisionRef.current,
         answers: answersRef.current,
-      });
+      }).catch(() => ({ ok: false, error: t.simulator.submitFailed, resultId: undefined, conflict: false }));
+      if (result.conflict) { conflictRef.current = true; setSaveState("conflict"); }
 
       if (result.ok && result.resultId) {
         // Replace, not push: the back button should not return to a test that
@@ -198,41 +212,42 @@ export function SimulatorEngine({
       isSubmittingRef.current = false;
       setIsSubmitting(false);
       setIsFinishOpen(false);
-      toast.error(result.error ?? t.simulator.submitFailed);
+      toast.error(actionErrorText(result.error, t.simulator.submitFailed, lang));
     },
     /*
      * The dictionary strings are dependencies but not churn: they are plain
      * strings that only change when the student switches language, so this
      * callback keeps the referential stability the countdown's interval needs.
      */
-    [attemptId, router, t.simulator.submitFailed, t.simulator.timeUp],
+    [attemptId, activeModuleIndex, router, lang, t.simulator.submitFailed, t.simulator.timeUp],
   );
 
   /**
    * Close this module.
    *
-   * The answers are flushed first, deliberately: the autosave runs on a 1.5s
+   * The final answers and flags are sent in the same transaction: the autosave runs on a 1.5s
    * debounce, and a student who answers the last question and immediately hits
    * "finish" would otherwise lose it — the server grades what it stored, not
    * what the browser is holding.
    */
   const handleAdvance = React.useCallback(async () => {
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current || conflictRef.current) return;
     isSubmittingRef.current = true;
     setIsSubmitting(true);
 
-    await saveAttemptProgress({
+    const result = await advanceModule({
       attemptId,
+      moduleIndex: activeModuleIndex,
+      revision: ++revisionRef.current,
       answers: answersRef.current,
       flagged: [...flaggedRef.current],
-    });
-
-    const result = await advanceModule(attemptId);
+    }).catch(() => ({ ok: false, error: t.simulator.nextModuleFailed, resultId: undefined, conflict: false }));
+    if (result.conflict) { conflictRef.current = true; setSaveState("conflict"); }
 
     if (!result.ok) {
       isSubmittingRef.current = false;
       setIsSubmitting(false);
-      toast.error(result.error ?? t.simulator.nextModuleFailed);
+      toast.error(actionErrorText(result.error, t.simulator.nextModuleFailed, lang));
       return;
     }
 
@@ -243,7 +258,7 @@ export function SimulatorEngine({
 
     // The page re-reads the attempt and renders the next module's questions.
     router.refresh();
-  }, [attemptId, router, t.simulator.nextModuleFailed]);
+  }, [attemptId, activeModuleIndex, router, lang, t.simulator.nextModuleFailed]);
 
   /**
    * Time is up, or the student says they are done.
@@ -281,6 +296,28 @@ export function SimulatorEngine({
 
   const hasMounted = React.useRef(false);
 
+  const flushProgress = React.useCallback(async () => {
+    if (isSubmittingRef.current || conflictRef.current) return;
+    const revision = ++revisionRef.current;
+    const payload = { ...answersRef.current };
+    const flags = [...flaggedRef.current];
+    setSaveState("saving");
+    try {
+      const result = await saveAttemptProgress({ attemptId, moduleIndex: activeModuleIndex, revision, answers: payload, flagged: flags });
+      if (revision !== revisionRef.current) return;
+      if (result.ok) { setSavedSignature(JSON.stringify([payload, flags])); setSaveState("saved"); }
+      else if (result.conflict) { conflictRef.current = true; setSaveState("conflict"); }
+      else setSaveState("error");
+    } catch { if (revision === revisionRef.current) setSaveState("error"); }
+  }, [attemptId, activeModuleIndex]);
+
+  React.useEffect(() => {
+    if (!unsaved) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsaved]);
+
   React.useEffect(() => {
     // Skip the initial render: nothing has changed yet, and saving here would
     // write the same data we just read.
@@ -288,18 +325,12 @@ export function SimulatorEngine({
       hasMounted.current = true;
       return;
     }
-    if (isSubmittingRef.current) return;
+    if (isSubmittingRef.current || conflictRef.current) return;
 
-    const timeout = setTimeout(() => {
-      void saveAttemptProgress({
-        attemptId,
-        answers,
-        flagged: [...flagged],
-      });
-    }, AUTOSAVE_DEBOUNCE_MS);
+    const timeout = setTimeout(() => { void flushProgress(); }, AUTOSAVE_DEBOUNCE_MS);
 
     return () => clearTimeout(timeout);
-  }, [answers, flagged, attemptId]);
+  }, [answers, flagged, flushProgress]);
 
   /* ---------------------------------------------------------------------- */
   /* Interaction handlers                                                   */
@@ -362,7 +393,7 @@ export function SimulatorEngine({
   async function handleSaveWord(word: string) {
     const result = await saveWord(word);
     if (!result.ok) {
-      toast.error(result.error ?? t.simulator.saveWordFailed);
+      toast.error(actionErrorText(result.error, t.simulator.saveWordFailed, lang));
       throw new Error(result.error ?? "save failed");
     }
   }
@@ -520,6 +551,11 @@ export function SimulatorEngine({
           </Button>
         </div>
       </header>
+      <div className="flex min-h-8 shrink-0 items-center justify-end gap-3 border-b border-border px-4 text-xs text-muted-foreground">
+        <span role="status" aria-live="polite">{saveState === "conflict" ? t.saveStatus.conflict : saveState === "error" ? t.saveStatus.failed : saveState === "saving" ? t.saveStatus.saving : unsaved ? t.saveStatus.pending : t.saveStatus.saved}</span>
+        {saveState === "conflict" && <Button variant="outline" size="sm" className="min-h-11" onClick={() => window.location.reload()}>{t.saveStatus.reload}</Button>}
+        {saveState === "error" && <Button variant="ghost" size="sm" className="min-h-11" onClick={() => void flushProgress()}>{t.saveStatus.retry}</Button>}
+      </div>
 
       {/* ---------------------------------------------------------------- */}
       {/* Body — split on desktop, tabbed on mobile                        */}

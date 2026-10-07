@@ -1,0 +1,53 @@
+{
+  "tests": [
+    {
+      "externalId": "format-example-math-v1",
+      "title": "JSON format example — original arithmetic",
+      "type": "MATH",
+      "isPublished": false,
+      "durationMinutes": 35,
+      "sourceName": "Original arithmetic examples for the Sirius JSON guide",
+      "rightsNote": "Created for this guide; format examples, not official SAT questions.",
+      "questions": [
+        {
+          "externalId": "format-example-linear-v1",
+          "order": 1,
+          "module": "MODULE_1",
+          "questionText": "If 2x + 3 = 11, what is x?",
+          "format": "MULTIPLE_CHOICE",
+          "options": [
+            { "label": "A", "text": "2" },
+            { "label": "B", "text": "3" },
+            { "label": "C", "text": "4" },
+            { "label": "D", "text": "7" }
+          ],
+          "correctAnswer": "C",
+          "acceptedAnswers": [],
+          "explanation": "Subtract 3 from both sides to get 2x = 8. Divide both sides by 2 to get x = 4.",
+          "skillCode": "MATH_ALGEBRA_LINEAR_EQ_ONE_VAR"
+        },
+        {
+          "externalId": "format-example-spr-v1",
+          "order": 1,
+          "module": "MODULE_2",
+          "questionText": "If 4x = 3, what is x?",
+          "format": "SPR",
+          "correctAnswer": "3/4",
+          "acceptedAnswers": ["0.75"],
+          "explanation": "Divide both sides by 4: x = 3/4 = 0.75.",
+          "skillCode": "MATH_ALGEBRA_LINEAR_EQ_ONE_VAR"
+        }
+      ]
+    },
+    {
+      "externalId": "format-example-full-v1",
+      "title": "Full mock container — replace with your title",
+      "type": "FULL",
+      "isPublished": false,
+      "durationMinutes": 144,
+      "sourceName": "Original arithmetic examples for the Sirius JSON guide",
+      "rightsNote": "Format example only; publishing needs a complete reviewed bank.",
+      "questions": []
+    }
+  ]
+}

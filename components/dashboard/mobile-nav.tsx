@@ -20,9 +20,11 @@ import {
 } from "@/components/ui/sheet";
 import { Logo } from "@/components/brand/logo";
 import { AppNav } from "@/components/dashboard/app-nav";
+import { useT } from "@/components/i18n/lang-provider";
 
-export function MobileNav() {
+export function MobileNav({ canManageContent = false, canViewAnalytics = false }: { canManageContent?: boolean; canViewAnalytics?: boolean }) {
   const [open, setOpen] = React.useState(false);
+  const { lang } = useT();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -32,7 +34,7 @@ export function MobileNav() {
           // 40px painted, 44 to a finger. The gap to the logo beside it is
           // sized for this halo — see the note in `app/(app)/layout.tsx`.
           className="tap-target inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-95 lg:hidden"
-          aria-label="Open navigation"
+          aria-label={lang === "uz" ? "Menyuni ochish" : "Open navigation"}
         >
           <Menu className="size-5" />
         </button>
@@ -45,8 +47,8 @@ export function MobileNav() {
           </SheetTitle>
         </SheetHeader>
 
-        <div className="p-4">
-          <AppNav onNavigate={() => setOpen(false)} />
+        <div className="min-h-0 overflow-y-auto p-4">
+          <AppNav canManageContent={canManageContent} canViewAnalytics={canViewAnalytics} onNavigate={() => setOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>

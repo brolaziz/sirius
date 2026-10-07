@@ -24,6 +24,8 @@ import { getDictionary, getLang } from "@/lib/i18n";
 import { formatDuration, testTypeLabel } from "@/lib/sat";
 import { parseQuestionOptions } from "@/lib/simulator";
 import { cn } from "@/lib/utils";
+import { questionIdsFrom } from "@/lib/attempt-questions";
+import { fill } from "@/lib/i18n/config";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = getDictionary(await getLang());
@@ -73,19 +75,6 @@ export default async function ResultsPage({
         select: {
           title: true,
           type: true,
-          questions: {
-            orderBy: [{ module: "asc" }, { order: "asc" }],
-            select: {
-              id: true,
-              order: true,
-              questionText: true,
-              format: true,
-              options: true,
-              correctAnswer: true,
-              explanation: true,
-              domain: true,
-            },
-          },
         },
       },
     },
@@ -100,9 +89,15 @@ export default async function ResultsPage({
    * a partial bank leaves whole modules out, and showing those questions as
    * "blank, incorrect" would misreport the sitting.
    */
-  const reviewed = result.test.questions.filter(
-    (question) => records[question.id] !== undefined,
-  );
+  const savedOrder = questionIdsFrom(result.questionIds);
+  const ids = savedOrder.length ? savedOrder : Object.keys(records);
+  const reviewRows = await prisma.question.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, order: true, questionText: true, format: true, options: true,
+      correctAnswer: true, acceptedAnswers: true, explanation: true, domain: true, passageText: true, passageTitle: true },
+  });
+  const byId = new Map(reviewRows.map((q) => [q.id, q]));
+  const reviewed = ids.flatMap((id) => byId.has(id) ? [byId.get(id)!] : []);
   const accuracy =
     result.totalQuestions > 0 ? result.score / result.totalQuestions : 0;
 
@@ -112,7 +107,7 @@ export default async function ResultsPage({
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link href="/practice">
             <ArrowLeft className="size-4" />
-            Practice
+            {t.practice.practiceTitle}
           </Link>
         </Button>
 
@@ -122,7 +117,7 @@ export default async function ResultsPage({
         <p className="mt-3 text-base text-muted-foreground">
           {testTypeLabel(result.test.type, t)}
           {result.durationSeconds
-            ? ` · finished in ${formatDuration(result.durationSeconds)}`
+            ? ` · ${fill(t.review.finishedIn, { time: formatDuration(result.durationSeconds) })}`
             : ""}
         </p>
       </div>
@@ -138,19 +133,18 @@ export default async function ResultsPage({
           </div>
 
           <div className="relative">
-            <p className="text-sm text-white/85">Estimated score</p>
+            <p className="text-sm text-white/85">{t.review.estimated}</p>
             <p className="mt-3 text-5xl leading-none font-extrabold tracking-tightest tnum">
               <AnimatedNumber value={result.scaledScore ?? 0} />
             </p>
             <p className="mt-3 text-xs leading-relaxed text-white/75">
-              Our estimate from your raw score — close, but not an official
-              College Board conversion.
+              {t.review.estimateHelp}
             </p>
           </div>
         </div>
 
         <div className="rounded-2xl bg-card p-6 shadow-card">
-          <p className="text-sm text-muted-foreground">Raw score</p>
+          <p className="text-sm text-muted-foreground">{t.dash.raw}</p>
           <p className="mt-3 text-5xl leading-none font-extrabold tracking-tightest tnum">
             {result.score}
             <span className="text-2xl text-muted-foreground">
@@ -160,7 +154,7 @@ export default async function ResultsPage({
         </div>
 
         <div className="rounded-2xl bg-card p-6 shadow-card">
-          <p className="text-sm text-muted-foreground">Accuracy</p>
+          <p className="text-sm text-muted-foreground">{t.dash.accuracy}</p>
           <p
             className={cn(
               "mt-3 text-5xl leading-none font-extrabold tracking-tightest tnum",
@@ -179,8 +173,8 @@ export default async function ResultsPage({
       {/* Section scores — a full sitting only. */}
       {(result.rwScore !== null || result.mathScore !== null) && (
         <section className="grid gap-5 sm:grid-cols-2">
-          <SectionScore label="Reading & Writing" value={result.rwScore} />
-          <SectionScore label="Math" value={result.mathScore} />
+          <SectionScore label={t.simulator.typeReading} value={result.rwScore} empty={t.review.sectionMissing} />
+          <SectionScore label={t.simulator.typeMath} value={result.mathScore} empty={t.review.sectionMissing} />
         </section>
       )}
 
@@ -189,6 +183,8 @@ export default async function ResultsPage({
         <h2 className="text-sm font-semibold text-muted-foreground">
           {t.pages.resultsReview}
         </h2>
+
+        {reviewed.length < ids.length && <p className="mt-3 text-sm text-muted-foreground">{fill(t.review.missingQuestions, { count: ids.length - reviewed.length })}</p>}
 
         <StaggerGroup immediate pace="tight" className="mt-5 space-y-4">
           {reviewed.map((question, index) => {
@@ -226,17 +222,17 @@ export default async function ResultsPage({
                         {isCorrect ? (
                           <>
                             <Check className="size-3" />
-                            Correct
+                            {t.review.correct}
                           </>
                         ) : isBlank ? (
                           <>
                             <Minus className="size-3" />
-                            Left blank
+                            {t.review.blank}
                           </>
                         ) : (
                           <>
                             <X className="size-3" />
-                            Incorrect
+                            {t.review.incorrect}
                           </>
                         )}
                       </Badge>
@@ -249,6 +245,10 @@ export default async function ResultsPage({
                     )}
                   </div>
 
+                  {question.passageText && <blockquote className="mt-4 whitespace-pre-wrap rounded-lg bg-muted/50 p-4 text-sm leading-relaxed">
+                    {question.passageTitle && <p className="mb-2 font-semibold">{question.passageTitle}</p>}
+                    {question.passageText}
+                  </blockquote>}
                   <p className="mt-4 text-sm leading-relaxed font-medium">
                     {question.questionText}
                   </p>
@@ -287,11 +287,11 @@ export default async function ResultsPage({
                               {option.label}
                             </span>
 
-                            <span className="leading-relaxed">{option.text}</span>
+                            <span className="min-w-0 flex-1 break-words leading-relaxed">{option.text}</span>
 
                             {isChosen && (
                               <span className="ml-auto shrink-0 text-[11px] text-muted-foreground">
-                                your answer
+                                {t.review.yourAnswer}
                               </span>
                             )}
                           </li>
@@ -303,7 +303,7 @@ export default async function ResultsPage({
                     <div className="mt-4 flex flex-wrap gap-6 text-sm">
                       <div>
                         <p className="text-xs text-muted-foreground">
-                          Your answer
+                          {t.review.yourAnswer}
                         </p>
                         <p
                           className={cn(
@@ -316,10 +316,10 @@ export default async function ResultsPage({
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">
-                          Accepted answer
+                          {t.review.acceptedAnswer}
                         </p>
                         <p className="mt-1 font-medium tnum">
-                          {question.correctAnswer.split("|").join(" or ")}
+                          {[...new Set([question.correctAnswer, ...question.acceptedAnswers].flatMap((value) => value.split("|")))].join(` ${t.review.or} `)}
                         </p>
                       </div>
                     </div>
@@ -328,13 +328,14 @@ export default async function ResultsPage({
                   {question.explanation && (
                     <div className="mt-4 rounded-lg bg-muted/50 p-3.5">
                       <p className="text-xs font-medium text-muted-foreground">
-                        Why
+                        {t.review.why}
                       </p>
                       <p className="mt-1 text-sm leading-relaxed">
                         {question.explanation}
                       </p>
                     </div>
                   )}
+                  {!question.explanation && <p className="mt-4 text-xs text-muted-foreground">{t.review.explanationMissing}</p>}
                 </article>
               </StaggerItem>
             );
@@ -352,13 +353,13 @@ export default async function ResultsPage({
  * bank cannot fill four modules yet, and a missing half of the exam must not
  * read as a bad half.
  */
-function SectionScore({ label, value }: { label: string; value: number | null }) {
+function SectionScore({ label, value, empty }: { label: string; value: number | null; empty: string }) {
   return (
     <div className="rounded-2xl bg-card p-6 shadow-card">
       <p className="text-sm text-muted-foreground">{label}</p>
       {value === null ? (
         <p className="mt-3 text-lg font-medium text-muted-foreground">
-          Not in this sitting
+          {empty}
         </p>
       ) : (
         <p className="mt-3 text-4xl leading-none font-extrabold tracking-tightest tnum">

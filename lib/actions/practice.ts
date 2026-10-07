@@ -23,15 +23,17 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
-import { isAnswerCorrect } from "@/lib/sat";
+import { answerOwnedPractice, finishOwnedPractice, recordPracticeExplanation } from "@/lib/practice-lifecycle";
+import { practiceAnswerSchema } from "@/lib/validation/practice-answer";
 import {
   selectPracticeQuestions,
   sessionLength,
   type QuestionHistory,
 } from "@/lib/practice";
-import { asQuestionIds } from "@/lib/queries/practice";
 import { taskWindow } from "@/lib/study-plan";
 import type { ActionResult } from "@/lib/actions/roadmap";
+import { getMistakeQuestionIds } from "@/lib/queries/learning-evidence";
+import { recordLearningEvent } from "@/lib/learning-events";
 
 /* -------------------------------------------------------------------------- */
 /* Start                                                                       */
@@ -43,12 +45,13 @@ const startSchema = z
     planTaskId: z.string().min(1).max(60).optional(),
     /** Mixed practice: every topic, no skill. */
     mixed: z.boolean().optional(),
+    mistakes: z.boolean().optional(),
     /** How many questions the student asked for. */
     count: z.number().int().min(5).max(50).optional(),
   })
   .refine(
     (input) =>
-      [input.skillCode, input.planTaskId, input.mixed].filter(Boolean)
+      [input.skillCode, input.planTaskId, input.mixed, input.mistakes].filter(Boolean)
         .length === 1,
     {
       error:
@@ -83,7 +86,7 @@ export async function startPracticeSession(
   let planTaskId: string | null = null;
   let remainingInTask: number | null = null;
 
-  if (parsed.data.mixed) {
+  if (parsed.data.mixed || parsed.data.mistakes) {
     /* Mixed practice has no skill — see the note on `PracticeSession.skillId`. */
     skillId = null;
   } else if (parsed.data.planTaskId) {
@@ -134,7 +137,7 @@ export async function startPracticeSession(
       userId,
       skillId,
       planTaskId,
-      source: parsed.data.mixed ? "MIXED" : undefined,
+      source: parsed.data.mistakes ? "REVIEW" : parsed.data.mixed ? "MIXED" : planTaskId ? "PLAN" : "SKILL",
       completedAt: null,
     },
     orderBy: { startedAt: "desc" },
@@ -148,8 +151,9 @@ export async function startPracticeSession(
    * whole usable bank. A question with no skill is excluded for the same reason
    * the blueprint cannot place it: nothing knows what it tests.
    */
+  const mistakes = parsed.data.mistakes ? await getMistakeQuestionIds(userId) : null;
   const candidates = await prisma.question.findMany({
-    where: skillId === null ? { skillRef: { isNot: null } } : { skillId },
+    where: { ...(mistakes ? { id: { in: mistakes } } : skillId === null ? { skillRef: { isNot: null } } : { skillId }), reviewStatus: "VERIFIED" },
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
     select: { id: true },
   });
@@ -201,15 +205,24 @@ export async function startPracticeSession(
     return { ok: false, error: "There are no questions for that topic yet." };
   }
 
-  const session = await prisma.practiceSession.create({
+  const session = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+    const source = parsed.data.mistakes ? "REVIEW" : parsed.data.mixed ? "MIXED" : planTaskId ? "PLAN" : "SKILL";
+    const resumed = await tx.practiceSession.findFirst({ where: { userId, skillId, planTaskId, source, completedAt: null }, select: { id: true } });
+    if (resumed) return resumed;
+    const created = await tx.practiceSession.create({
     data: {
       userId,
       skillId,
       planTaskId,
-      source: parsed.data.mixed ? "MIXED" : planTaskId ? "PLAN" : "SKILL",
+      source: parsed.data.mistakes ? "REVIEW" : parsed.data.mixed ? "MIXED" : planTaskId ? "PLAN" : "SKILL",
       questionIds,
     },
     select: { id: true },
+    });
+    await recordLearningEvent(tx, userId, "practice_started", created.id);
+    if (parsed.data.mistakes) await recordLearningEvent(tx, userId, "mistake_retried", created.id);
+    return created;
   });
 
   return { ok: true, sessionId: session.id };
@@ -219,15 +232,11 @@ export async function startPracticeSession(
 /* Answer                                                                      */
 /* -------------------------------------------------------------------------- */
 
-const answerSchema = z.object({
-  sessionId: z.string().min(1).max(60),
-  questionId: z.string().min(1).max(60),
-  answer: z.string().min(1).max(200),
-  /** Clamped rather than trusted: an hour on one practice question is a bug. */
-  timeSpentSeconds: z.number().int().min(0).max(3_600),
-});
+const answerSchema = practiceAnswerSchema;
 
 export interface AnswerPracticeResult extends ActionResult {
+  answer?: string | null;
+  timeSpentSeconds?: number;
   isCorrect?: boolean;
   correctAnswer?: string;
   explanation?: string | null;
@@ -242,84 +251,7 @@ export async function answerPracticeQuestion(
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false, error: "Not signed in." };
 
-  const session = await prisma.practiceSession.findFirst({
-    where: { id: parsed.data.sessionId, userId },
-    select: { id: true, questionIds: true, completedAt: true },
-  });
-
-  if (!session) return { ok: false, error: "Session not found." };
-  if (session.completedAt) {
-    return { ok: false, error: "This session is already finished." };
-  }
-
-  // The question has to be one this session asked, not any question in the bank.
-  if (!asQuestionIds(session.questionIds).includes(parsed.data.questionId)) {
-    return { ok: false, error: "That question is not part of this session." };
-  }
-
-  const question = await prisma.question.findUnique({
-    where: { id: parsed.data.questionId },
-    select: {
-      id: true,
-      correctAnswer: true,
-      acceptedAnswers: true,
-      explanation: true,
-    },
-  });
-
-  if (!question) return { ok: false, error: "Question not found." };
-
-  /*
-   * Idempotent: a double submit, or a retried request, returns the verdict
-   * already recorded instead of marking the same question twice. The first
-   * answer is the true one — that is the whole point of recording it.
-   */
-  const existing = await prisma.practiceResponse.findUnique({
-    where: {
-      sessionId_questionId: {
-        sessionId: session.id,
-        questionId: question.id,
-      },
-    },
-    select: { isCorrect: true },
-  });
-
-  if (existing) {
-    return {
-      ok: true,
-      isCorrect: existing.isCorrect,
-      correctAnswer: question.correctAnswer,
-      explanation: question.explanation,
-    };
-  }
-
-  const correct = isAnswerCorrect(
-    parsed.data.answer,
-    question.correctAnswer,
-    question.acceptedAnswers,
-  );
-
-  /*
-   * One write. Answering used to also increment the plan task's counter, which
-   * is what made this a transaction; the plan now counts these rows instead of
-   * being told about them, so there is nothing to keep in step.
-   */
-  await prisma.practiceResponse.create({
-    data: {
-      sessionId: session.id,
-      questionId: question.id,
-      answer: parsed.data.answer,
-      isCorrect: correct,
-      timeSpentSeconds: parsed.data.timeSpentSeconds,
-    },
-  });
-
-  return {
-    ok: true,
-    isCorrect: correct,
-    correctAnswer: question.correctAnswer,
-    explanation: question.explanation,
-  };
+  return answerOwnedPractice(prisma, userId, parsed.data);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -335,10 +267,8 @@ export async function finishPracticeSession(
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false, error: "Not signed in." };
 
-  await prisma.practiceSession.updateMany({
-    where: { id: parsed.data, userId, completedAt: null },
-    data: { completedAt: new Date() },
-  });
+  const result = await finishOwnedPractice(prisma, userId, parsed.data);
+  if (!result.ok) return result;
 
   revalidatePath("/practice");
   revalidatePath("/plan");
@@ -346,4 +276,11 @@ export async function finishPracticeSession(
 
   // Finishing an already-finished session is not an error worth showing.
   return { ok: true };
+}
+
+export async function markPracticeExplanation(input: { sessionId: string; questionId: string }) {
+  const parsed = z.object({ sessionId: z.string().min(1).max(60), questionId: z.string().min(1).max(60) }).safeParse(input);
+  const userId = await getCurrentUserId();
+  if (!parsed.success || !userId) return { ok: false, error: "Invalid request." };
+  return recordPracticeExplanation(prisma, userId, parsed.data.sessionId, parsed.data.questionId);
 }

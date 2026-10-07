@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pressable } from "@/components/motion/pressable";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { fill } from "@/lib/i18n/config";
 import { setTargetScore } from "@/lib/actions/profile";
 import { TOTAL_SCORE_MAX, TOTAL_SCORE_MIN } from "@/lib/sat";
@@ -52,7 +53,7 @@ export function WelcomeBanner({
   targetScore,
   canEdit = true,
 }: WelcomeBannerProps) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const ref = React.useRef<HTMLDivElement>(null);
   const [open, setOpen] = React.useState(false);
   const [draft, setDraft] = React.useState(String(targetScore ?? 1400));
@@ -91,7 +92,7 @@ export function WelcomeBanner({
         toast.success(t.dash.targetSaved);
         setOpen(false);
       } else {
-        toast.error(result.error ?? t.dash.targetInvalid);
+        toast.error(actionErrorText(result.error, t.dash.targetInvalid, lang));
       }
     });
   }

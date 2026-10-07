@@ -1,12 +1,7 @@
 /**
  * Profile — the account, and the numbers the whole app is measured against.
  *
- * Two cards, in the order a student would ask about them: who Sirius thinks
- * they are, then what they are aiming at. Only the target score is editable
- * here. The current score and the exam date are onboarding's answers and have
- * no editor yet, so they are shown as read-only rows with a line saying where
- * they come from — a disabled input that looks editable is a worse answer than
- * a value with an explanation.
+ * Preparation settings rebuild the study plan without overwriting past plans.
  *
  * The name and the email are Google's. There is nothing to edit: changing them
  * means changing the Google account, and a field here that silently disagreed
@@ -15,12 +10,12 @@
 
 import type { Metadata } from "next";
 
-import { TargetScoreForm } from "@/components/profile/target-score-form";
+import { StudyPreferencesForm } from "@/components/profile/study-preferences-form";
 import { DatabaseSetupBanner } from "@/components/dashboard/database-setup-banner";
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
-import type { Lang } from "@/lib/i18n/config";
+
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -40,6 +35,7 @@ export default async function ProfilePage() {
           name: true,
           email: true,
           targetScore: true,
+          weeklyStudyMinutes: true,
           currentScore: true,
           targetExamDate: true,
         },
@@ -90,78 +86,18 @@ export default async function ProfilePage() {
           {t.profile.planNote}
         </p>
 
-        <TargetScoreForm
-          targetScore={user?.targetScore ?? null}
-          currentScore={user?.currentScore ?? null}
-        />
-
-        <dl className="mt-7 grid gap-4 border-t border-border pt-6 sm:grid-cols-2">
-          <Row
-            label={t.onboarding.currentLabel}
-            value={user?.currentScore === null || user?.currentScore === undefined
-              ? null
-              : String(user.currentScore)}
-            empty={t.profile.notSet}
-            numeric
-          />
-          <Row
-            label={t.onboarding.dateLabel}
-            value={
-              user?.targetExamDate ? formatDate(user.targetExamDate, lang) : null
-            }
-            empty={t.profile.notSet}
-            numeric
-          />
-        </dl>
-
-        <p className="mt-5 text-xs text-muted-foreground">
-          {t.profile.lockedNote}
-        </p>
+        <StudyPreferencesForm key={JSON.stringify([user?.currentScore, user?.targetScore, user?.targetExamDate, user?.weeklyStudyMinutes])} initial={{
+          currentScore: user?.currentScore ?? null, targetScore: user?.targetScore ?? null,
+          examDate: user?.targetExamDate?.toISOString().slice(0, 10) ?? "", weeklyStudyMinutes: user?.weeklyStudyMinutes ?? 300,
+        }} />
       </section>
     </div>
   );
 }
 
-/** One read-only fact. `<dt>`/`<dd>`, because that is what these rows are. */
-function Row({
-  label,
-  value,
-  empty,
-  numeric = false,
-}: {
-  label: string;
-  value: string | null;
-  empty: string;
-  numeric?: boolean;
-}) {
-  return (
-    <div className="min-w-0 rounded-xl bg-muted/50 px-4 py-3">
-      <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>
-      <dd
-        className={
-          value === null
-            ? "mt-1 truncate text-sm text-muted-foreground"
-            : numeric
-              ? "mt-1 truncate text-sm font-bold tnum"
-              : "mt-1 truncate text-sm font-bold"
-        }
-      >
-        {value ?? empty}
-      </dd>
-    </div>
-  );
-}
-
-/**
- * The exam date, in the interface language. UTC because the column stores the
- * midnight the student picked on a calendar, not an instant — see the note in
- * `lib/validation/onboarding.ts`.
- */
-function formatDate(date: Date, lang: Lang): string {
-  return new Intl.DateTimeFormat(lang === "uz" ? "uz-UZ" : "en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(date);
+function Row({ label, value, empty }: { label: string; value: string | null; empty: string }) {
+  return <div className="min-w-0 rounded-xl bg-muted/50 px-4 py-3">
+    <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>
+    <dd className="mt-1 break-words text-sm font-bold">{value ?? empty}</dd>
+  </div>;
 }

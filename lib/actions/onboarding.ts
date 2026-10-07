@@ -15,6 +15,7 @@
  */
 
 import { revalidatePath } from "next/cache";
+import { recordLearningEvent } from "@/lib/learning-events";
 
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserId } from "@/lib/user";
@@ -165,9 +166,9 @@ export async function completeOnboarding(): Promise<OnboardingResult> {
    * move the completion date or stack up plans.
    */
   if (user.onboardingCompletedAt === null) {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { onboardingCompletedAt: new Date() },
+    await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.updateMany({ where: { id: userId, onboardingCompletedAt: null }, data: { onboardingCompletedAt: new Date() } });
+      if (updated.count) await recordLearningEvent(tx, userId, "onboarding_completed", userId);
     });
 
     const planned = await regenerateStudyPlan();

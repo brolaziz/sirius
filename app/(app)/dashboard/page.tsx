@@ -96,10 +96,7 @@ export default async function DashboardPage() {
 
       <BentoGrid>
         <BentoItem className="sm:col-span-7 lg:col-span-5">
-          <UniversitiesCard
-            universities={data.shortlisted}
-            total={data.shortlistCount}
-          />
+          <StartTestCard action={data.todayAction} className="min-h-64" />
         </BentoItem>
 
         <BentoItem className="sm:col-span-5 lg:col-span-3">
@@ -163,7 +160,10 @@ export default async function DashboardPage() {
         </BentoItem>
 
         <BentoItem className="sm:col-span-12 lg:col-span-5">
-          <StartTestCard test={data.featuredTest} className="min-h-64" />
+          <UniversitiesCard
+            universities={data.shortlisted}
+            total={data.shortlistCount}
+          />
         </BentoItem>
 
         {data.latestResult && (

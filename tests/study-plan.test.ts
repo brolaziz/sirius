@@ -29,7 +29,14 @@ import {
 } from "@/lib/study-plan";
 
 const day = 86_400_000;
+/**
+ * A **Tuesday**, and that matters: a plan's week 1 starts on the Monday of the
+ * week it is written in, so almost every week count below is one more than
+ * counting forward from `today` would give. The extra week is the partial one
+ * the student is already standing in.
+ */
 const today = new Date("2026-09-01T00:00:00.000Z");
+const mondayOfToday = new Date("2026-08-31T00:00:00.000Z");
 
 function inDays(days: number): Date {
   return new Date(today.getTime() + days * day);
@@ -110,10 +117,23 @@ describe("minutesToReach", () => {
 });
 
 describe("planWeeks", () => {
-  it("counts whole weeks to the exam", () => {
-    expect(planWeeks(today, inDays(7))).toBe(1);
-    expect(planWeeks(today, inDays(84))).toBe(12);
+  it("counts the calendar weeks a plan spans", () => {
+    // Counted from Monday 31 August, not from Tuesday 1 September.
+    expect(planWeeks(today, inDays(7))).toBe(2);
+    expect(planWeeks(today, inDays(84))).toBe(13);
     expect(planWeeks(today, inDays(10))).toBe(2);
+  });
+
+  it("counts from the Monday, so the day of the week does not change the end", () => {
+    const exam = inDays(84);
+
+    // Every day of one week is in the same plan, of the same length.
+    for (let offset = 0; offset < 7; offset += 1) {
+      const someDay = new Date(mondayOfToday.getTime() + offset * day);
+      expect(planWeeks(someDay, exam), `written +${offset}d`).toBe(
+        planWeeks(mondayOfToday, exam),
+      );
+    }
   });
 
   it("never plans past the horizon", () => {
@@ -147,9 +167,39 @@ describe("buildStudyPlan", () => {
   it("plans one entry per week up to the exam", () => {
     const result = plan();
 
-    expect(result.projection.weeks).toBe(12);
-    expect(result.weeks).toHaveLength(12);
+    expect(result.projection.weeks).toBe(13);
+    expect(result.weeks).toHaveLength(13);
     expect(result.weeks[0].week).toBe(1);
+  });
+
+  /**
+   * The point of anchoring the planner: the dates a plan *shows* and the week
+   * its progress is *counted* in are the same seven days. Two definitions of
+   * "week" in one product is how a student concludes the app lost their work.
+   */
+  it("starts week 1 on the Monday the student is already in", () => {
+    const result = plan();
+    const first = result.weeks[0];
+
+    expect(first.startDate.toISOString()).toBe(mondayOfToday.toISOString());
+    expect(first.dueDate.toISOString()).toBe(
+      new Date(mondayOfToday.getTime() + 6 * day).toISOString(),
+    );
+
+    // And the window progress is counted in is that same week.
+    expect(taskWindow(first).from.toISOString()).toBe(
+      first.startDate.toISOString(),
+    );
+  });
+
+  it("gives every week of a plan the window it displays", () => {
+    for (const week of plan().weeks) {
+      const span = taskWindow(week);
+
+      expect(span.from.toISOString()).toBe(week.startDate.toISOString());
+      // `dueDate` is the last day; the window is half-open the day after.
+      expect(span.until.getTime()).toBeGreaterThan(week.dueDate.getTime());
+    }
   });
 
   it("never schedules a week past exam day", () => {
@@ -268,9 +318,23 @@ describe("buildStudyPlan", () => {
 
     const result = plan({ skills: thin });
     const scheduled = result.weeks.filter((week) => week.questions > 0);
+    const perWeek = result.weeks.map((week) => week.questions);
 
-    // 40 questions over 12 weeks: every week should get some of them.
-    expect(scheduled.length).toBeGreaterThanOrEqual(result.weeks.length - 1);
+    /*
+     * Stated as the property rather than as a week count, which moved when the
+     * planner was anchored to the calendar: no week may carry more than an even
+     * share, and the work has to occupy as many weeks as that pace needs. A
+     * front-loaded plan fails the first; a plan that dumps the bank into three
+     * weeks fails the second.
+     */
+    const evenShare = Math.ceil(
+      result.projection.totalQuestions / result.weeks.length,
+    );
+
+    expect(Math.max(...perWeek)).toBeLessThanOrEqual(evenShare);
+    expect(scheduled.length).toBeGreaterThanOrEqual(
+      Math.floor(result.projection.totalQuestions / evenShare),
+    );
   });
 
   it("says so when there is nothing to practise at all", () => {
@@ -288,7 +352,7 @@ describe("buildStudyPlan", () => {
     expect(result.projection.requiredMinutes).toBeNull();
     expect(result.projection.onTrack).toBe(false);
     // The schedule itself does not depend on the score.
-    expect(result.weeks.length).toBe(12);
+    expect(result.weeks.length).toBe(13);
   });
 
   it("reports how much more a week an out-of-reach target would need", () => {

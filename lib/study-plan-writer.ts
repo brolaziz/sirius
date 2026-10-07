@@ -14,6 +14,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { buildStudyPlan, type PlanSkill } from "@/lib/study-plan";
+import { getRecentQuestionEvidence } from "@/lib/queries/learning-evidence";
+import { prioritizeFromEvidence, summarizePlanEvidence } from "@/lib/study-evidence";
 
 export type BuildPlanResult =
   | { ok: true; planId: string; totalQuestions: number }
@@ -69,17 +71,24 @@ export async function buildAndSaveStudyPlan(
     select: {
       id: true,
       code: true,
+      name: true,
+      nameUz: true,
       weightInDomain: true,
       domain: { select: { examWeight: true } },
-      _count: { select: { questions: true } },
+      _count: { select: { questions: { where: { reviewStatus: "VERIFIED" } } } },
     },
   });
 
-  const planSkills: PlanSkill[] = skills.map((skill) => ({
+  const evidence = await getRecentQuestionEvidence(userId);
+  const baseSkills = skills.map((skill) => ({
+    id: skill.id,
     code: skill.code,
+    name: skill.name, nameUz: skill.nameUz,
     examShare: skill.domain.examWeight * skill.weightInDomain,
     availableQuestions: skill._count.questions,
   }));
+  const planSkills: PlanSkill[] = prioritizeFromEvidence(baseSkills, evidence);
+  const evidenceSummary = summarizePlanEvidence(baseSkills, evidence);
 
   const skillIds = new Map(skills.map((skill) => [skill.code, skill.id]));
 
@@ -96,6 +105,7 @@ export async function buildAndSaveStudyPlan(
     const plan = await tx.studyPlan.create({
       data: {
         userId,
+        evidenceSummary,
         currentScore,
         targetScore,
         examDate,

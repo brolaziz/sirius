@@ -1,0 +1,26 @@
+export const CONTENT_COPY = {
+  uz: {
+    title: "Kontent boshqaruvi", body: "JSON’ni ko‘rib chiqing, o‘qituvchi tekshiruvidan o‘tkazing va tayyor testni nashr qiling.",
+    importTitle: "Savollarni yuklash", file: "JSON fayl", preview: "Avval ko‘rib chiqish", stage: "Qoralama sifatida saqlash", staged: "Qoralama saqlandi.",
+    help: "Har test va savol uchun doimiy externalId kiriting. Mavjud savolni tuzatish uchun yangi ID ishlating. Import testni qoralamaga qaytaradi.",
+    questions: "Savollar", explained: "Izohli", mapped: "Skill biriktirilgan", source: "Manba va foydalanish ruxsati", missing: "Yetishmaydi", present: "Ko‘rsatilgan",
+    queue: "Tekshirish navbati", approve: "Tekshirildi", reject: "Rad qilish", answer: "Javob", explanation: "Izoh", empty: "Hozircha savol yo‘q.",
+    tests: "Testlar", publish: "Nashr qilish", unpublish: "Qoralamaga qaytarish", draft: "Qoralama", published: "Nashr qilingan",
+    failed: "Amal bajarilmadi. Qayta urinib ko‘ring.", oversized: "Fayl 8 MB’dan oshmasin.", next: "Keyingi sahifa", previous: "Oldingi sahifa",
+    statuses: { UNREVIEWED: "Tekshirilmagan", VERIFIED: "Tekshirilgan", REJECTED: "Rad qilingan" },
+    reviewHelp: "Tasdiqlashdan oldin savol, variantlar, javob, izoh, skill va foydalanish ruxsatini tekshiring. Bu belgi savolning statistik kalibratsiyasini anglatmaydi.",
+    audit: "Oxirgi amallar", editorHelp: "Nashr qilish administrator huquqini talab qiladi.",
+  },
+  en: {
+    title: "Content management", body: "Preview JSON, review each question, then publish a ready test.",
+    importTitle: "Import questions", file: "JSON file", preview: "Preview first", stage: "Save as draft", staged: "Draft saved.",
+    help: "Supply stable externalId values for each test and question. Use a new ID for revised content. Import returns the test to draft.",
+    questions: "Questions", explained: "Explained", mapped: "Skill mapped", source: "Source and permission", missing: "Missing", present: "Provided",
+    queue: "Review queue", approve: "Mark reviewed", reject: "Reject", answer: "Answer", explanation: "Explanation", empty: "No questions yet.",
+    tests: "Tests", publish: "Publish", unpublish: "Return to draft", draft: "Draft", published: "Published",
+    failed: "The action failed. Try again.", oversized: "Keep the file under 8 MB.", next: "Next page", previous: "Previous page",
+    statuses: { UNREVIEWED: "Unreviewed", VERIFIED: "Reviewed", REJECTED: "Rejected" },
+    reviewHelp: "Before approval, check the question, options, answer, explanation, skill and permission. This status does not indicate statistical calibration.",
+    audit: "Recent actions", editorHelp: "Publishing requires administrator access.",
+  },
+};

@@ -21,6 +21,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText, Info, Lock } from "lucide-react";
 
+import { CreateDraftButton } from "@/components/essays/create-draft-button";
+import { prisma, isDatabaseConfigured } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 import { getCurrentUserId } from "@/lib/user";
@@ -32,11 +34,13 @@ export const metadata: Metadata = {
   title: "Essays",
 };
 
-export default async function EssaysPage() {
+export default async function EssaysPage({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
   const userId = await getCurrentUserId();
   const t = getDictionary(await getLang());
+  const archived = (await searchParams).archived === "1";
 
   const essays = await getEssays(userId);
+  const drafts = userId && isDatabaseConfigured() ? await prisma.essayDraft.findMany({ where: { userId, archivedAt: archived ? { not: null } : null }, orderBy: { updatedAt: "desc" }, take: 100, select: { id: true, title: true, revision: true } }) : [];
 
   return (
     <div className="mx-auto max-w-7xl space-y-10">
@@ -52,6 +56,11 @@ export default async function EssaysPage() {
         </p>
       </div>
 
+      <section className="rounded-2xl bg-card p-6 shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-5"><h2 className="text-xl font-bold">{t.workspace.myDrafts}</h2><CreateDraftButton /></div>
+        <Link href={archived ? "/essays" : "/essays?archived=1"} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">{archived ? t.workspace.activeItems : t.workspace.archivedItems}</Link>
+        <ul className="mt-5 space-y-3">{drafts.map((draft) => <li key={draft.id}><Link href={`/essays/drafts/${draft.id}`} className="inline-block min-h-11 break-words font-medium text-primary">{draft.title} · {t.workspace.version} {draft.revision}</Link></li>)}</ul>
+      </section>
       {essays.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border bg-card p-12 text-center">
           <span className="inline-flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">

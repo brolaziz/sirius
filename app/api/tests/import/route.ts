@@ -7,14 +7,12 @@
  *
  * Idempotency: a test is identified by `externalId`. Re-posting the same
  * payload updates the existing test in place rather than creating a duplicate,
- * so the endpoint is safe to wire into a script you run repeatedly. Questions
- * are replaced wholesale on each import — the payload is the source of truth for
- * a test's content.
+ * so the endpoint is safe to wire into a script you run repeatedly. Questions retain their IDs and content. Content revisions use a new question
+ * externalId; questions omitted from later imports are retained.
  *
- * Auth: send `Authorization: Bearer $TEST_IMPORT_TOKEN`. In development the
- * token may be unset for convenience; in production a missing token makes the
- * endpoint refuse every request, so an unconfigured deployment cannot have its
- * question bank overwritten by an anonymous caller.
+ * Auth: send `Authorization: Bearer $TEST_IMPORT_TOKEN`. A missing token
+ * disables imports in every environment. Imports are drafts; review and
+ * publishing require the authenticated content-management workflow.
  *
  * Example:
  *   curl -X POST http://localhost:3000/api/tests/import \
@@ -26,13 +24,12 @@
  * payload, so you can check the contract without reading the source.
  */
 
+import { importTest, QuestionRevisionConflict } from "@/lib/question-import";
 import { timingSafeEqual } from "node:crypto";
 
 import { isDatabaseConfigured, prisma } from "@/lib/prisma";
 import {
   parseImportPayload,
-  resolveCorrectAnswerLabel,
-  type ImportTest,
 } from "@/lib/validation/test-import";
 
 /** Cap the request body so a malformed or hostile payload cannot exhaust memory. */
@@ -50,10 +47,7 @@ type AuthOutcome = { ok: true } | { ok: false; status: number; message: string }
 
 function authorise(request: Request): AuthOutcome {
   const expected = process.env.TEST_IMPORT_TOKEN?.trim();
-  const isProduction = process.env.NODE_ENV === "production";
-
   if (!expected) {
-    if (isProduction) {
       return {
         ok: false,
         status: 503,
@@ -61,9 +55,6 @@ function authorise(request: Request): AuthOutcome {
           "TEST_IMPORT_TOKEN is not configured on the server, so imports are " +
           "disabled. Set it in the environment and redeploy.",
       };
-    }
-    // Development convenience: no token configured, no token required.
-    return { ok: true };
   }
 
   const header = request.headers.get("authorization") ?? "";
@@ -80,69 +71,6 @@ function authorise(request: Request): AuthOutcome {
   }
 
   return { ok: true };
-}
-
-/** Persist one validated test, replacing any previous content under the same id. */
-async function upsertTest(test: ImportTest) {
-  return prisma.$transaction(
-    async (tx) => {
-      const data = {
-        title: test.title,
-        description: test.description ?? null,
-        type: test.type,
-        isPublished: test.isPublished,
-        durationMinutes: test.durationMinutes,
-      };
-
-      // `externalId` is what makes re-imports idempotent. Without one we can
-      // only ever create a new test.
-      const record = test.externalId
-        ? await tx.test.upsert({
-            where: { externalId: test.externalId },
-            create: { ...data, externalId: test.externalId },
-            update: data,
-          })
-        : await tx.test.create({ data });
-
-      // The payload defines the test's content, so clear what was there before.
-      const removed = await tx.question.deleteMany({
-        where: { testId: record.id },
-      });
-
-      await tx.question.createMany({
-        data: test.questions.map((question) => ({
-          testId: record.id,
-          externalId: question.externalId ?? null,
-          order: question.order,
-          module: question.module,
-          passageText: question.passageText ?? null,
-          passageTitle: question.passageTitle ?? null,
-          questionText: question.questionText,
-          format: question.format,
-          options: question.options ?? undefined,
-          // Store the label, never the option text, so grading is a simple
-          // label comparison regardless of how the payload expressed it.
-          correctAnswer: resolveCorrectAnswerLabel(question),
-          explanation: question.explanation ?? null,
-          domain: question.domain ?? null,
-          skill: question.skill ?? null,
-          difficulty: question.difficulty,
-        })),
-      });
-
-      return {
-        id: record.id,
-        externalId: record.externalId,
-        title: record.title,
-        type: record.type,
-        isPublished: record.isPublished,
-        questionsImported: test.questions.length,
-        questionsReplaced: removed.count,
-      };
-    },
-    // A few hundred questions across several tests can outrun the default 5s.
-    { timeout: 30_000 },
-  );
 }
 
 export async function POST(request: Request) {
@@ -200,12 +128,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Sequential rather than parallel: each test is its own transaction, and
-    // serialising them keeps the connection pool and error attribution simple.
-    const imported = [];
-    for (const test of parsed.data.tests) {
-      imported.push(await upsertTest(test));
-    }
+    const imported = await prisma.$transaction(async (tx) => {
+      const rows = [];
+      for (const test of parsed.data.tests) rows.push(await importTest(tx, { ...test, isPublished: false }));
+      return rows;
+    }, { timeout: 60_000 });
 
     const questionCount = imported.reduce(
       (total, test) => total + test.questionsImported,
@@ -221,6 +148,7 @@ export async function POST(request: Request) {
       tests: imported,
     });
   } catch (error) {
+    if (error instanceof QuestionRevisionConflict) return Response.json({ ok: false, error: error.message }, { status: 409 });
     console.error("[tests/import] failed to write import", error);
     return Response.json(
       {
@@ -241,7 +169,7 @@ export function GET() {
     auth: "Authorization: Bearer $TEST_IMPORT_TOKEN",
     idempotency:
       "Tests are keyed on `externalId`. Re-posting the same payload updates " +
-      "the test in place and replaces its questions.",
+      "the container in place. Question IDs and content are preserved; revisions require a new question externalId. Missing questions are retained.",
     accepts: [
       "{ tests: [ <test>, … ] }",
       "[ <test>, … ]",
@@ -252,10 +180,12 @@ export function GET() {
       externalId: "string (optional, but required for idempotent re-import)",
       title: "string (required)",
       description: "string (optional)",
+      sourceName: "string (source or author; required for review and publishing)",
+      rightsNote: "string (permission or ownership details; required for review and publishing)",
       type: "'reading' | 'math' | 'full' — aliases accepted (rw, verbal, maths…)",
-      isPublished: "boolean (default true)",
-      durationMinutes: "integer (default 32, or 35 for math)",
-      questions: "array (required, 1–200)",
+      isPublished: "Imports are always drafts regardless of this input. Publish through /content.",
+      durationMinutes: "integer (default 32, 35 for math, 144 for full)",
+      questions: "array (1–200 for section tests; FULL containers may be empty)",
     },
     question: {
       externalId: "string (optional)",
@@ -274,16 +204,18 @@ export function GET() {
       correctAnswer:
         "option label ('B'), option text, or for SPR the accepted value. " +
         "Use 'a|b' to accept several values.",
+      acceptedAnswers: "string[] (optional, alternate SPR answers)",
       explanation: "string (optional) — shown on the review screen",
       domain: "string (optional) e.g. 'Information and Ideas'",
       skill: "string (optional)",
-      difficulty: "'easy' | 'medium' | 'hard' | 1 | 2 | 3 (default medium)",
+      skillCode: "string (optional taxonomy code; required for placement in full mock modules)",
+      difficulty: "'easy' | 'medium' | 'hard' | 1 | 2 | 3 (unrated when omitted)",
     },
     example: {
       externalId: "sat-practice-1",
       title: "Practice Test 1 — Reading & Writing",
       type: "reading",
-      isPublished: true,
+      isPublished: false,
       questions: [
         {
           externalId: "q1",

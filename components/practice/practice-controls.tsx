@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { startPracticeSession } from "@/lib/actions/practice";
 import {
   PRACTICE_COUNTS,
@@ -33,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export function PracticeControls({ className }: { className?: string }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const router = useRouter();
   const { count, minutes, setCount, setMinutes } =
     usePracticePreferencesControl();
@@ -44,7 +45,7 @@ export function PracticeControls({ className }: { className?: string }) {
       const result = await startPracticeSession({ mixed: true, count });
 
       if (!result.ok || !result.sessionId) {
-        toast.error(result.error ?? t.practice.startFailed);
+        toast.error(actionErrorText(result.error, t.practice.startFailed, lang));
         return;
       }
 

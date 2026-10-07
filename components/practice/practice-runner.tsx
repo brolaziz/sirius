@@ -32,9 +32,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { fill } from "@/lib/i18n/config";
 import { formatDuration } from "@/lib/sat";
 import { summarisePractice } from "@/lib/practice";
+import { ExplanationFeedback } from "@/components/practice/explanation-feedback";
 import {
   answerPracticeQuestion,
   finishPracticeSession,
@@ -64,7 +66,7 @@ export function PracticeRunner({
    */
   minutes?: number;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [secondsLeft, setSecondsLeft] = React.useState<number | null>(
     minutes && minutes > 0 ? minutes * 60 : null,
   );
@@ -105,7 +107,7 @@ export function PracticeRunner({
   async function handleSaveWord(word: string) {
     const result = await saveWord(word);
     if (!result.ok) {
-      toast.error(result.error ?? t.simulator.saveWordFailed);
+      toast.error(actionErrorText(result.error, t.simulator.saveWordFailed, lang));
       throw new Error(result.error ?? "save failed");
     }
   }
@@ -124,19 +126,19 @@ export function PracticeRunner({
         questionId: question.id,
         answer: draft.trim(),
         timeSpentSeconds: spent,
-      });
+      }).catch(() => ({ ok: false as const, error: t.practice.answerFailed, isCorrect: undefined, answer: undefined, timeSpentSeconds: undefined, correctAnswer: undefined, explanation: undefined }));
 
       if (!result.ok || result.isCorrect === undefined) {
-        toast.error(result.error ?? t.practice.answerFailed);
+        toast.error(actionErrorText(result.error, t.practice.answerFailed, lang));
         return;
       }
 
       setFeedback((previous) => ({
         ...previous,
         [question.id]: {
-          answer: draft.trim(),
+          answer: result.answer ?? draft.trim(),
           isCorrect: result.isCorrect ?? false,
-          timeSpentSeconds: spent,
+          timeSpentSeconds: result.timeSpentSeconds ?? spent,
           correctAnswer: result.correctAnswer ?? "",
           explanation: result.explanation ?? null,
         },
@@ -151,9 +153,9 @@ export function PracticeRunner({
 
   function finish() {
     startTransition(async () => {
-      const result = await finishPracticeSession(session.id);
+      const result = await finishPracticeSession(session.id).catch(() => ({ ok: false as const, error: t.practice.answerFailed }));
       if (!result.ok) {
-        toast.error(result.error ?? t.practice.answerFailed);
+        toast.error(actionErrorText(result.error, t.practice.answerFailed, lang));
         return;
       }
 
@@ -340,9 +342,7 @@ export function PracticeRunner({
                 </p>
               )}
 
-              <p className="mt-3 text-sm leading-relaxed text-foreground/80">
-                {current.explanation ?? t.practice.noExplanation}
-              </p>
+              <ExplanationFeedback key={question.id} sessionId={session.id} questionId={question.id} text={current.explanation} emptyText={t.practice.noExplanation} />
             </div>
           )}
 

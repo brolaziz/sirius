@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useT } from "@/components/i18n/lang-provider";
+import { actionErrorText } from "@/lib/i18n/action-errors";
 import { fill } from "@/lib/i18n/config";
 import { removeSavedWord } from "@/lib/actions/words";
 import {
@@ -34,13 +35,14 @@ import {
 import type { VocabularyEntry } from "@/lib/vocabulary";
 
 export interface SavedWordView {
+  nextReviewAt?: string;
   word: string;
   /** Null when the saved word is no longer in the dictionary. */
   entry: VocabularyEntry | null;
 }
 
 export function WordBank({ words }: { words: SavedWordView[] }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const listRef = React.useRef<HTMLUListElement>(null);
   const [query, setQuery] = React.useState("");
   const [isPending, startTransition] = React.useTransition();
@@ -99,7 +101,7 @@ export function WordBank({ words }: { words: SavedWordView[] }) {
       removeOptimistically(word);
       const result = await removeSavedWord(word);
       if (!result.ok) {
-        toast.error(result.error ?? t.words.removeFailed);
+        toast.error(actionErrorText(result.error, t.words.removeFailed, lang));
       }
     });
   }
@@ -193,6 +195,7 @@ export function WordBank({ words }: { words: SavedWordView[] }) {
                   {item.entry.example}
                 </p>
               )}
+              {item.nextReviewAt && <p className="mt-3 text-xs text-muted-foreground">{t.recall.nextReview}: {new Intl.DateTimeFormat(lang === "uz" ? "uz-UZ" : "en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Tashkent" }).format(new Date(item.nextReviewAt))}</p>}
             </li>
           ))}
       </ul>

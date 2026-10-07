@@ -179,11 +179,20 @@ export const uz = {
     practice: "Mashq",
     myWords: "So'zlarim",
     universities: "Universitetlar",
-    applications: "Arizalar",
+    applications: "Qabul natijalari",
+    applicationsTracker: "Arizalarim",
     essays: "Insholar",
     activities: "Faoliyatlar",
   },
 
+  today: {
+    eyebrow: "BUGUNGI QADAM", resume: "Boshlaganingizni davom ettiring", resumeBody: "Javoblaringiz va urinish vaqti saqlangan.",
+    task: "Rejangizdagi keyingi mashq", remaining: "Bu haftadagi vazifada {count} ta savol qoldi.", startTask: "Mashqni boshlash",
+    done: "Bu haftaning vazifalari bajarildi", doneBody: "Natijalaringizni ko'ring yoki qo'shimcha mashq uchun Practice bo'limiga o'ting.",
+    setup: "Tayyorgarlik maqsadini belgilang", setupBody: "Maqsad, imtihon sanasi va haftalik vaqtni profil orqali sozlang. Hozir mavjud mavzularni ham mashq qilishingiz mumkin.",
+    practice: "Bir mavzuni mashq qiling", practiceBody: "Mavzuni tanlang, javob bering va tushuntirishlar orqali xatolaringizni ko'rib chiqing.",
+    continue: "Davom ettirish", editGoal: "Maqsadni sozlash", viewPlan: "Rejani ko'rish", viewPractice: "Mashqlarga o'tish",
+  },
   dash: {
     greeting: "Salom, {name}",
     subtitle: "Bugun profilingizni bir qadam oldinga suramiz.",
@@ -216,7 +225,7 @@ export const uz = {
     bestScoreEmpty: "Hali ball yo'q",
     accuracy: "Aniqlik",
     accuracyEmpty: "Birinchi testdan keyin ko'rinadi",
-    accuracyHint: "Barcha tugatilgan testlar bo'yicha",
+    accuracyHint: "Mashq va testlardagi javoblar bo'yicha",
     words: "So'z boyligi",
     wordsHint: "O'qiyotib bosgan so'zlaringiz",
     shortlistCount: "Ro'yxatdagi universitetlar",
@@ -229,6 +238,7 @@ export const uz = {
 
     roadmap: "Keyingi qadamlar",
     roadmapDone: "{done} bajarildi, {left} qoldi",
+    taskUpdateFailed: "Vazifani yangilab bo‘lmadi. Qayta urinib ko‘ring.",
     roadmapEmpty:
       "Hisobingiz sozlangach, birinchi qadamlar shu yerda paydo bo'ladi.",
 
@@ -249,10 +259,16 @@ export const uz = {
    * and the exam date are still onboarding's, and the copy says so rather than
    * rendering a field that cannot be saved.
    */
+  settings: {
+    weeklyMinutes: "Haftalik tayyorgarlik vaqti (daq.)", baselineHelp: "Joriy ball siz kiritgan boshlang'ich natija. Hali test topshirmagan bo'lsangiz, bo'sh qoldiring.",
+    planHelp: "Saqlanganda yangi reja tuziladi. Oldingi rejalar va bajargan mashqlaringiz saqlanadi.",
+    invalid: "Ballar 400–1600 oralig'ida, 10 qadam bilan bo'lsin; maqsad joriy balldan past bo'lmasin. Haqiqiy kelajak sanasini va 30–2100 daqiqa vaqtni 15 qadam bilan kiriting.",
+    saved: "Maqsadlar saqlandi va reja yangilandi.", failed: "Sozlamalar saqlanmadi. Yana urinib ko'ring.",
+  },
   profile: {
     eyebrow: "Hisob",
     title: "Profil",
-    body: "Hisobingiz va SAT maqsadingiz. Maqsad ballni shu yerdan o'zgartirasiz.",
+    body: "Hisobingiz, SAT maqsadingiz, imtihon sanasi va haftalik tayyorgarlik vaqti.",
     accountHeading: "Hisob",
     name: "Ism",
     email: "Email",
@@ -340,6 +356,15 @@ export const uz = {
     priorityBothBody: "Ball ustida ham, ariza ustida ham parallel ishlaymiz.",
   },
 
+  progress: {
+    planReasons: "Reja ustuvorliklari sababi", noSnapshot: "Bu eski reja yaratilganda dalillar saqlanmagan.", tooLittle: "Moslashish uchun kamida 5 turli javob kerak", priority: "Mashq ustuvorligi", snapshotHelp: "Bu reja yaratilgan paytdagi yaqin natijalar. Sonlar to‘g‘ri / javob berilgan savollarni bildiradi. Ustuvorlik mashq taqsimotiga ta’sir qiladi; savol soni aynan shu foizga ortishi shart emas.",
+    loading: "Yuklanmoqda…",
+    mixed: "Aralash mashq", topicPractice: "Mavzu mashqi", test: "Yakunlangan test", mistakes: "Xatolar ustida ishlash",
+    mistakesCount: "So'nggi natijalaringizda {count} ta qayta ishlash kerak bo'lgan savol bor.", mistakesEmpty: "So'nggi javoblaringizda qayta ishlash kerak bo'lgan savollar yo'q.",
+    mistakesHelp: "Xato yoki bo'sh qolgan savolga qayta to'g'ri javob berganingizda u ro'yxatdan chiqadi. Bu yaqindagi mashq va test natijalaridan tuziladi.",
+    review: "Xatolarni mashq qilish", coverage: "Savol banki qamrovi", coverageHelp: "Mashq va mock uchun faqat tekshirilgan savollar ishlatiladi. Tekshiruv statistik kalibratsiya degani emas.",
+    verified: "Tekshirilgan", questions: "Savollar", explained: "Tushuntirishi bor", module2: "2-modul", evidenceHelp: "Yangi reja kamida beshta turli savolga berilgan javoblar asosida mashq ustuvorligini moslaydi. Bu bilim darajasi yoki rasmiy ball bahosi emas.",
+  },
   practice: {
     /* ---- Full mock, the top section ------------------------------------ */
     resultsTitle: "Natijalaringiz",
@@ -432,6 +457,12 @@ export const uz = {
    * These are not literal translations of the English. Uzbek phrasing that is
    * natural at reading speed beats phrasing that maps word-for-word.
    */
+  saveStatus: { conflict: "Boshqa oynada yangi javoblar saqlangan. Davom etish uchun sahifani yangilang.", reload: "Sahifani yangilash", saved: "Javoblar saqlandi", saving: "Saqlanmoqda…", pending: "O'zgarishlar hali saqlanmagan", failed: "Saqlanmadi. Internetni tekshiring va qayta urinib ko'ring.", retry: "Qayta saqlash" },
+  review: {
+    estimated: "Taxminiy ball", estimateHelp: "Xom natijadan hisoblangan Sirius taxmini. College Board rasmiy konversiyasi emas.",
+    finishedIn: "{time} da yakunlangan", correct: "To'g'ri", incorrect: "Xato", blank: "Bo'sh qoldirilgan", yourAnswer: "Javobingiz", acceptedAnswer: "Qabul qilinadigan javob", or: "yoki", why: "Tushuntirish",
+    explanationMissing: "Bu savol uchun tushuntirish hali kiritilmagan.", sectionMissing: "Bu urinishda yo'q", missingQuestions: "Eski natijadagi {count} ta savolning matni mavjud emas. Yozilgan ball saqlangan.",
+  },
   simulator: {
     tabTitle: "Test davom etmoqda",
     sectionModule: "{section}-bo'lim, {module}-modul",
@@ -644,6 +675,20 @@ export const uz = {
       "Har bir qator — bitta qaror, bitta odam emas. Ism-sharif saqlanmaydi; nomzod faqat taxallus kod bilan belgilanadi.",
   },
 
+  workspace: {
+    archive: "Arxivlash", unarchive: "Arxivdan tiklash", archivedItems: "Arxivdagi ishlar", activeItems: "Faol ishlar", archiveHelp: "Bu ish arxivda. Kontent va versiyalar saqlangan; tahrirlash uchun tiklang.",
+    tracker: "Arizalarim", trackerHelp: "O'zingizning universitet arizalaringiz, muddatlar va hujjatlarni bir joyda kuzating.", newApplication: "Ariza qo'shish", applicationsEmpty: "Hali shaxsiy ariza qo'shilmagan. Universitet va intake bilan boshlang.", viewOutcomes: "Boshqalarning qabul natijalarini ko'rish",
+    university: "Universitet", intake: "Intake / qabul davri", deadline: "Siz belgilagan muddat", status: "Holat", deadlineHelp: "Bu sizning shaxsiy rejangizdagi sana. Rasmiy muddatni universitetning o'zidan tekshirib kiriting.",
+    states: { PLANNING: "Rejalashtirilmoqda", IN_PROGRESS: "Tayyorlanmoqda", SUBMITTED: "Yuborilgan", WAITLISTED: "Kutish ro'yxati", ACCEPTED: "Qabul qilingan", REJECTED: "Rad etilgan", WITHDRAWN: "Bekor qilingan" },
+    checklist: "Hujjatlar checklisti", defaultChecklist: ["Insho", "Baholar / transcript", "Tavsiyanomalar", "Moliyaviy yordam hujjatlari"], documentName: "Hujjat nomi", newDocument: "Yangi hujjat", addDocument: "Hujjat qo'shish", remove: "O'chirish", notes: "Shaxsiy qaydlar",
+    activities: "Arizaga bog'langan faoliyatlar", activitiesEmpty: "Faoliyatlar bo'limida o'zingizning faoliyatlaringizni qo'shing.", manageActivities: "Faoliyatlarni boshqarish",
+    saved: "Saqlandi.", failed: "Saqlanmadi. Matningizni saqlab turing va yana urinib ko'ring.", invalid: "Majburiy maydonlar, sana va checklistni tekshiring.", conflict: "Boshqa oynada yangi o'zgarish saqlangan. Mahalliy matningizni nusxalang va sahifani yangilang.",
+    myDrafts: "Mening qoralamalarim", newDraft: "Yangi insho qoralamasi", untitledDraft: "Yangi qoralama", draftTitle: "Qoralama nomi", wordLimit: "So'z limiti", prompt: "Insho savoli / prompt", draftBody: "Insho matni", words: "so'z", revisions: "Oldingi versiyalar", version: "Versiya", restore: "Versiyani tiklash", refreshHistory: "Tarixni yangilash", privateHelp: "Qoralama shaxsiy profilingizda saqlanadi. Tiklash oldingi tarixni o'chirmay, yangi versiya yaratadi.", draftWorkspace: "Insho ustida ishlash", linkedApplication: "Bog'langan ariza",
+  },
+  recall: {
+    recognition: "Ma’nosini eslash", production: "Inglizcha so‘zni eslash", productionPrompt: "Tarjimaga qarab inglizcha so‘zni eslang.", nextReview: "Keyingi takrorlash",
+    title: "So'zlarni takrorlash", dueCount: "Hozir {count} ta kartani takrorlash vaqti keldi.", empty: "Hozir takrorlanadigan karta yo'q. Saqlangan so'zlar va keyingi muddatlarni So'zlar bo'limida ko'ring.", prompt: "Tarjimasini ko'rmasdan ma'nosini eslang.", reveal: "Javobni ko'rsatish", rateHelp: "Qanchalik oson esladingiz?", ratings: { again: "Yana", hard: "Qiyin", good: "Yaxshi", easy: "Oson" }, selfRating: "Bu o'zingiz bergan eslab qolish bahosi. SAT balliga qo'shilmaydi.", dictionaryHelp: "Kartalar tarjimasi Sirius lug'atida mavjud saqlangan so'zlardan tuziladi. Tarjimasi topilmagan so'zlar So'zlar ro'yxatida qoladi.", start: "Takrorlashni boshlash",
+  },
   essays: {
     eyebrow: "Ariza",
     title: "Insholar",
@@ -927,11 +972,20 @@ export const en: Dictionary = {
     practice: "Practice",
     myWords: "My words",
     universities: "Universities",
-    applications: "Applications",
+    applications: "Admission outcomes",
+    applicationsTracker: "My applications",
     essays: "Essays",
     activities: "Activities",
   },
 
+  today: {
+    eyebrow: "TODAY'S NEXT STEP", resume: "Pick up where you left off", resumeBody: "Your saved answers and attempt clock are preserved.",
+    task: "Your next planned practice", remaining: "{count} questions remain in this week's task.", startTask: "Start practice",
+    done: "This week's tasks are complete", doneBody: "Review your results or open Practice for additional work.",
+    setup: "Set your preparation goal", setupBody: "Update your target, exam date and weekly time in your profile. You can also practise the available topics now.",
+    practice: "Practise a topic", practiceBody: "Choose a topic, answer questions and review explanations for your mistakes.",
+    continue: "Continue", editGoal: "Edit goal", viewPlan: "View plan", viewPractice: "Open practice",
+  },
   dash: {
     greeting: "Hi, {name}",
     subtitle: "Let's move your profile one step forward today.",
@@ -964,7 +1018,7 @@ export const en: Dictionary = {
     bestScoreEmpty: "No score yet",
     accuracy: "Accuracy",
     accuracyEmpty: "Shows up after your first test",
-    accuracyHint: "Across every completed test",
+    accuracyHint: "Across practice and test answers",
     words: "Vocabulary",
     wordsHint: "Words you tapped while reading",
     shortlistCount: "Universities saved",
@@ -977,6 +1031,7 @@ export const en: Dictionary = {
 
     roadmap: "Next steps",
     roadmapDone: "{done} done, {left} to go",
+    taskUpdateFailed: "Could not update that task. Please try again.",
     roadmapEmpty:
       "Your first steps appear here once your account finishes setting up.",
 
@@ -992,10 +1047,16 @@ export const en: Dictionary = {
     estimated: "Estimated",
   },
 
+  settings: {
+    weeklyMinutes: "Weekly study time (minutes)", baselineHelp: "Current score is your self-reported starting result. Leave it blank if you have not taken a test yet.",
+    planHelp: "Saving creates a new plan. Previous plans and completed practice are preserved.",
+    invalid: "Use scores from 400 to 1600 in steps of 10, with target at least current score. Choose a real future date and 30–2100 weekly minutes in steps of 15.",
+    saved: "Goals saved and plan rebuilt.", failed: "Settings could not be saved. Please try again.",
+  },
   profile: {
     eyebrow: "Account",
     title: "Profile",
-    body: "Your account and your SAT target. The target score is edited here.",
+    body: "Your account, SAT goal, exam date and weekly study time.",
     accountHeading: "Account",
     name: "Name",
     email: "Email",
@@ -1083,6 +1144,15 @@ export const en: Dictionary = {
     priorityBothBody: "Score and application, side by side.",
   },
 
+  progress: {
+    planReasons: "Why these plan priorities", noSnapshot: "Evidence was not stored when this older plan was created.", tooLittle: "At least 5 distinct answers are needed to adjust", priority: "Practice priority", snapshotHelp: "Recent results at the time this plan was created. Counts show correct / answered questions. Priority influences the allocation; question counts do not necessarily rise by the same percentage.",
+    loading: "Loading…",
+    mixed: "Mixed practice", topicPractice: "Topic practice", test: "Completed test", mistakes: "Work on mistakes",
+    mistakesCount: "{count} questions from your recent results need another look.", mistakesEmpty: "No questions in your recent answers currently need another look.",
+    mistakesHelp: "Answer a missed or blank question correctly again to remove it from this list. It is based on recent practice and completed tests.",
+    review: "Practise mistakes", coverage: "Question bank coverage", coverageHelp: "Only reviewed questions are used for practice and mock tests. Review does not indicate statistical calibration.",
+    verified: "Reviewed", questions: "Questions", explained: "With explanations", module2: "Module 2", evidenceHelp: "New plans adjust practice priorities after at least five distinct answered questions. This is a scheduling preference, not a mastery or official-score estimate.",
+  },
   practice: {
     /* ---- Full mock, the top section ------------------------------------ */
     resultsTitle: "Your results",
@@ -1156,6 +1226,12 @@ export const en: Dictionary = {
 
   /** See the note on the Uzbek side. */
   /** See the note on the Uzbek side: shortest wording that is still clear. */
+  saveStatus: { conflict: "Newer answers were saved in another tab. Reload before continuing.", reload: "Reload page", saved: "Answers saved", saving: "Saving…", pending: "Changes have not been saved yet", failed: "Could not save. Check your connection and retry.", retry: "Retry save" },
+  review: {
+    estimated: "Estimated score", estimateHelp: "A Sirius estimate from your raw result. It is not an official College Board conversion.",
+    finishedIn: "finished in {time}", correct: "Correct", incorrect: "Incorrect", blank: "Left blank", yourAnswer: "Your answer", acceptedAnswer: "Accepted answer", or: "or", why: "Explanation",
+    explanationMissing: "An explanation has not been added for this question yet.", sectionMissing: "Not in this sitting", missingQuestions: "The text of {count} questions in this older result is unavailable. Its recorded score is preserved.",
+  },
   simulator: {
     tabTitle: "Test in progress",
     sectionModule: "Section {section}, Module {module}",
@@ -1367,6 +1443,20 @@ export const en: Dictionary = {
       "Each row is a decision, not a person. No names are stored; an applicant appears only as a pseudonymous key.",
   },
 
+  workspace: {
+    archive: "Archive", unarchive: "Restore from archive", archivedItems: "Archived items", activeItems: "Active items", archiveHelp: "This item is archived. Content and versions are preserved; restore it to edit.",
+    tracker: "My applications", trackerHelp: "Keep your university applications, deadlines and documents in one place.", newApplication: "Add application", applicationsEmpty: "You have no personal applications yet. Start with a university and intake.", viewOutcomes: "Explore reported admission outcomes",
+    university: "University", intake: "Intake / admission cycle", deadline: "Your planned deadline", status: "Status", deadlineHelp: "This is a date in your personal plan. Verify the official deadline with the university before entering it.",
+    states: { PLANNING: "Planning", IN_PROGRESS: "In progress", SUBMITTED: "Submitted", WAITLISTED: "Waitlisted", ACCEPTED: "Accepted", REJECTED: "Rejected", WITHDRAWN: "Withdrawn" },
+    checklist: "Document checklist", defaultChecklist: ["Essay", "Transcript", "Recommendations", "Financial aid documents"], documentName: "Document name", newDocument: "New document", addDocument: "Add document", remove: "Remove", notes: "Private notes",
+    activities: "Activities linked to this application", activitiesEmpty: "Add your own activities in the Activities section first.", manageActivities: "Manage activities",
+    saved: "Saved.", failed: "Could not save. Keep your text and try again.", invalid: "Check required fields, the date and the checklist.", conflict: "A newer change was saved in another tab. Copy your local text and reload the page.",
+    myDrafts: "My drafts", newDraft: "New essay draft", untitledDraft: "Untitled draft", draftTitle: "Draft title", wordLimit: "Word limit", prompt: "Essay question / prompt", draftBody: "Essay text", words: "words", revisions: "Previous versions", version: "Version", restore: "Restore version", refreshHistory: "Refresh history", privateHelp: "This draft is saved in your private profile. Restoring creates a new version and preserves previous history.", draftWorkspace: "Essay workspace", linkedApplication: "Linked application",
+  },
+  recall: {
+    recognition: "Recall meaning", production: "Recall English word", productionPrompt: "Recall the English word from its translation.", nextReview: "Next review",
+    title: "Review words", dueCount: "{count} cards are due for review now.", empty: "No cards are due now. Open My words for your saved words and upcoming reviews.", prompt: "Recall the meaning before revealing the translation.", reveal: "Reveal answer", rateHelp: "How easily did you remember it?", ratings: { again: "Again", hard: "Hard", good: "Good", easy: "Easy" }, selfRating: "This is your self-rated recall. It does not contribute to a SAT score.", dictionaryHelp: "Review cards use saved words with a translation in the Sirius dictionary. Words without translations remain in your word list.", start: "Start review",
+  },
   essays: {
     eyebrow: "Apply",
     title: "Essays",
