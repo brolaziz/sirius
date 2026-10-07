@@ -50,15 +50,11 @@ interface NavSection {
 
 export function AppNav({
   onNavigate,
-  canManageContent = false,
-  canViewAnalytics = false,
 }: {
   /** Called after a link is clicked — used to close the mobile sheet. */
   onNavigate?: () => void;
-  canManageContent?: boolean;
-  canViewAnalytics?: boolean;
 }) {
-  const { t, lang } = useT();
+  const { t } = useT();
   const pathname = usePathname();
   const navRef = React.useRef<HTMLElement>(null);
   const pillRef = React.useRef<HTMLSpanElement>(null);
@@ -84,8 +80,6 @@ export function AppNav({
       ],
     },
   ];
-  if (canManageContent) sections.push({ eyebrow: lang === "uz" ? "Boshqaruv" : "Management", items: [{ href: "/content", label: lang === "uz" ? "Kontent" : "Content", icon: FileText }] });
-  if (canViewAnalytics) sections[sections.length - 1].items.push({ href: "/analytics", label: lang === "uz" ? "Statistika" : "Analytics", icon: CalendarDays });
 
   useGSAP(
     () => {

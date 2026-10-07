@@ -9,7 +9,7 @@ const reviewSchema = z.object({ id: z.string().min(1).max(60), status: z.enum(["
 const publishSchema = z.object({ id: z.string().min(1).max(60), published: z.boolean() });
 const denied = { ok: false as const, error: "Forbidden." };
 function refreshContent() {
-  for (const path of ["/content", "/practice", "/dashboard", "/plan"]) revalidatePath(path);
+  for (const path of ["/admin/content", "/practice", "/dashboard", "/plan"]) revalidatePath(path);
 }
 export async function previewQuestionImport(text: string) {
   const userId = await getCurrentUserId(); const parsed = textSchema.safeParse(text);

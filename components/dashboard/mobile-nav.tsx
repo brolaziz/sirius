@@ -22,7 +22,7 @@ import { Logo } from "@/components/brand/logo";
 import { AppNav } from "@/components/dashboard/app-nav";
 import { useT } from "@/components/i18n/lang-provider";
 
-export function MobileNav({ canManageContent = false, canViewAnalytics = false }: { canManageContent?: boolean; canViewAnalytics?: boolean }) {
+export function MobileNav() {
   const [open, setOpen] = React.useState(false);
   const { lang } = useT();
 
@@ -48,7 +48,7 @@ export function MobileNav({ canManageContent = false, canViewAnalytics = false }
         </SheetHeader>
 
         <div className="min-h-0 overflow-y-auto p-4">
-          <AppNav canManageContent={canManageContent} canViewAnalytics={canViewAnalytics} onNavigate={() => setOpen(false)} />
+          <AppNav onNavigate={() => setOpen(false)} />
         </div>
       </SheetContent>
     </Sheet>
