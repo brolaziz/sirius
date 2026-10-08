@@ -2,7 +2,7 @@
 
 `sirius-mascot-v1.png` is a transparent 3D-rendered **illustration**, not a rigged GLB model. The user supplied the Sirius character identity and authorized its use, animation, landing redesign and logo replacement. Created with the built-in Imagegen tool on 2026-10-08; original output preserved outside the repository.
 
-The cream hood, indigo face, purple scarf and smiling gold star define the identity. `components/brand/logo.tsx` provides a small vector interpretation for navigation; `app/icon.svg` provides the tab icon. Decorative four-point `SiriusStar` accents remain separate from the new logo.
+The cream hood, indigo face, purple scarf and smiling gold star define the identity. `sirius-identity-original.png` preserves the user-supplied original image unchanged. `components/brand/logo.tsx` displays its head/shoulders with a CSS viewport crop; `app/icon.tsx` derives the tab icon from that same original. Decorative four-point `SiriusStar` accents remain separate from the new logo.
 
 Final built-in edit prompt:
 
@@ -10,6 +10,6 @@ Final built-in edit prompt:
 
 `transparent_background=true`. The asset is served through Next Image with explicit viewport sizes. No competitor illustrations, photographs or videos are bundled.
 
-Motion: six-second vertical float, mild pointer tilt, breathing shadow and star twinkles. All loops pause outside the viewport or in a hidden document. The mascot pause button persists its preference; OS reduced-motion disables transforms and loops. Text and actions are always readable without animation. The control deliberately describes mascot motion; older section scroll reveals are independent.
+Motion: six-second vertical float, mild pointer tilt, breathing shadow and star twinkles. All loops pause outside the viewport or in a hidden document. There is no animation toggle in the interface. OS reduced-motion disables transforms and loops. Text and actions are always readable without animation. Section scroll reveals respect reduced-motion separately.
 
 A true rotatable/rigged character would require a separate modeling, texturing and rigging stage. This implementation does not claim to provide one.

@@ -21,7 +21,7 @@ import { Pressable } from "@/components/motion/pressable";
 import { SiriusStar } from "@/components/brand/logo";
 
 export function CtaBand() {
-  const { t } = useT();
+  const { t, lang } = useT();
 
   return (
     <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 lg:px-8 lg:pb-32">
@@ -42,10 +42,10 @@ export function CtaBand() {
 
           <div className="relative">
             <h2 className="mx-auto max-w-2xl text-4xl leading-[1.05] font-extrabold tracking-tightest text-balance text-white sm:text-5xl">
-              {t.cta.heading}
+              {lang === "uz" ? "Arizalaringizni bir joyda boshqaring" : "Manage your applications in one place"}
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-white/85 text-pretty">
-              {t.cta.body}
+              {lang === "uz" ? "Universitet ro‘yxati, faoliyatlar, insho qoralamalari va deadline’larni Sirius kabinetida saqlang." : "Keep your college list, activities, essay drafts and deadlines in your Sirius workspace."}
             </p>
 
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">

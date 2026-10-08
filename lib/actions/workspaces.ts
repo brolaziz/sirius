@@ -23,7 +23,7 @@ export async function savePersonalApplication(input: z.infer<typeof applicationS
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false as const, error: "Not signed in." };
   const result = await saveApplication(prisma, userId, parsed.data.id, parsed.data.revision, parsed.data.data);
-  if (result.ok) { revalidatePath("/applications/tracker"); revalidatePath("/dashboard"); }
+  if (result.ok) { revalidatePath("/applications/tracker"); revalidatePath("/dashboard"); revalidatePath("/admissions-analysis"); }
   return result;
 }
 export async function createPersonalEssay(input: z.infer<typeof createSchema>) {
@@ -32,7 +32,7 @@ export async function createPersonalEssay(input: z.infer<typeof createSchema>) {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false as const, error: "Not signed in." };
   const result = await createEssayDraft(prisma, userId, parsed.data.data, parsed.data.applicationId);
-  if (result.ok) revalidatePath("/essays");
+  if (result.ok) { revalidatePath("/essay-editor"); revalidatePath("/dashboard"); revalidatePath("/admissions-analysis"); }
   return result;
 }
 export async function savePersonalEssay(input: z.infer<typeof saveSchema>) {
@@ -41,7 +41,7 @@ export async function savePersonalEssay(input: z.infer<typeof saveSchema>) {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false as const, error: "Not signed in." };
   const result = await saveEssayDraft(prisma, userId, parsed.data.id, parsed.data.revision, parsed.data.data);
-  if (result.ok) { revalidatePath("/essays"); revalidatePath(`/essays/drafts/${parsed.data.id}`); }
+  if (result.ok) { revalidatePath("/essay-editor"); revalidatePath("/dashboard"); revalidatePath(`/essays/drafts/${parsed.data.id}`); }
   return result;
 }
 export async function restorePersonalEssay(input: z.infer<typeof restoreSchema>) {
@@ -50,7 +50,7 @@ export async function restorePersonalEssay(input: z.infer<typeof restoreSchema>)
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false as const, error: "Not signed in." };
   const result = await restoreEssayDraft(prisma, userId, parsed.data.id, parsed.data.revision, parsed.data.version);
-  if (result.ok) revalidatePath(`/essays/drafts/${parsed.data.id}`);
+  if (result.ok) { revalidatePath(`/essays/drafts/${parsed.data.id}`); revalidatePath("/essay-editor"); revalidatePath("/dashboard"); }
   return result;
 }
 export async function rateWordRecall(input: z.infer<typeof wordSchema>) {
@@ -67,6 +67,6 @@ export async function archivePersonalWorkspace(input: z.infer<typeof archiveSche
   const parsed = archiveSchema.safeParse(input); const userId = await getCurrentUserId();
   if (!parsed.success || !userId) return { ok: false as const, error: "Invalid request." };
   const result = await setWorkspaceArchived(prisma, userId, parsed.data.kind, parsed.data.id, parsed.data.revision, parsed.data.archived);
-  if (result.ok) { revalidatePath("/applications/tracker"); revalidatePath("/essays"); revalidatePath(`/essays/drafts/${parsed.data.id}`); revalidatePath(`/applications/tracker/${parsed.data.id}`); }
+  if (result.ok) { revalidatePath("/applications/tracker"); revalidatePath("/essay-editor"); revalidatePath("/dashboard"); revalidatePath("/admissions-analysis"); revalidatePath(`/essays/drafts/${parsed.data.id}`); revalidatePath(`/applications/tracker/${parsed.data.id}`); }
   return result;
 }

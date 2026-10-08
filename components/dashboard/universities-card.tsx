@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Dream universities — the shortlist, as three stacked rows.
+ * Saved universities — the shortlist, as three stacked rows.
  *
  * Each row is a strip of that university's own gradient (derived from its name,
  * see `coverGradient`) with a frosted plate over it carrying the name. It is the

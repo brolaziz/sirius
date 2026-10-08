@@ -34,6 +34,10 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PROTECTED_PREFIXES = [
   "/activities",
+  "/insights",
+  "/admissions-analysis",
+  "/masterclass",
+  "/essay-editor",
   "/explore",
   "/prepare",
   "/apply",

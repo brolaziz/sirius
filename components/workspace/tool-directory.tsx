@@ -1,10 +1,10 @@
 "use client";
 import * as React from "react";
 import Link from "next/link";
-import { ArrowUpRight, Search, GraduationCap, Users, CalendarDays, PenLine, BookMarked, Sparkles, ClipboardList, FilePenLine, UserRound } from "lucide-react";
+import { ArrowUpRight, Search, GraduationCap, Users, CalendarDays, PenLine, BookMarked, Sparkles, ClipboardList, FilePenLine, UserRound, BookOpen, ChartNoAxesCombined, ClipboardCheck } from "lucide-react";
 import { useT } from "@/components/i18n/lang-provider";
 import { workspaceTools, type ToolGroup } from "@/lib/workspace-tools";
-const icons = { college: GraduationCap, profiles: Users, plan: CalendarDays, practice: PenLine, words: BookMarked, activities: Sparkles, tracker: ClipboardList, essay: FilePenLine, profile: UserRound };
+const icons = { college: GraduationCap, profiles: Users, plan: CalendarDays, practice: PenLine, words: BookMarked, activities: Sparkles, tracker: ClipboardList, essay: FilePenLine, profile: UserRound, library: BookOpen, insights: ChartNoAxesCombined, analysis: ClipboardCheck };
 const tones = { sky: "bg-viz-sky-soft text-viz-sky", violet: "bg-viz-violet-soft text-viz-violet", amber: "bg-viz-amber-soft text-viz-amber", emerald: "bg-viz-emerald-soft text-viz-emerald", rose: "bg-viz-rose-soft text-viz-rose" };
 export function ToolDirectory({ group, initialQuery = "" }: { group?: ToolGroup; initialQuery?: string }) {
   const { lang } = useT(); const uz = lang === "uz";

@@ -13,7 +13,7 @@ export default async function DraftPage({ params }: { params: Promise<{ draftId:
     include: { revisions: { orderBy: { version: "desc" }, take: 50, select: { version: true, createdAt: true } } } });
   if (!draft) notFound();
   return <div className="mx-auto max-w-4xl space-y-7">
-    <Link href="/essays" className="inline-block min-h-11 text-sm font-medium text-primary">← {t.workspace.myDrafts}</Link>
+    <Link href="/essay-editor" className="inline-block min-h-11 text-sm font-medium text-primary">← {t.workspace.myDrafts}</Link>
     {draft.applicationId && <Link href={`/applications/tracker/${draft.applicationId}`} className="ml-5 inline-block min-h-11 text-sm font-medium text-primary">{t.workspace.linkedApplication}</Link>}
     <h1 className="text-3xl font-extrabold tracking-tightest">{t.workspace.draftWorkspace}</h1>
     <section className="rounded-2xl bg-card p-5 shadow-card sm:p-8">{draft.archivedAt ? <div className="space-y-4"><p className="text-sm text-muted-foreground">{t.workspace.archiveHelp}</p><h2 className="font-bold">{draft.title}</h2><p className="whitespace-pre-wrap text-sm">{draft.content}</p><ArchiveWorkspaceButton id={draft.id} revision={draft.revision} kind="draft" archived /></div> : <DraftEditor key={`${draft.id}:${draft.revision}`} initial={{ id: draft.id, revision: draft.revision,

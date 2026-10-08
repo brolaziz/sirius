@@ -59,74 +59,92 @@ export const uz = {
   },
 
   ticker: {
-    items: [
-      "Personal statement — 4 ta qoralama",
-      "Reach · Match · Safety",
-      "Extracurricular profil",
-      "Ivy League deadline: 1-yanvar",
-      "Portfolio — 12 ta ish",
-      "SAT 1310 → 1450",
-      "Tavsiyanoma xatlari",
-      "ubiquitous → hamma yerda mavjud",
-      "Moliyaviy yordam: to'liq need",
-    ],
-  },
+  "items": [
+    "Universitetlar",
+    "Insho qoralamalari",
+    "Faoliyatlar",
+    "Deadline",
+    "Checklist",
+    "SAT mashqlari",
+    "Versiyalar tarixi",
+    "Inglizcha → o‘zbekcha"
+  ]
+},
 
   features: {
-    heading: "Ariza — bitta katta ish emas, oltita kichik ish",
-    body: "Universitet tanlashdan tortib insho qoralamalarigacha. Har bir bo'lak alohida jadval yoki alohida ilova emas — hammasi bitta joyda, bir-biriga ulangan holda.",
-    items: [
-      {
-        title: "Dream universitetlar",
-        body: "Har bir universitet uchun qabul foizi, qabul qilinganlarning o'rtacha bali va moliyaviy yordam shartlari. Taxmin qilish tugadi.",
-        bullets: ["Qabul foizi", "Qabul qilinganlar o'rtachasi", "Moliyaviy yordam"],
-      },
-      {
-        title: "Insho va personal statement",
-        body: "Qoralamalar, struktura va nimani aytmaslik kerakligi. Bitta hikoya — rezyume emas.",
-        bullets: ["650 so'z", "Qoralamalar tarixi", "Supplemental insholar"],
-      },
-      {
-        title: "Extracurricular faoliyat",
-        body: "Ro'yxat emas, ta'sir. Har bir faoliyatni admissions ofisi o'qiydigan tilda yozib chiqasiz.",
-        bullets: ["10 ta slot", "Ta'sir o'lchovi", "Yetakchilik"],
-      },
-      {
-        title: "Portfolio",
-        body: "Loyihalar, olimpiadalar, sertifikatlar va ishlaringiz — bitta havolada yig'ilgan holda.",
-        bullets: ["Loyihalar", "Yutuqlar", "Bitta havola"],
-      },
-      {
-        title: "Deadline va hujjatlar",
-        body: "Qaysi universitet nima so'raydi va qachongacha. Hech narsa oxirgi kechada esga tushmaydi.",
-        bullets: ["ED / EA / RD", "Hujjat ro'yxati", "Eslatmalar"],
-      },
-      {
-        title: "SAT va til",
-        body: "Imtihon kunidek simulyator va matn ichidagi o'zbekcha lug'at. Bu — platformaning bir bo'lagi, hammasi emas.",
-        bullets: ["Ikki modul", "Inglizcha → o'zbekcha", "Taxminiy ball"],
-      },
-    ],
-  },
+  "heading": "Universitetga ariza vositalari",
+  "body": "Universitetlar, profil, insholar, arizalar va SAT tayyorgarligini bitta kabinetda boshqaring.",
+  "items": [
+    {
+      "title": "Universitetlarni solishtirish",
+      "body": "Universitetlarni joylashuv, xarajat va mavjud qabul ma’lumotlari bo‘yicha solishtiring.",
+      "bullets": [
+        "Joylashuv",
+        "Qabul ma’lumotlari",
+        "Saqlangan ro‘yxat"
+      ]
+    },
+    {
+      "title": "Insho va personal statement",
+      "body": "Shaxsiy qoralamalar, so‘z limiti va oldingi versiyalarni saqlang.",
+      "bullets": [
+        "So‘z limiti",
+        "Versiyalar tarixi",
+        "Supplemental insholar"
+      ]
+    },
+    {
+      "title": "Faoliyatlar profili",
+      "body": "Faoliyat, vazifa, davomiylik va natijalarni profilingizga kiriting.",
+      "bullets": [
+        "Faoliyatlar",
+        "Vazifalar",
+        "Natijalar"
+      ]
+    },
+    {
+      "title": "Arizalarim",
+      "body": "Har bir universitet uchun ariza yarating, holati va shaxsiy qaydlarni saqlang.",
+      "bullets": [
+        "Ariza holati",
+        "Shaxsiy qaydlar",
+        "Arxiv"
+      ]
+    },
+    {
+      "title": "Deadline va checklist",
+      "body": "Arizaga muddat va vazifalar qo‘shing. Eng yaqin deadline kabinetda ko‘rinadi.",
+      "bullets": [
+        "Deadline",
+        "Checklist",
+        "Kabinet"
+      ]
+    },
+    {
+      "title": "SAT va til",
+      "body": "Vaqtli testlar, mashqlar va matn ichidagi o‘zbekcha lug‘at bilan ishlang.",
+      "bullets": [
+        "Vaqtli test",
+        "Inglizcha → o‘zbekcha",
+        "Taxminiy ball"
+      ]
+    }
+  ]
+},
 
-  /*
-   * The dictionary demo. Presented as one capability of the SAT toolkit, not as
-   * a headline feature — its own last sentence has always said as much, and the
-   * eyebrow now says it before the heading does.
-   */
   dictionary: {
     eyebrow: "SAT tayyorgarligining bir qismi",
     heading: "Matn ichidagi o'zbekcha lug'at",
     body: "Simulyatordagi parchalarda, universitet sahifalarida va insho namunalarida belgilangan so'zga bosing — o'zbekchasi shu yerda chiqadi. Hech narsa yuklanmaydi, chunki lug'at ilova ichida keladi.",
     hintOn: "Istalgan belgilangan so'zga bosing",
     hintOff: "{count} ta so'zni ochish uchun UZ ni yoqing",
-    footer: "Lug'atda hozir {count} ta so'z bor va u har hafta o'sib boradi.",
+    footer: "Lug‘atda hozir {count} ta so‘z bor.",
   },
 
   journey: {
     badge: "Yo'l xaritasi",
-    heading: "11-sinfdan qabul xatigacha",
-    body: "Ko'pchilik arizani noyabrda boshlaydi va yil oxirigacha yetib olishga urinadi. Sirius jarayonni to'rt bosqichga bo'ladi va har bosqichda aynan nima kerakligini aytadi.",
+    heading: "Ariza tayyorlash bosqichlari",
+    body: "Profil, universitetlar ro‘yxati, insho va yakuniy checklist bilan ketma-ket ishlang.",
     stats: [
       { value: "4", label: "bosqich" },
       { value: "10", label: "extracurricular slot" },
@@ -143,7 +161,7 @@ export const uz = {
         body: "Ikki reach, ikki match, bitta safety. Har biri nima so'rashini bilib turasiz.",
       },
       {
-        title: "Hikoyangizni yozing",
+        title: "Insho yozing",
         body: "Personal statement va supplemental insholar. Birinchi qoralamadan yakuniy variantgacha.",
       },
       {
@@ -162,7 +180,7 @@ export const uz = {
 
   footer: {
     tagline:
-      "Top universitetlarga kirish uchun to'liq platforma: universitet ro'yxati, insholar, portfolio, extracurricular va SAT.",
+      "Universitetlar ro‘yxati, profil, insholar, arizalar va SAT tayyorgarligi uchun kabinet.",
     product: "Platforma",
     account: "Hisob",
     rights: "Barcha huquqlar himoyalangan.",
@@ -211,7 +229,7 @@ export const uz = {
     saving: "Saqlanmoqda…",
     cancel: "Hozir emas",
 
-    universities: "Dream universitetlar",
+    universities: "Saqlangan universitetlar",
     universitiesEmpty: "Hali birorta universitet saqlanmagan.",
     universitiesCta: "Ro'yxatni ochish",
     moreUniversities: "+{count} ta yana",
@@ -857,55 +875,78 @@ export const en: Dictionary = {
   },
 
   ticker: {
-    items: [
-      "Personal statement — 4 drafts",
-      "Reach · Match · Safety",
-      "Extracurricular profile",
-      "Ivy deadline: January 1",
-      "Portfolio — 12 pieces",
-      "SAT 1310 → 1450",
-      "Recommendation letters",
-      "ubiquitous → hamma yerda mavjud",
-      "Financial aid: meets full need",
-    ],
-  },
+  "items": [
+    "College shortlist",
+    "Essay drafts",
+    "Activities",
+    "Deadlines",
+    "Checklists",
+    "SAT practice",
+    "Version history",
+    "English → Uzbek"
+  ]
+},
 
   features: {
-    heading: "An application is not one big job. It is six small ones.",
-    body: "From picking universities to the fourth draft of an essay. None of it lives in a separate spreadsheet or a separate app — it is all here, and the parts talk to each other.",
-    items: [
-      {
-        title: "Dream universities",
-        body: "Every university tells you whether it is a reach, a match or a safety for your score and your profile. No more guessing.",
-        bullets: ["Acceptance rates", "Average admitted scores", "Financial aid"],
-      },
-      {
-        title: "Essays and personal statement",
-        body: "Drafts, structure, and what not to say. One story — not a résumé in prose.",
-        bullets: ["650 words", "Draft history", "Supplemental essays"],
-      },
-      {
-        title: "Extracurriculars",
-        body: "Not a list, an impact. Write every activity the way an admissions officer reads it.",
-        bullets: ["10 slots", "Impact framing", "Leadership"],
-      },
-      {
-        title: "Portfolio",
-        body: "Projects, olympiads, certificates and work — collected behind a single link.",
-        bullets: ["Projects", "Awards", "One link"],
-      },
-      {
-        title: "Deadlines and documents",
-        body: "What each university asks for and when. Nothing surfaces on the last night.",
-        bullets: ["ED / EA / RD", "Document checklist", "Reminders"],
-      },
-      {
-        title: "SAT and language",
-        body: "A test-day simulator and an Uzbek dictionary inside every passage. One part of the platform, not the whole of it.",
-        bullets: ["Two modules", "English → Uzbek", "Score estimate"],
-      },
-    ],
-  },
+  "heading": "Tools for university applications",
+  "body": "Manage your shortlist, profile, writing, applications and SAT preparation in one workspace.",
+  "items": [
+    {
+      "title": "Compare universities",
+      "body": "Compare universities by location, cost and available admissions data.",
+      "bullets": [
+        "Location",
+        "Admissions data",
+        "Saved list"
+      ]
+    },
+    {
+      "title": "Essays and personal statement",
+      "body": "Keep private drafts, word limits and previous versions.",
+      "bullets": [
+        "Word limits",
+        "Version history",
+        "Supplemental essays"
+      ]
+    },
+    {
+      "title": "Activities profile",
+      "body": "Record activities, responsibilities, time commitments and outcomes.",
+      "bullets": [
+        "Activities",
+        "Responsibilities",
+        "Outcomes"
+      ]
+    },
+    {
+      "title": "My applications",
+      "body": "Create an application for each university and keep its status and private notes.",
+      "bullets": [
+        "Status",
+        "Private notes",
+        "Archive"
+      ]
+    },
+    {
+      "title": "Deadlines and checklists",
+      "body": "Add deadlines and tasks to applications. Your next deadline appears on the dashboard.",
+      "bullets": [
+        "Deadlines",
+        "Checklists",
+        "Dashboard"
+      ]
+    },
+    {
+      "title": "SAT and language",
+      "body": "Work with timed tests, practice and an Uzbek dictionary inside the passage.",
+      "bullets": [
+        "Timed tests",
+        "English → Uzbek",
+        "Score estimates"
+      ]
+    }
+  ]
+},
 
   dictionary: {
     eyebrow: "Part of the SAT toolkit",
@@ -913,13 +954,13 @@ export const en: Dictionary = {
     body: "In simulator passages, on university pages and in sample essays — tap a highlighted word and the Uzbek is right there. Nothing loads, because the dictionary ships inside the app.",
     hintOn: "Tap any highlighted word",
     hintOff: "Turn on UZ to reveal {count} words",
-    footer: "The dictionary holds {count} entries today and grows every week.",
+    footer: "The dictionary currently contains {count} entries.",
   },
 
   journey: {
     badge: "The journey",
-    heading: "From year eleven to the acceptance letter",
-    body: "Most students start the application in November and spend the rest of the year catching up. Sirius splits it into four stages and tells you what the current one needs.",
+    heading: "Application preparation stages",
+    body: "Work through your profile, college shortlist, writing and final checklist.",
     stats: [
       { value: "4", label: "stages" },
       { value: "10", label: "extracurricular slots" },
@@ -936,7 +977,7 @@ export const en: Dictionary = {
         body: "Two reaches, two matches, one safety — and what each of them actually asks for.",
       },
       {
-        title: "Write your story",
+        title: "Write your essays",
         body: "Personal statement and supplementals, from first draft to the version you submit.",
       },
       {
@@ -955,7 +996,7 @@ export const en: Dictionary = {
 
   footer: {
     tagline:
-      "The complete platform for getting into a top university: your list, essays, portfolio, extracurriculars and the SAT.",
+      "A workspace for university shortlists, profiles, essays, applications and SAT preparation.",
     product: "Platform",
     account: "Account",
     rights: "All rights reserved.",
@@ -1004,7 +1045,7 @@ export const en: Dictionary = {
     saving: "Saving…",
     cancel: "Not now",
 
-    universities: "Dream universities",
+    universities: "Saved colleges",
     universitiesEmpty: "No universities saved yet.",
     universitiesCta: "Open the list",
     moreUniversities: "+{count} more",

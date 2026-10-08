@@ -760,8 +760,8 @@
   --border: #e8ecf2;
   --input: #dce3ee;
   --color-brand-50: #eaf1ff;
-  --shadow-card: 0 3px 0 #e6eaf1, 0 6px 20px -14px #263e6033;
-  --shadow-card-hover: 0 3px 0 #dce3ed, 0 14px 30px -14px #263e6033;
+  --shadow-card: 0 5px 20px -14px #263e6026;
+  --shadow-card-hover: 0 10px 26px -16px #263e6033;
   font-family: var(--font-sans);
   color: var(--foreground);
 }
@@ -804,8 +804,7 @@
 .mascot-spark-one { top: 10%; right: 12%; width: 22px; }
 .mascot-spark-two { top: 50%; left: 6%; width: 16px; animation-delay: -1.3s; }
 .mascot-spark-three { bottom: 16%; right: 4%; width: 15px; animation-delay: -2.6s; }
-.mascot-scene[data-running="false"] *, html[data-motion-paused="true"] .mascot-scene * { animation-play-state: paused !important; }
-html[data-motion-paused="true"] .mascot-depth { transform: none; }
+.mascot-scene[data-running="false"] * { animation-play-state: paused !important; }
 .workspace main > div > section { animation: sirius-arrive .5s ease-out both; }
 @keyframes sirius-float { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
 @keyframes sirius-shadow { 0%, 100% { transform: scaleX(1); opacity: .7; } 50% { transform: scaleX(.88); opacity: .45; } }
