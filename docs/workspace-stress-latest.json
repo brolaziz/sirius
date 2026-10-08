@@ -1,0 +1,58 @@
+{
+  "date": "2026-10-08T00:27:26.898Z",
+  "environment": "confirmed Neon dev branch",
+  "stressClientPool": 8,
+  "appPoolDefaultForNeon": 4,
+  "serverMode": "next dev",
+  "fixtureWorkers": 2,
+  "competingWriters": 6,
+  "fixtureOwners": 8,
+  "assertions": 232,
+  "elapsedSeconds": 127.59,
+  "samples": {
+    "draft-write": {
+      "count": 144,
+      "p50Ms": 2094,
+      "p95Ms": 2893,
+      "maxMs": 3191
+    },
+    "application-write": {
+      "count": 144,
+      "p50Ms": 2343,
+      "p95Ms": 3393,
+      "maxMs": 3519
+    },
+    "workspace-read": {
+      "count": 96,
+      "p50Ms": 875,
+      "p95Ms": 1432,
+      "maxMs": 1575
+    },
+    "http-/admin/content-307": {
+      "count": 16,
+      "p50Ms": 512,
+      "p95Ms": 1549,
+      "maxMs": 1549
+    },
+    "http-/api/analytics/export-403": {
+      "count": 8,
+      "p50Ms": 1326,
+      "p95Ms": 2299,
+      "maxMs": 2299
+    },
+    "http-/admin/content-404": {
+      "count": 8,
+      "p50Ms": 1464,
+      "p95Ms": 2356,
+      "maxMs": 2356
+    },
+    "http-/explore-200": {
+      "count": 8,
+      "p50Ms": 2668,
+      "p95Ms": 4455,
+      "maxMs": 4455
+    }
+  },
+  "limits": "Bounded workspace contention and route authorization; not saturation, prolonged soak, OAuth-provider or full SAT load testing.",
+  "fixtureCleanupVerified": true
+}

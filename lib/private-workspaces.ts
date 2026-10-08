@@ -4,6 +4,9 @@ import { scheduleWordReview, type WordRating } from "@/lib/word-review";
 import { recordLearningEvent } from "@/lib/learning-events";
 
 type WorkspaceResult = { ok: true; id: string; revision: number } | { ok: false; error: string; conflict?: boolean };
+// Bounded budgets for networked Postgres and competing saves; row locks and
+// revision checks remain inside each transaction. No automatic write retries.
+const transactionOptions = { maxWait: 10_000, timeout: 15_000 };
 const conflict = { ok: false as const, conflict: true, error: "This item changed in another tab. Reload before saving." };
 
 export async function saveApplication(db: PrismaClient, userId: string, id: string | null, revision: number, input: ApplicationInput): Promise<WorkspaceResult> {
@@ -28,7 +31,7 @@ export async function saveApplication(db: PrismaClient, userId: string, id: stri
       await recordLearningEvent(tx, userId, "application_task_completed", `${row.id}:${item.id}`);
     }
     return { ok: true, id: row.id, revision: row.revision };
-  });
+  }, transactionOptions);
 }
 
 export async function createEssayDraft(db: PrismaClient, userId: string, input: DraftInput, applicationId: string | null): Promise<WorkspaceResult> {
@@ -41,7 +44,7 @@ export async function createEssayDraft(db: PrismaClient, userId: string, input: 
     const draft = await tx.essayDraft.create({ data: { ...parsed.data, userId, applicationId } });
     await tx.essayDraftRevision.create({ data: { ...parsed.data, draftId: draft.id, version: 0 } });
     return { ok: true, id: draft.id, revision: 0 };
-  });
+  }, transactionOptions);
 }
 
 export async function saveEssayDraft(db: PrismaClient, userId: string, id: string, revision: number, input: DraftInput): Promise<WorkspaceResult> {
@@ -59,7 +62,7 @@ export async function saveEssayDraft(db: PrismaClient, userId: string, id: strin
     const updated = await tx.essayDraft.update({ where: { id }, data: { ...parsed.data, revision: { increment: 1 } } });
     await tx.essayDraftRevision.create({ data: { ...parsed.data, draftId: id, version: updated.revision } });
     return { ok: true, id, revision: updated.revision };
-  });
+  }, transactionOptions);
 }
 
 export async function restoreEssayDraft(db: PrismaClient, userId: string, id: string, revision: number, version: number): Promise<WorkspaceResult> {
@@ -78,7 +81,7 @@ export async function reviewSavedWord(db: PrismaClient, userId: string, id: stri
     await tx.savedWord.update({ where: { id }, data: scheduleWordReview(word, rating, now) });
     await recordLearningEvent(tx, userId, "word_review_completed", `${id}:${expectedDue}`);
     return { ok: true as const };
-  });
+  }, transactionOptions);
 }
 
 /** Reversible archival retains content, links and all essay revisions. */
@@ -103,5 +106,5 @@ export async function setWorkspaceArchived(db: PrismaClient, userId: string, kin
     // Keep version numbers aligned with the optimistic revision used by the editor.
     await tx.essayDraftRevision.create({ data: { draftId: id, version: updated.revision, title: row.title, prompt: row.prompt, content: row.content, wordLimit: row.wordLimit } });
     return { ok: true, id, revision: updated.revision };
-  });
+  }, transactionOptions);
 }

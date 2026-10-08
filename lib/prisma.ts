@@ -66,12 +66,17 @@ export function isDatabaseConfigured(): boolean {
 /**
  * How many connections the pool may open.
  *
- * One by default — see the note above. `DATABASE_POOL_MAX` raises it for a real
- * Postgres server.
+ * PGlite keeps one connection. Neon defaults to four, so concurrent page reads
+ * do not queue behind every other request. An explicit override still wins.
  */
 function poolSize(): number {
   const configured = Number(process.env.DATABASE_POOL_MAX);
-  return Number.isInteger(configured) && configured > 0 ? configured : 1;
+  if (Number.isInteger(configured) && configured > 0) return configured;
+  try {
+    return new URL(process.env.DATABASE_URL ?? "").hostname.endsWith(".neon.tech") ? 4 : 1;
+  } catch {
+    return 1;
+  }
 }
 
 function createPrismaClient(): PrismaClient {
