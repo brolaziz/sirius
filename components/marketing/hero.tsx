@@ -1,198 +1,37 @@
 "use client";
 
-/**
- * Landing hero.
- *
- * One GSAP timeline runs the whole opening, which is what makes it read as a
- * single authored moment rather than five components that each happen to fade
- * in. The order is the order the eye should travel:
- *
- *   0.0s  the four wash shapes scale up behind the headline
- *   0.2s  the badge
- *   0.3s  the headline, word by word, out of a clipping mask
- *   0.9s  the sub-headline, word by word via SplitText
- *   1.2s  the buttons, then the small print
- *   1.3s  the product shot rises in
- *
- * After the load sequence, three things keep moving: the headline's gradient
- * slides forever (CSS), the shapes drift on scroll (ScrollTrigger scrub), and
- * the primary button leans toward the pointer (MagneticButton).
- */
-
-import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
-
-import { BackgroundWash } from "@/components/brand/background-wash";
-import { Button } from "@/components/ui/button";
-import { WordReveal } from "@/components/motion/word-reveal";
-import { HeroVisual } from "@/components/marketing/hero-visual";
-import { MagneticButton, Pressable } from "@/components/motion/pressable";
+import { ArrowRight, Compass, Feather, GraduationCap, Sparkles } from "lucide-react";
 import { useT } from "@/components/i18n/lang-provider";
-import {
-  DUR,
-  EASE,
-  EASE_POP,
-  SplitText,
-  gsap,
-  prefersReducedMotion,
-  useGSAP,
-} from "@/lib/gsap";
+import { MascotScene } from "@/components/brand/mascot-scene";
+import { MotionToggle } from "@/components/brand/motion-toggle";
 
 export function Hero() {
-  const { t } = useT();
-  const ref = React.useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      if (prefersReducedMotion()) return;
-
-      const root = ref.current;
-      if (!root) return;
-
-      /*
-       * SplitText is safe on the sub-headline because it is plain text with no
-       * markup to preserve. (The headline keeps its own hand-built spans — the
-       * highlighted words have to carry their class in the server HTML.)
-       */
-      const sub = root.querySelector<HTMLElement>("[data-hero-sub]");
-      const split = sub ? SplitText.create(sub, { type: "words" }) : null;
-
-      const timeline = gsap.timeline();
-
-      timeline
-        .from("[data-wash-shape]", {
-          scale: 0,
-          opacity: 0,
-          duration: 1.4,
-          ease: EASE_POP,
-          stagger: 0.12,
-        })
-        .from(
-          "[data-hero-badge]",
-          { opacity: 0, y: 16, duration: DUR.base, ease: EASE },
-          0.2,
-        )
-        .from(
-          split ? split.words : "[data-hero-sub]",
-          { opacity: 0, y: 18, duration: 0.7, ease: EASE, stagger: 0.018 },
-          0.9,
-        )
-        .from(
-          "[data-hero-cta]",
-          { opacity: 0, y: 22, duration: DUR.base, ease: EASE, stagger: 0.12 },
-          1.2,
-        )
-        .from(
-          "[data-hero-note]",
-          { opacity: 0, duration: DUR.base, ease: EASE },
-          1.45,
-        )
-        .from(
-          "[data-hero-visual]",
-          { opacity: 0, y: 70, scale: 0.97, duration: DUR.slow, ease: EASE },
-          1.3,
-        );
-
-      /*
-       * Parallax. Each shape moves a different distance as the page scrolls,
-       * which is the whole trick: identical speeds read as one flat layer.
-       */
-      gsap.utils
-        .toArray<HTMLElement>(root.querySelectorAll("[data-wash-shape]"))
-        .forEach((shape) => {
-          gsap.to(shape, {
-            y: Number(shape.dataset.depth ?? 0),
-            ease: "none",
-            scrollTrigger: {
-              trigger: root,
-              start: "top top",
-              end: "bottom top",
-              scrub: 0.6,
-            },
-          });
-        });
-
-      return () => {
-        // SplitText rewrites the DOM; revert puts the original text back.
-        split?.revert();
-      };
-    },
-    { scope: ref, dependencies: [t.hero.headline] },
-  );
-
-  return (
-    <section ref={ref} className="relative overflow-hidden">
-      {/*
-       * The same wash every other shell paints, `absolute` so it scrolls away
-       * with the hero rather than following the page. The parallax above reads
-       * the shapes it renders — see `components/brand/background-wash.tsx`.
-       */}
-      <BackgroundWash position="absolute" />
-
-      <div className="mx-auto max-w-6xl px-4 pt-16 pb-20 sm:px-6 sm:pt-24 lg:px-8 lg:pb-28">
-        <div className="mx-auto max-w-3xl text-center">
-          <div data-hero-badge>
-            <span className="sticker bg-lime text-midnight">
-              <Sparkles className="size-3.5" />
-              {t.hero.badge}
-            </span>
-          </div>
-
-          <WordReveal
-            as="h1"
-            text={t.hero.headline}
-            highlight={t.hero.highlight}
-            delay={0.3}
-            className="mt-7 text-4xl leading-[1.05] font-extrabold tracking-tightest text-balance sm:text-5xl lg:text-6xl"
-          />
-
-          <p
-            data-hero-sub
-            className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground text-pretty"
-          >
-            {t.hero.body}
-          </p>
-
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <div data-hero-cta className="w-full sm:w-auto">
-              <MagneticButton className="w-full sm:w-auto">
-                <Button
-                  asChild
-                  size="lg"
-                  className="group h-12 w-full rounded-lg px-7 text-base font-semibold shadow-glow sm:w-auto"
-                >
-                  <Link href="/sign-up">
-                    {t.hero.ctaPrimary}
-                    <ArrowRight className="ml-1 size-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                </Button>
-              </MagneticButton>
-            </div>
-
-            <div data-hero-cta className="w-full sm:w-auto">
-              <Pressable className="w-full sm:w-auto">
-                <Button
-                  asChild
-                  variant="outline"
-                  size="lg"
-                  className="h-12 w-full rounded-lg bg-card px-7 text-base font-semibold sm:w-auto"
-                >
-                  <Link href="/sign-in">{t.hero.ctaSecondary}</Link>
-                </Button>
-              </Pressable>
-            </div>
-          </div>
-
-          <p data-hero-note className="mt-5 text-sm text-muted-foreground">
-            {t.hero.note}
-          </p>
+  const { t, lang } = useT();
+  const uz = lang === "uz";
+  const steps = [
+    { icon: GraduationCap, label: uz ? "Universitetlar" : "Colleges" },
+    { icon: Feather, label: uz ? "Sizning hikoyangiz" : "Your story" },
+    { icon: Compass, label: uz ? "Sizning yo‘lingiz" : "Your journey" },
+  ];
+  return <section className="sirius-hero relative isolate overflow-hidden">
+    <div aria-hidden="true" className="sirius-hero-cloud sirius-hero-cloud-one" />
+    <div aria-hidden="true" className="sirius-hero-cloud sirius-hero-cloud-two" />
+    <div className="relative mx-auto grid max-w-6xl items-center gap-6 px-5 pt-12 pb-14 sm:px-8 sm:pt-16 sm:pb-20 lg:min-h-[700px] lg:grid-cols-[1.1fr_1fr] lg:gap-8 lg:pt-20">
+      <div className="sirius-hero-copy relative z-10">
+        <span className="inline-flex items-center gap-2 rounded-full border border-violet-200/70 bg-white/80 px-4 py-2 text-xs font-extrabold text-violet-800"><Sparkles className="size-4" />{uz ? "Katta orzular uchun kichik qadamlar" : "Small steps. Bright futures."}</span>
+        <h1 className="mt-6 text-4xl leading-[1.08] font-extrabold tracking-[-.045em] text-balance sm:text-5xl lg:text-[3.65rem]">{uz ? <>Kelajagingizga<br /><span className="text-[#7050a7]">o‘z yo‘lingiz bilan.</span></> : <>Your future.<br /><span className="text-[#7050a7]">Your own way.</span></>}</h1>
+        <p className="mt-6 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">{uz ? "O‘zingizga mos universitetni toping, hikoyangizni yozing va katta maqsadingiz sari ishonch bilan qadam qo‘ying. Sirius har bosqichda yoningizda." : "Find colleges that fit you, tell your story and move toward your next chapter with confidence. Sirius brings every step together."}</p>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Link href="/sign-up" className="inline-flex min-h-13 items-center justify-center gap-3 rounded-full bg-[#7050a7] px-7 text-base font-extrabold text-white shadow-[0_4px_0_#563a87] transition hover:-translate-y-0.5 hover:bg-[#624296] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600">{t.hero.ctaPrimary}<ArrowRight className="size-4" /></Link>
+          <Link href="#features" className="inline-flex min-h-13 items-center justify-center gap-2 rounded-full border border-violet-200 bg-white/80 px-6 text-sm font-bold text-[#513774] transition hover:bg-white">{uz ? "Sirius bilan tanishish" : "Meet Sirius"}<ArrowRight className="size-4" /></Link>
         </div>
-
-        <div data-hero-visual className="mt-16 sm:mt-20">
-          <HeroVisual />
-        </div>
+        <div className="mt-7 flex flex-wrap gap-x-5 gap-y-3">{steps.map(step => <span key={step.label} className="inline-flex items-center gap-2 text-xs font-bold text-[#6f647d]"><step.icon className="size-4 text-[#8d78aa]" />{step.label}</span>)}</div>
       </div>
-    </section>
-  );
+      <div className="relative mx-auto w-full max-w-lg">
+        <MascotScene eager className="h-[310px] sm:h-[420px] lg:h-[520px]" />
+        <div className="relative mx-auto -mt-2 flex w-fit max-w-full items-center gap-3 rounded-2xl border border-white bg-white/90 px-5 py-3 shadow-[0_8px_30px_-15px_#7050a755]"><Sparkles className="size-5 shrink-0 text-[#b58b2c]" /><p className="text-sm font-bold text-[#513774]">{uz ? "O‘z yo‘lingiz. O‘z sur’atingiz." : "Your path. Your pace."}</p><MotionToggle /></div>
+      </div>
+    </div>
+  </section>;
 }

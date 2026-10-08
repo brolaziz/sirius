@@ -14,6 +14,7 @@ import { getOrCreateCurrentUser, requireUserId } from "@/lib/user";
 import { getDictionary, getLang } from "@/lib/i18n";
 import { workspaceFont } from "@/lib/workspace-font";
 import { WorkspaceHeader } from "@/components/workspace/workspace-header";
+import { MotionToggle } from "@/components/brand/motion-toggle";
 export const dynamic = "force-dynamic";
 export default async function AppLayout({ children }: LayoutProps<"/">) {
  const userId = await requireUserId(); const databaseReady = isDatabaseConfigured();
@@ -39,7 +40,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
   <div className="min-w-0 flex-1">
    <header className="sticky top-0 z-40 flex h-20 items-center gap-3 border-b border-border/60 bg-card/95 px-4 sm:gap-6 sm:px-8">
     <MobileNav /><Link href="/dashboard" className="lg:hidden"><Logo compact /></Link><WorkspaceHeader />
-    <div className="flex shrink-0 items-center gap-2 sm:gap-4"><LangSwitch /><UserMenu name={user?.name ?? null} email={user?.email ?? null} image={user?.image ?? null} /></div>
+    <div className="flex shrink-0 items-center gap-2 sm:gap-4"><span className="hidden sm:block"><MotionToggle /></span><LangSwitch /><UserMenu name={user?.name ?? null} email={user?.email ?? null} image={user?.image ?? null} /></div>
    </header>
    <main id="workspace-content" tabIndex={-1} className="min-w-0 p-4 outline-none sm:p-8 xl:px-10 xl:py-9">
     {!databaseReady && <DatabaseSetupBanner className="mb-8" />}{databaseFailed && <DatabaseErrorBanner className="mb-8" />}{children}

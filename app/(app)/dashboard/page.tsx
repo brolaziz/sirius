@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight, Compass, CalendarClock, GraduationCap, FilePenLine, ClipboardList, BookMarked, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowUpRight, CalendarClock, GraduationCap, FilePenLine, ClipboardList, BookMarked, Sparkles, ArrowRight } from "lucide-react";
+import { MascotScene } from "@/components/brand/mascot-scene";
+import { MotionToggle } from "@/components/brand/motion-toggle";
 import { getDashboardData } from "@/lib/queries/dashboard";
 import { getWorkspaceOverview } from "@/lib/queries/workspace";
 import { getLang } from "@/lib/i18n";
@@ -25,12 +27,12 @@ export default async function DashboardPage() {
   { label: uz ? "Saqlangan so‘zlar" : "Saved words", value: data.savedWordCount, href: "/words", icon: BookMarked },
  ];
  return <div className="mx-auto max-w-6xl space-y-7">
-  <header className="workspace-intro relative overflow-hidden">
-   <div className="relative z-10 max-w-2xl"><p className="text-xs font-extrabold uppercase tracking-widest text-primary">{uz ? "Sizning kelajagingiz shu yerdan boshlanadi" : "Your next chapter starts here"}</p>
+  <header className="workspace-intro relative grid items-center overflow-hidden gap-2 sm:grid-cols-[1fr_200px] xl:grid-cols-[1fr_280px]">
+   <div className="relative z-10 min-w-0"><p className="text-xs font-extrabold uppercase tracking-widest text-primary">{uz ? "Sizning kelajagingiz shu yerdan boshlanadi" : "Your next chapter starts here"}</p>
     <h1 className="mt-3 font-extrabold">{uz ? "Salom" : "Welcome back"}, {displayName(data.user)} <span aria-hidden="true">✦</span></h1>
     <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">{uz ? "Har kuni bitta kichik qadam. O‘zingizga mos universitetni toping, hikoyangizni yozing va arizangizni bir joyda yig‘ing." : "One small step each day. Find your colleges, tell your story and bring your application together in one place."}</p>
     <Link href="/explore" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-extrabold text-primary-foreground">{uz ? "Keyingi qadamim" : "Find my next step"}<ArrowUpRight className="size-4" /></Link>
-   </div><Compass aria-hidden="true" className="absolute top-8 right-6 hidden size-36 rotate-12 text-primary/10 xl:block" />
+   </div><div className="relative mx-auto w-full max-w-64 sm:max-w-none"><MascotScene eager className="h-52 sm:h-64 xl:h-72" /><span className="absolute right-0 bottom-0 sm:hidden"><MotionToggle /></span></div>
   </header>
   <section className="rounded-3xl bg-card p-5 shadow-card sm:p-7"><div className="mb-5 flex items-center justify-between gap-4"><div><h2 className="text-xl font-extrabold">{uz ? "Bugun nima qilamiz?" : "What shall we work on?"}</h2><p className="mt-1 text-sm text-muted-foreground">{uz ? "Maqsadingizga olib boradigan yo‘lni tanlang." : "Pick the path that moves you forward."}</p></div><Link href="/explore" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-primary">{uz ? "Barchasi" : "All tools"}<ArrowRight className="size-3.5" /></Link></div>
    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{quick.map(item => <Link key={item.href} href={item.href} className={`flex min-h-24 items-center gap-3 rounded-2xl border-b-4 border-black/5 p-4 font-extrabold transition hover:-translate-y-1 ${item.tone}`}><item.icon className="size-7 shrink-0" /><span className="text-sm">{item.title}</span></Link>)}</div>

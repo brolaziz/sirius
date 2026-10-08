@@ -28,6 +28,7 @@ import {
 import { useT } from "@/components/i18n/lang-provider";
 import { signOutAction } from "@/lib/actions/auth";
 import { cn } from "@/lib/utils";
+import { workspaceFont } from "@/lib/workspace-font";
 
 export function UserMenu({
   name,
@@ -77,7 +78,7 @@ export function UserMenu({
         <ChevronDown className="size-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent align="end" className={`workspace ${workspaceFont.variable} w-60`}>
         <DropdownMenuLabel className="flex flex-col gap-0.5 py-2.5">
           <span className="truncate text-sm font-bold">{label}</span>
           {email && (

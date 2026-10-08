@@ -36,18 +36,21 @@ interface PressableProps {
 function usePress(disabled: boolean, lift: number) {
   const ref = React.useRef<HTMLDivElement>(null);
   const scaleTo = React.useRef<QuickTo | null>(null);
+  const scaleYTo = React.useRef<QuickTo | null>(null);
   const yTo = React.useRef<QuickTo | null>(null);
 
   useGSAP(
     () => {
       if (disabled || prefersReducedMotion()) {
         scaleTo.current = null;
+        scaleYTo.current = null;
         yTo.current = null;
         return;
       }
 
       const options = { duration: DUR.fast, ease: EASE };
-      scaleTo.current = gsap.quickTo(ref.current, "scale", options);
+      scaleTo.current = gsap.quickTo(ref.current, "scaleX", options);
+      scaleYTo.current = gsap.quickTo(ref.current, "scaleY", options);
       yTo.current = gsap.quickTo(ref.current, "y", options);
     },
     { scope: ref, dependencies: [disabled, lift] },
@@ -55,6 +58,7 @@ function usePress(disabled: boolean, lift: number) {
 
   const set = React.useCallback((scale: number, y: number) => {
     scaleTo.current?.(scale);
+    scaleYTo.current?.(scale);
     yTo.current?.(y);
   }, []);
 
@@ -119,6 +123,7 @@ export function MagneticButton({
   const xTo = React.useRef<QuickTo | null>(null);
   const yTo = React.useRef<QuickTo | null>(null);
   const scaleTo = React.useRef<QuickTo | null>(null);
+  const scaleYTo = React.useRef<QuickTo | null>(null);
 
   useGSAP(
     () => {
@@ -136,10 +141,11 @@ export function MagneticButton({
       const options = { duration: 0.5, ease: "power3.out" };
       xTo.current = gsap.quickTo(node, "x", options);
       yTo.current = gsap.quickTo(node, "y", options);
-      scaleTo.current = gsap.quickTo(node, "scale", {
+      scaleTo.current = gsap.quickTo(node, "scaleX", {
         duration: DUR.fast,
         ease: EASE,
       });
+      scaleYTo.current = gsap.quickTo(node, "scaleY", { duration: DUR.fast, ease: EASE });
 
       const onMove = (event: PointerEvent) => {
         const bounds = node.getBoundingClientRect();
@@ -149,11 +155,12 @@ export function MagneticButton({
         yTo.current?.(offsetY * strength);
       };
 
-      const onEnter = () => scaleTo.current?.(1.04);
+      const onEnter = () => { scaleTo.current?.(1.04); scaleYTo.current?.(1.04); };
       const onLeave = () => {
         xTo.current?.(0);
         yTo.current?.(0);
         scaleTo.current?.(1);
+        scaleYTo.current?.(1);
       };
 
       node.addEventListener("pointermove", onMove);

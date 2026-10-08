@@ -10,6 +10,7 @@ import { auth } from "@/auth";
 
 import { StickyHeader } from "@/components/marketing/sticky-header";
 import { SiteFooter } from "@/components/marketing/site-footer";
+import { workspaceFont } from "@/lib/workspace-font";
 
 export default async function MarketingLayout({
   children,
@@ -17,7 +18,7 @@ export default async function MarketingLayout({
   const session = await auth();
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className={`sirius-public ${workspaceFont.variable} flex min-h-dvh flex-col`}>
       <StickyHeader isSignedIn={Boolean(session?.user)} />
       <main className="flex-1">{children}</main>
       <SiteFooter />

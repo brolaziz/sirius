@@ -21,6 +21,7 @@ import {
 import { Logo } from "@/components/brand/logo";
 import { AppNav } from "@/components/dashboard/app-nav";
 import { useT } from "@/components/i18n/lang-provider";
+import { workspaceFont } from "@/lib/workspace-font";
 
 export function MobileNav() {
   const [open, setOpen] = React.useState(false);
@@ -40,7 +41,7 @@ export function MobileNav() {
         </button>
       </SheetTrigger>
 
-      <SheetContent side="left" className="w-[17rem] p-0">
+      <SheetContent side="left" className={`workspace ${workspaceFont.variable} w-[17rem] p-0`}>
         <SheetHeader className="border-b border-border px-6 py-5">
           <SheetTitle className="text-left">
             <Logo />

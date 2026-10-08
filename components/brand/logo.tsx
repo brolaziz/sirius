@@ -1,9 +1,6 @@
 /**
- * Sirius wordmark and star glyph.
- *
- * Sirius is the brightest star in the night sky — the mark is a four-point star
- * with a soft glow. Rendered as inline SVG rather than an image file so it
- * inherits `currentColor` and stays crisp at any size.
+ * Sirius mascot lockup. The small vector mark stays readable at navigation size;
+ * the full 3D illustration belongs in the hero, rather than a tiny thumbnail.
  */
 
 import { cn } from "@/lib/utils";
@@ -44,16 +41,21 @@ export function Logo({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 font-semibold tracking-tight",
+        "inline-flex items-center gap-2.5 font-extrabold tracking-tight",
         className,
       )}
     >
-      <span className="relative inline-flex">
-        {/* Glow: a blurred copy behind the glyph. Purely decorative. */}
-        <SiriusStar className="absolute inset-0 size-6 text-primary/40 blur-[6px]" />
-        <SiriusStar className="relative size-6 text-primary" />
-      </span>
-      {!compact && <span className="text-lg">Sirius</span>}
+      <svg viewBox="0 0 48 48" className="size-10 shrink-0" role="img" aria-label={compact ? "Sirius" : undefined} aria-hidden={compact ? undefined : true}>
+        <path d="M8 30c-3-7 2-18 12-22 8-4 11-6 14-3 2 2-1 5-1 7 8 4 12 11 10 19-2 9-11 14-21 12C15 42 11 38 8 30Z" fill="#f6eadc" stroke="#e5d5c7" strokeWidth="1.2" />
+        <path d="M33 10c2-2 4-3 5-1" fill="none" stroke="#9270b4" strokeWidth="1.4" strokeLinecap="round" />
+        <path d="m40 9 1.1 2.2 2.4.4-1.8 1.7.5 2.4-2.2-1.2-2.2 1.2.4-2.4-1.7-1.7 2.4-.4Z" fill="#f4c869" />
+        <path d="M13 28c0-8 7-13 16-13 7 0 11 6 10 12-1 8-8 12-16 11-6-1-10-4-10-10Z" fill="#302345" />
+        <ellipse cx="22" cy="25" rx="2" ry="2.8" fill="white" /><ellipse cx="32" cy="25" rx="2" ry="2.8" fill="white" />
+        <path d="M25 30q2 3 4 0" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+        <path d="M12 36q12 8 25 0l-1 5q-12 6-24-1Z" fill="#8b65b0" />
+        <path d="m33 34 1.8 3.5 3.9.6-2.8 2.7.6 3.8-3.5-1.8-3.5 1.8.6-3.8-2.8-2.7 3.9-.6Z" fill="#f4c869" />
+      </svg>
+      {!compact && <span className="text-[1.45rem] text-[#7050a7] dark:text-[#c8afe7]">sirius<span className="text-[#c39536]">.</span></span>}
     </span>
   );
 }
