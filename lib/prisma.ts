@@ -52,6 +52,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { printDatabaseBanner } from "@/lib/db-banner";
+import { postgresConnectionString } from "@/lib/postgres-connection";
 
 /** True when a usable `DATABASE_URL` is present in the environment. */
 export function isDatabaseConfigured(): boolean {
@@ -100,7 +101,7 @@ function createPrismaClient(): PrismaClient {
   }
 
   const pool = new pg.Pool({
-    connectionString,
+    connectionString: postgresConnectionString(connectionString),
     max: poolSize(),
     // `prisma dev` drops idle connections; keepalives stop pg handing out one
     // that the server has already closed.

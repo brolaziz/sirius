@@ -10,6 +10,7 @@ import { getWorkspaceOverview } from "../lib/queries/workspace";
 import { previewContentImport } from "../lib/content-management";
 import { getProductAnalytics } from "../lib/queries/product-analytics";
 import type { ApplicationInput } from "../lib/validation/workspaces";
+import { postgresConnectionString } from "../lib/postgres-connection";
 
 const url = process.env.DATABASE_URL;
 const host = process.argv.find(arg => arg.startsWith("--dev-host="))?.split("=")[1];
@@ -20,7 +21,7 @@ const origin = process.argv.find(arg => arg.startsWith("--origin="))?.slice(9);
 if (origin && !["http://localhost:3000", "http://127.0.0.1:3000"].includes(origin)) throw Error("HTTP audit is limited to the local Sirius server.");
 const mode = process.argv.find(arg => arg.startsWith("--server-mode="))?.slice(14) ?? "unspecified";
 if (!["dev", "production", "unspecified"].includes(mode)) throw Error("Server mode must be dev or production.");
-const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: url, max: 8 }) });
+const db = new PrismaClient({ adapter: new PrismaPg({ connectionString: postgresConnectionString(url), max: 8 }) });
 const prefix = `stress-${randomUUID()}`;
 const users: string[] = [];
 const samples: Record<string, number[]> = {};

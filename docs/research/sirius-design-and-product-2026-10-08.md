@@ -74,11 +74,13 @@ Sizdan keyin kerak bo‘ladiganlar: savollarning 5–10 JSON namunasi; tekshiruv
 
 ## Bajarilgan testlar va qolgan stress rejasi
 
-16 faylda 232 avtomatik test: ma’lumot egaligi, parallel save/grade, versiya, kontent ruxsatlari va mavjud SAT oqimlari. Lint, typecheck va production build tekshiruvlari alohida. Brauzerda oddiy Google admin kirishi, student menyusida admin havolalari yo‘qligi, mobil drawer, yangi editor/Insights/Analysis/qo‘llanma, UZ/EN va asosiy sahifalar ko‘rildi.
+17 faylda 235 avtomatik test: ma’lumot egaligi, parallel save/grade, versiya, kontent ruxsatlari, TLS ulanish parametrlari va mavjud SAT oqimlari. Lint, typecheck va production build tekshiruvlari alohida. Brauzerda oddiy Google admin kirishi, student menyusida admin havolalari yo‘qligi, mobil drawer, yangi editor/Insights/Analysis/qo‘llanma, UZ/EN va asosiy sahifalar ko‘rildi.
 
 Neon devda qisqa contention sinovi: 8 owner + 8 foreign fixture; 2 fixture worker; 6 parallel competing writer; 3 revision round. 144 essay yozishi + 144 application yozishi + 96 overview o‘qishi + 40 HTTP authorization so‘rovi. 232 assertion o‘tdi, fixture cleanup tekshirildi. Stress client pool 8, app Neon default pool 4. Jami 127.59 soniya. Essay p95 2893 ms; ariza p95 3393 ms; overview p95 1432 ms; `/explore` dev HTTP p95 4455 ms. Bu raqamlar production SLA yoki foydalanuvchi sig‘imi emas. [Mashina hisobot](../workspace-stress-latest.json)
 
 Birinchi urinishlarda tranzaksiya navbati va appning bir ulanishli pooli vaqt yetishmasligini ko‘rsatdi. Networked workspace tranzaksiyalarida maxWait 10s/timeout 15s, Neon uchun default pool 4 qilindi; PGlite default 1 bo‘lib qoladi. Qayta sinov yuqoridagi natija bilan o‘tdi.
+
+Yakuniy dev previewda pg drayveri eski `sslmode=require` nomi bo‘yicha ogohlantirish chiqardi. Neonning legacy TLS nomlari drayverga yuborishda `verify-full` sifatida aniqlandi. `.env` o‘zgartirilmadi; explicit libpq compatibility va local PGlite qiymatlari saqlandi. Drayverning oldingi/keyingi parse natijalari orqali credential, channel binding parametri va TLS semantikasi bir xil ekanligi tekshirildi. [node-postgres TLS hujjati](https://node-postgres.com/features/ssl)
 
 Qolgan sinovlar:
 
